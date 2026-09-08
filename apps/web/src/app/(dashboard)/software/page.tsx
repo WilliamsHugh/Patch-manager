@@ -1,0 +1,1 @@
+import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Software" description="Quản lý danh mục phần mềm và phiên bản hiện tại." fields={["TÊN PHẦN MỀM","NHÀ CUNG CẤP","PHIÊN BẢN","BẢN VÁ"]}/>}

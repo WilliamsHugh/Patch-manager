@@ -1,0 +1,1 @@
+import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Deployment Plans" description="Lập, xét duyệt và theo dõi kế hoạch triển khai bản vá." fields={["TÊN KẾ HOẠCH","NGƯỜI TẠO","LỊCH CHẠY","TRẠNG THÁI"]}/>}

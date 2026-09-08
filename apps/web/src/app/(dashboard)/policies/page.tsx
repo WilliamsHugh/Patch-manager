@@ -1,0 +1,1 @@
+import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Policies" description="Cấu hình hoãn cập nhật, khởi động lại và phê duyệt." fields={["TÊN CHÍNH SÁCH","HOÃN TỐI ĐA","KHỞI ĐỘNG LẠI","TRẠNG THÁI"]}/>}
