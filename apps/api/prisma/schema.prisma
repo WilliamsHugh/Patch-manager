@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  IT_HELPDESK
+  USER
+}
+
+enum PatchSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum PlanStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+  DEPLOYING
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+enum TaskStatus {
+  PENDING
+  DOWNLOADING
+  INSTALLING
+  WAITING_RESTART
+  SUCCESS
+  FAILED
+  ROLLBACKED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_USER
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  NEEDS_ATTENTION
+}
+
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  passwordHash String
+  name String
+  role Role @default(USER)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  devices Device[]
+  createdPlans DeploymentPlan[] @relation("PlanCreator")
+  reviewedPlans DeploymentPlan[] @relation("PlanReviewer")
+  createdTickets Ticket[] @relation("TicketCreator")
+  assignedTickets Ticket[] @relation("TicketAssignee")
+  ticketComments TicketComment[]
+  notifications Notification[]
+  auditLogs AuditLog[]
+  configuredPolicies Policy[]
+}
+
+model Software {
+  id String @id @default(uuid())
+  name String
+  vendor String
+  currentVersion String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  patches Patch[]
+  installations InstalledSoftware[]
+  @@unique([name, vendor])
+}
+
+model Patch {
+  id String @id @default(uuid())
+  code String @unique
+  title String
+  description String?
+  version String?
+  severity PatchSeverity
+  releasedAt DateTime
+  requiresRestart Boolean @default(false)
+  softwareId String
+  software Software @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+  tasks DeploymentTask[]
+  createdAt DateTime @default(now())
+}
+
+model Device {
+  id String @id @default(uuid())
+  hostname String @unique
+  operatingSystem String
+  ipAddress String?
+  department String?
+  status DeviceStatus @default(OFFLINE)
+  ownerId String?
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  installedSoftware InstalledSoftware[]
+  planDevices DeploymentPlanDevice[]
+  deploymentTasks DeploymentTask[]
+  agentStatus AgentStatus?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InstalledSoftware {
+  id String @id @default(uuid())
+  deviceId String
+  softwareId String
+  version String
+  installedAt DateTime?
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  software Software @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+  @@unique([deviceId, softwareId])
+}
+
+model DeploymentPlan {
+  id String @id @default(uuid())
+  name String
+  description String?
+  status PlanStatus @default(DRAFT)
+  scheduledAt DateTime?
+  reviewNote String?
+  reviewedAt DateTime?
+  createdById String
+  reviewedById String?
+  createdBy User @relation("PlanCreator", fields: [createdById], references: [id])
+  reviewedBy User? @relation("PlanReviewer", fields: [reviewedById], references: [id])
+  devices DeploymentPlanDevice[]
+  tasks DeploymentTask[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeploymentPlanDevice {
+  planId String
+  deviceId String
+  plan DeploymentPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  @@id([planId, deviceId])
+}
+
+model DeploymentTask {
+  id String @id @default(uuid())
+  status TaskStatus @default(PENDING)
+  errorCode String?
+  errorLog String?
+  startedAt DateTime?
+  completedAt DateTime?
+  planId String
+  deviceId String
+  patchId String
+  plan DeploymentPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id])
+  patch Patch @relation(fields: [patchId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([planId, deviceId, patchId])
+}
+
+model Ticket {
+  id String @id @default(uuid())
+  title String
+  description String
+  priority PatchSeverity @default(MEDIUM)
+  status TicketStatus @default(OPEN)
+  createdById String
+  assignedToId String?
+  createdBy User @relation("TicketCreator", fields: [createdById], references: [id])
+  assignedTo User? @relation("TicketAssignee", fields: [assignedToId], references: [id])
+  comments TicketComment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TicketComment {
+  id String @id @default(uuid())
+  content String
+  ticketId String
+  authorId String
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id String @id @default(uuid())
+  title String
+  message String
+  status NotificationStatus @default(UNREAD)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+  action String
+  entityType String
+  entityId String?
+  metadata Json?
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  @@index([entityType, entityId])
+}
+
+model Policy {
+  id String @id @default(uuid())
+  name String @unique
+  description String?
+  autoApproveSeverity PatchSeverity?
+  maxDeferralHours Int @default(24)
+  forceRestart Boolean @default(false)
+  isActive Boolean @default(true)
+  configuredById String
+  configuredBy User @relation(fields: [configuredById], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AgentStatus {
+  id String @id @default(uuid())
+  version String
+  isConnected Boolean @default(false)
+  lastHeartbeatAt DateTime?
+  lastScanAt DateTime?
+  deviceId String @unique
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+}
