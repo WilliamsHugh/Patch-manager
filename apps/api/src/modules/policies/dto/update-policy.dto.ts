@@ -1,0 +1,2 @@
+import { PatchSeverity } from "@prisma/client"; import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
+export class UpdatePolicyDto { @IsOptional() @IsString() description?: string; @IsOptional() @IsEnum(PatchSeverity) autoApproveSeverity?: PatchSeverity; @IsOptional() @IsInt() @Min(0) maxDeferralHours?: number; @IsOptional() @IsBoolean() forceRestart?: boolean; @IsOptional() @IsBoolean() isActive?: boolean; }

@@ -1,0 +1,2 @@
+import { Injectable } from "@nestjs/common"; import { PrismaService } from "../../prisma/prisma.service";
+@Injectable() export class DevicesService { constructor(private prisma: PrismaService) {} findAll() { return this.prisma.device.findMany({ include: { owner: { omit: { passwordHash: true } }, installedSoftware: { include: { software: true } }, agentStatus: true }, orderBy: { hostname: "asc" } }); } }

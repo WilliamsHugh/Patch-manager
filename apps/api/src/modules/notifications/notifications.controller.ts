@@ -1,0 +1,2 @@
+import { Controller, Get } from "@nestjs/common"; import { CurrentUser } from "../../common/decorators/current-user.decorator"; import { NotificationsService } from "./notifications.service";
+@Controller("notifications") export class NotificationsController { constructor(private service: NotificationsService) {} @Get() findAll(@CurrentUser() user: { id: string }) { return this.service.findForUser(user.id); } }

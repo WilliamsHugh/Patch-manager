@@ -1,0 +1,2 @@
+import { Injectable } from "@nestjs/common"; import { PrismaService } from "../../prisma/prisma.service"; import { UpdatePolicyDto } from "./dto/update-policy.dto";
+@Injectable() export class PoliciesService { constructor(private prisma: PrismaService) {} findAll() { return this.prisma.policy.findMany({ include: { configuredBy: { select: { id: true, name: true } } } }); } update(id: string, dto: UpdatePolicyDto, userId: string) { return this.prisma.policy.update({ where: { id }, data: { ...dto, configuredById: userId } }); } }
