@@ -1,9 +1,10 @@
 import { ArrayMinSize, IsArray, IsDateString, IsOptional, IsString, IsUUID, MinLength } from "class-validator";
 
-export class CreateDeploymentPlanDto {
+export class UpdateDeploymentPlanDto {
+  @IsOptional()
   @IsString()
   @MinLength(3)
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
@@ -13,13 +14,15 @@ export class CreateDeploymentPlanDto {
   @IsDateString()
   scheduledAt?: string;
 
+  @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
   @IsUUID("4", { each: true })
-  deviceIds: string[];
+  deviceIds?: string[];
 
+  @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
   @IsUUID("4", { each: true })
-  patchIds: string[];
+  patchIds?: string[];
 }

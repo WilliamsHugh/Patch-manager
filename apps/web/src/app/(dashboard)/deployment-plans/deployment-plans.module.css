@@ -1,0 +1,301 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 28px 28px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.metrics div,
+.panel,
+.formPanel {
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.metrics div {
+  min-height: 74px;
+  padding: 14px 16px;
+}
+
+.metrics span,
+.toolbar span,
+.detailHeader span,
+.form label span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metrics b {
+  display: block;
+  font-size: 26px;
+  margin-top: 6px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.toolbar label,
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toolbar input,
+.toolbar select,
+.form input,
+.form textarea {
+  border: 1px solid #8a8886;
+  min-height: 34px;
+  padding: 0 10px;
+  outline: none;
+}
+
+.toolbar input {
+  width: min(330px, 38vw);
+}
+
+.toolbar button,
+.actions button,
+.formTitle button {
+  min-height: 34px;
+  border: 1px solid #8a8886;
+  background: #fff;
+  padding: 0 12px;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+.listPane {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.table th {
+  height: 38px;
+  text-align: left;
+  color: #605e5c;
+  background: #faf9f8;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  padding: 0 12px;
+}
+
+.table td {
+  height: 50px;
+  border-bottom: 1px solid #edebe9;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.table tr {
+  cursor: pointer;
+}
+
+.table tr:hover,
+.selected {
+  background: #f3f9fd;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  background: #deecf9;
+  color: #005a9e;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.detailPane {
+  border-left: 1px solid var(--line);
+  min-height: 360px;
+  padding: 18px;
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+
+.detailHeader h2,
+.formTitle h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.facts {
+  margin: 12px 0 0;
+}
+
+.facts div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edebe9;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.state,
+.error {
+  padding: 28px;
+  color: var(--muted);
+}
+
+.error {
+  color: #a4262c;
+  background: #fde7e9;
+  border-bottom: 1px solid #f3c6ca;
+}
+
+.formPanel {
+  padding: 16px;
+}
+
+.formTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.form textarea {
+  min-height: 74px;
+  padding-top: 8px;
+  resize: vertical;
+}
+
+.fullWidth,
+.form fieldset {
+  grid-column: 1 / -1;
+}
+
+.form fieldset {
+  border: 1px solid var(--line);
+  margin: 0;
+  padding: 12px;
+}
+
+.form legend {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+.checkGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  max-height: 170px;
+  overflow: auto;
+}
+
+.checkGrid label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 32px;
+  gap: 8px;
+}
+
+.checkGrid input {
+  min-height: auto;
+}
+
+.primary {
+  justify-self: start;
+  min-height: 36px;
+  border: 1px solid var(--azure);
+  background: var(--azure);
+  color: #fff;
+  padding: 0 16px;
+  font-weight: 600;
+}
+
+.primary:disabled,
+.toolbar button:disabled,
+.actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+@media (max-width: 1050px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .detailPane {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 12px;
+  }
+
+  .metrics,
+  .form {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar input,
+  .toolbar select {
+    width: 100%;
+  }
+
+  .facts div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
