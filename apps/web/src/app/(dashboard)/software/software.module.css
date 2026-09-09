@@ -1,0 +1,116 @@
+.formBar {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) minmax(140px, .7fr) auto;
+  gap: 12px;
+  padding: 16px;
+  align-items: end;
+}
+
+.formBar label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.formBar input {
+  height: 32px;
+  border: 1px solid #8a8886;
+  padding: 0 9px;
+  outline: none;
+}
+
+.formBar input:focus {
+  border-color: var(--azure);
+  box-shadow: inset 0 0 0 1px var(--azure);
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+}
+
+.formActions button {
+  height: 32px;
+  border: 1px solid #8a8886;
+  background: #fff;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.formActions button:first-child {
+  border-color: var(--azure);
+}
+
+.formError {
+  grid-column: 1 / -1;
+  background: #fde7e9;
+  border-left: 3px solid var(--red);
+  color: #a4262c;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.stateBox {
+  margin: 16px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  padding: 24px;
+  min-height: 96px;
+}
+
+.stateBox b {
+  color: var(--text);
+}
+
+.stateBox p {
+  margin: 6px 0 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.actions button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: #0067b8;
+}
+
+.actions button:hover {
+  background: #eff6fc;
+}
+
+.patchList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.patchList span {
+  border: 1px solid var(--line);
+  padding: 9px 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .formBar {
+    grid-template-columns: 1fr;
+  }
+
+  .formActions {
+    justify-content: stretch;
+  }
+
+  .formActions button {
+    flex: 1;
+  }
+}
