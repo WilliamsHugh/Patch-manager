@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import type { User } from "@patch-management/shared";
+import { getAccessToken, getStoredUser } from "@/lib/auth-storage";
+import { logout } from "@/lib/auth";
 
 const navigation = [
   { icon: "⌂", label: "Dashboard", href: "/dashboard", description: "Tổng quan tình trạng cập nhật và vận hành hệ thống." },
@@ -18,19 +21,46 @@ const navigation = [
 
 export function MasterDetailLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [selectedPath, setSelectedPath] = useState(pathname);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => { setSelectedPath(pathname); setMobileOpen(false); }, [pathname]);
-  const selection = useMemo(() => navigation.find(item => selectedPath.startsWith(item.href)) ?? navigation[0], [selectedPath]);
+  useEffect(() => {
+    const sessionUser = getStoredUser();
+    if (!sessionUser || !getAccessToken()) {
+      router.replace("/login");
+      return;
+    }
+    setUser(sessionUser);
+    setCheckingSession(false);
+  }, [router]);
+  const selection = useMemo(() => {
+    if (selectedPath.startsWith("/profile")) return { label: "Hồ sơ cá nhân", description: "Xem thông tin tài khoản, vai trò và các thiết bị được giao." };
+    return navigation.find(item => selectedPath.startsWith(item.href)) ?? navigation[0];
+  }, [selectedPath]);
+  const initials = user?.name.split(/\s+/).filter(Boolean).slice(-2).map(part => part[0]).join("").toUpperCase() || "U";
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await logout();
+    router.replace("/login");
+    router.refresh();
+  }
+
+  if (checkingSession) return <div className="sessionLoading"><span>↻</span><p>Đang kiểm tra phiên đăng nhập...</p></div>;
 
   return <div className={`portal sharedPortal ${collapsed ? "sidebarCollapsed" : ""}`}>
     <header className="portalBar">
       <button className="waffle" aria-label="Ứng dụng">⠿</button>
       <Link className="azureBrand" href="/dashboard">PatchFlow</Link>
       <label className="globalSearch"><span>⌕</span><input placeholder="Tìm kiếm tài nguyên, dịch vụ và tài liệu" /></label>
-      <div className="portalTools"><button>⌘</button><button>?</button><button>♢<i /></button><span className="account"><b>Trần Trường Thuận</b><small>thuantt@patchflow.edu.vn</small></span><span className="avatar">TT</span></div>
+      <div className="portalTools"><button>⌘</button><button>?</button><button>♢<i /></button><button className="accountButton" onClick={() => setAccountOpen(value => !value)} aria-expanded={accountOpen} aria-haspopup="menu"><span className="account"><b>{user?.name}</b><small>{user?.email}</small></span><span className="avatar">{initials}</span></button>{accountOpen && <div className="accountMenu" role="menu"><div className="accountMenuIdentity"><span className="avatar large">{initials}</span><div><b>{user?.name}</b><small>{user?.email}</small><em>{user?.role}</em></div></div><Link href="/profile" role="menuitem" onClick={() => setAccountOpen(false)}>♙ Hồ sơ cá nhân</Link><button role="menuitem" onClick={handleLogout} disabled={loggingOut}>⇥ {loggingOut ? "Đang đăng xuất..." : "Đăng xuất"}</button></div>}</div>
     </header>
 
     <div className="workspace">
