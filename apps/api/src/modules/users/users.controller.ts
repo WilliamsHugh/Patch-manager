@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
 import { Role } from "@prisma/client";
+import { AuditAction } from "../../common/decorators/audit-action.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -28,18 +29,21 @@ export class UsersController {
   }
 
   @Roles(Role.ADMIN)
+  @AuditAction("USER_CREATED", "User")
   @Post()
   create(@Body() dto: CreateUserDto) {
     return this.service.create(dto);
   }
 
   @Roles(Role.ADMIN)
+  @AuditAction("USER_UPDATED", "User")
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateUserDto, @CurrentUser() actor: { id: string }) {
     return this.service.update(id, dto, actor.id);
   }
 
   @Roles(Role.ADMIN)
+  @AuditAction("USER_DEACTIVATED", "User")
   @Delete(":id")
   deactivate(@Param("id") id: string, @CurrentUser() actor: { id: string }) {
     return this.service.deactivate(id, actor.id);

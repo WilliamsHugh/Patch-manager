@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
 import { Role } from "@prisma/client";
+import { AuditAction } from "../../common/decorators/audit-action.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { DeploymentPlansService } from "./deployment-plans.service";
@@ -24,30 +25,35 @@ export class DeploymentPlansController {
   }
 
   @Roles(Role.IT_HELPDESK)
+  @AuditAction("PLAN_CREATED", "DeploymentPlan")
   @Post()
   create(@Body() dto: CreateDeploymentPlanDto, @CurrentUser() user: { id: string }) {
     return this.service.create(dto, user.id);
   }
 
   @Roles(Role.IT_HELPDESK)
+  @AuditAction("PLAN_UPDATED", "DeploymentPlan")
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateDeploymentPlanDto) {
     return this.service.update(id, dto);
   }
 
   @Roles(Role.IT_HELPDESK)
+  @AuditAction("PLAN_DELETED", "DeploymentPlan")
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.service.remove(id);
   }
 
   @Roles(Role.MANAGER)
+  @AuditAction("PLAN_REVIEWED", "DeploymentPlan")
   @Patch(":id/review")
   review(@Param("id") id: string, @Body() dto: ReviewDeploymentPlanDto, @CurrentUser() user: { id: string }) {
     return this.service.review(id, dto, user.id);
   }
 
   @Roles(Role.IT_HELPDESK)
+  @AuditAction("PLAN_DEPLOYED", "DeploymentPlan")
   @Post(":id/deploy")
   deploy(@Param("id") id: string) {
     return this.service.deploy(id);

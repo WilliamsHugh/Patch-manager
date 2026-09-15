@@ -123,6 +123,8 @@ Mọi route trừ `/api/health`, `/api/auth/login` và `/api/auth/refresh` yêu 
 - `PATCH /api/policies/:id`
 - `GET /api/agent/status`
 
+Audit log ghi các thay đổi tài khoản, phần mềm, kế hoạch triển khai, ticket, policy và đăng xuất. Chỉ lưu hành động, người thực hiện, ID đối tượng và route; không lưu body hay token. Nếu ghi log thất bại, API vẫn trả kết quả thao tác và server cảnh báo (cơ chế best-effort ở giai đoạn scaffold, chưa có outbox/transaction đảm bảo tuyệt đối).
+
 Ví dụ đăng nhập:
 
 ```bash
