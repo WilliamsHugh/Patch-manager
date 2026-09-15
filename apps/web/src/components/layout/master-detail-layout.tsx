@@ -73,7 +73,7 @@ export function MasterDetailLayout({ children }: { children: ReactNode }) {
 
     <div className="workspace">
       <aside className={`sideNav persistentSidebar ${mobileOpen ? "open" : ""}`} aria-label="Điều hướng chính">
-        <div className="serviceTitle"><span className="serviceIcon">↻</span><div><b>PatchFlow</b><small>Update Manager</small></div><button onClick={() => setCollapsed(value => !value)} aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}>{collapsed ? "〉" : "〈"}</button></div>
+        <div className="serviceTitle"><span className="serviceIcon">↻</span><div><b>PatchFlow</b><small>Update Manager</small></div><button className="sidebarToggle" onClick={() => setCollapsed(value => !value)} aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"} aria-pressed={collapsed}><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={collapsed ? "m9 5 7 7-7 7" : "m15 5-7 7 7 7"} /></svg></button></div>
         <label className="navSearch"><span>⌕</span><input placeholder="Tìm kiếm trong menu" /></label>
         <nav className="moduleNav">
           {visibleNavigation.map(item => <Link key={item.href} href={item.href} prefetch onClick={() => setSelectedPath(item.href)} className={selectedPath.startsWith(item.href) ? "active" : ""} aria-current={selectedPath.startsWith(item.href) ? "page" : undefined}><span>{item.icon}</span><b>{item.label}</b></Link>)}
