@@ -11,11 +11,13 @@ import { UpdateDeploymentPlanDto } from "./dto/update-deployment-plan.dto";
 export class DeploymentPlansController {
   constructor(private service: DeploymentPlansService) {}
 
+  @Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.SECURITY_ANALYST)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.SECURITY_ANALYST)
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.service.findOne(id);
