@@ -11,6 +11,7 @@ enum Role {
   ADMIN
   MANAGER
   IT_HELPDESK
+  SECURITY_ANALYST
   USER
 }
 

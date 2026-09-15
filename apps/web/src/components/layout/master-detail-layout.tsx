@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import type { User } from "@patch-management/shared";
+import { Role, type User } from "@patch-management/shared";
 import { getAccessToken, getStoredUser } from "@/lib/auth-storage";
 import { logout } from "@/lib/auth";
 
@@ -18,6 +18,8 @@ const navigation = [
   { icon: "⚙", label: "Policies", href: "/policies", description: "Cấu hình chính sách cập nhật và khởi động lại." },
   { icon: "☷", label: "Audit Logs", href: "/audit-logs", description: "Theo dõi lịch sử thao tác trong hệ thống." },
 ];
+
+const securityAnalystPaths = new Set(["/dashboard", "/software", "/patches", "/devices", "/deployment-plans", "/reports", "/audit-logs"]);
 
 export function MasterDetailLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -40,10 +42,11 @@ export function MasterDetailLayout({ children }: { children: ReactNode }) {
     setUser(sessionUser);
     setCheckingSession(false);
   }, [router]);
+  const visibleNavigation = useMemo(() => user?.role === Role.SECURITY_ANALYST ? navigation.filter(item => securityAnalystPaths.has(item.href)) : navigation, [user?.role]);
   const selection = useMemo(() => {
     if (selectedPath.startsWith("/profile")) return { label: "Hồ sơ cá nhân", description: "Xem thông tin tài khoản, vai trò và các thiết bị được giao." };
-    return navigation.find(item => selectedPath.startsWith(item.href)) ?? navigation[0];
-  }, [selectedPath]);
+    return visibleNavigation.find(item => selectedPath.startsWith(item.href)) ?? visibleNavigation[0];
+  }, [selectedPath, visibleNavigation]);
   const initials = user?.name.split(/\s+/).filter(Boolean).slice(-2).map(part => part[0]).join("").toUpperCase() || "U";
 
   async function handleLogout() {
@@ -68,7 +71,7 @@ export function MasterDetailLayout({ children }: { children: ReactNode }) {
         <div className="serviceTitle"><span className="serviceIcon">↻</span><div><b>PatchFlow</b><small>Update Manager</small></div><button onClick={() => setCollapsed(value => !value)} aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}>{collapsed ? "〉" : "〈"}</button></div>
         <label className="navSearch"><span>⌕</span><input placeholder="Tìm kiếm trong menu" /></label>
         <nav className="moduleNav">
-          {navigation.map(item => <Link key={item.href} href={item.href} prefetch onClick={() => setSelectedPath(item.href)} className={selectedPath.startsWith(item.href) ? "active" : ""} aria-current={selectedPath.startsWith(item.href) ? "page" : undefined}><span>{item.icon}</span><b>{item.label}</b></Link>)}
+          {visibleNavigation.map(item => <Link key={item.href} href={item.href} prefetch onClick={() => setSelectedPath(item.href)} className={selectedPath.startsWith(item.href) ? "active" : ""} aria-current={selectedPath.startsWith(item.href) ? "page" : undefined}><span>{item.icon}</span><b>{item.label}</b></Link>)}
         </nav>
         <div className="navGroup">Hỗ trợ</div>
         <nav className="moduleNav supportNav"><button><span>?</span><b>Trợ giúp & hỗ trợ</b></button><button><span>♧</span><b>Gửi phản hồi</b></button></nav>
