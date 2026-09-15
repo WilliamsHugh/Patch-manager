@@ -33,7 +33,7 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-Sửa `DATABASE_URL` và `JWT_SECRET` trong `apps/api/.env`. Không commit file môi trường thật lên Git.
+Sửa `DATABASE_URL`, `DIRECT_URL`, `JWT_ACCESS_SECRET` và `JWT_REFRESH_SECRET` trong `apps/api/.env`. Không commit file môi trường thật lên Git. Với PostgreSQL local, hai URL có thể giống nhau. Với Supabase, `DATABASE_URL` dùng pooler transaction `6543` cho API, còn `DIRECT_URL` dùng kết nối direct/session `5432` cho Prisma Migrate.
 
 ## Khởi tạo cơ sở dữ liệu
 
@@ -45,16 +45,33 @@ npm run db:migrate -- --name init
 npm run db:seed
 ```
 
-Seed tạo bốn tài khoản, tất cả dùng mật khẩu `password123`:
+Với Supabase hoặc môi trường đã có migration trong repository, dùng `npm run db:migrate:deploy` thay cho `db:migrate -- --name init`, sau đó mới chạy `npm run db:seed`. Không chạy seed trước khi migration tạo bảng. Prisma Client của API và seed tự thêm mặc định `sslmode=require`, `connect_timeout=30` và giới hạn 5 kết nối cho transaction pooler Supabase nếu URL chưa khai báo các tham số này. Prisma Migrate vẫn đọc `DIRECT_URL` trực tiếp; nếu pooler kết nối chậm, thêm `sslmode=require&connect_timeout=30` vào `DIRECT_URL` trong `.env`. Không commit URL chứa mật khẩu.
+
+Seed tạo năm tài khoản, tất cả dùng mật khẩu `password123`:
 
 | Email | Role |
 |---|---|
 | `admin@example.com` | `ADMIN` |
 | `manager@example.com` | `MANAGER` |
 | `helpdesk@example.com` | `IT_HELPDESK` |
+| `security@example.com` | `SECURITY_ANALYST` |
 | `user@example.com` | `USER` |
 
 Seed cũng tạo software, patch, device, kế hoạch đang chờ duyệt, ticket và policy mẫu. Chỉ sử dụng thông tin đăng nhập này trong môi trường phát triển.
+
+## Vai trò và phạm vi quyền
+
+Hệ thống dùng role enum đơn giản thay vì một schema RBAC động, phù hợp với phạm vi đồ án:
+
+| Role | Trách nhiệm chính |
+|---|---|
+| `ADMIN` | Quản lý tài khoản, danh mục phần mềm, policy và audit log |
+| `MANAGER` | Xem báo cáo, theo dõi và review kế hoạch triển khai |
+| `IT_HELPDESK` | Lập/triển khai kế hoạch, theo dõi thiết bị và xử lý ticket |
+| `SECURITY_ANALYST` | Đọc dữ liệu phần mềm, bản vá, thiết bị, kế hoạch; xem báo cáo và audit log để đánh giá rủi ro |
+| `USER` | Theo dõi thiết bị cá nhân, thông báo và ticket |
+
+`SECURITY_ANALYST` có quyền chỉ đọc đối với dữ liệu quản trị và triển khai trong scaffold hiện tại. Role này không được tạo/sửa/xóa phần mềm, sửa policy, review hoặc triển khai kế hoạch. Module CVE/CVSS chuyên sâu được dành cho giai đoạn mở rộng và không yêu cầu thay đổi sang schema RBAC 24 bảng.
 
 ## Chạy local
 
@@ -83,13 +100,18 @@ npm run build:api
 
 ## API scaffold
 
-Mọi route trừ `/api/health` và `/api/auth/login` yêu cầu `Authorization: Bearer <accessToken>`.
+Mọi route trừ `/api/health`, `/api/auth/login` và `/api/auth/refresh` yêu cầu `Authorization: Bearer <accessToken>`.
 
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 - `GET /api/users/me`
+- `GET|POST /api/users` (chỉ `ADMIN`; dữ liệu trả về không gồm hash mật khẩu/token)
+- `GET|PATCH|DELETE /api/users/:id` (chỉ `ADMIN`; `DELETE` khóa tài khoản, không xóa dữ liệu)
 - `GET /api/software`
 - `GET /api/patches`
 - `GET /api/devices`
+- `GET /api/devices/me` (thiết bị cá nhân của `USER`)
 - `GET|POST /api/deployment-plans`
 - `PATCH /api/deployment-plans/:id/review`
 - `POST /api/deployment-plans/:id/deploy`
@@ -103,6 +125,8 @@ Mọi route trừ `/api/health` và `/api/auth/login` yêu cầu `Authorization:
 - `PATCH /api/policies/:id`
 - `GET /api/agent/status`
 
+Audit log ghi các thay đổi tài khoản, phần mềm, kế hoạch triển khai, ticket, policy và đăng xuất. Chỉ lưu hành động, người thực hiện, ID đối tượng và route; không lưu body hay token. Nếu ghi log thất bại, API vẫn trả kết quả thao tác và server cảnh báo (cơ chế best-effort ở giai đoạn scaffold, chưa có outbox/transaction đảm bảo tuyệt đối).
+
 Ví dụ đăng nhập:
 
 ```bash
@@ -114,7 +138,7 @@ curl -X POST http://localhost:4000/api/auth/login \
 ## Gợi ý chia việc cho ba thành viên
 
 1. **Nền tảng và quản trị:** `auth`, `users`, `roles`, `policies`, `audit-logs`, migration và bảo mật.
-2. **Tài sản và triển khai:** `software`, `patches`, `devices`, `agent`, `deployment-plans`, `deployment-tasks`.
+2. **Tài sản, bản vá và phân tích bảo mật:** `software`, `patches`, `devices`, `agent`, báo cáo rủi ro và quyền `SECURITY_ANALYST`.
 3. **Vận hành và frontend:** `tickets`, `notifications`, `reports`, kết nối API và hoàn thiện các page Next.js.
 
 Các thay đổi schema nên được review chung. Contract dùng chung đặt tại `packages/shared`; không khai báo lặp enum nghiệp vụ ở từng app.
@@ -131,7 +155,7 @@ Các thay đổi schema nên được review chung. Contract dùng chung đặt 
 
 - Build command từ root: `npm install && npm run db:generate && npm run build:api`.
 - Start command: `npm run start:prod --workspace=@patch-management/api`.
-- Khai báo `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `FRONTEND_URL` và `PORT`.
+- Khai báo `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `FRONTEND_URL` và `PORT`.
 - Gắn Render PostgreSQL và chạy `npm run db:migrate -- --name init` ở môi trường chuẩn bị trước khi phát hành.
 
 Không dùng tài khoản seed hoặc JWT secret mẫu trong production.

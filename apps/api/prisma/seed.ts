@@ -1,16 +1,19 @@
 import { DeviceStatus, PatchSeverity, PlanStatus, PrismaClient, Role, TicketStatus } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
+import { resolvePrismaDatabaseUrl } from "../src/prisma/prisma-url";
 
-const prisma = new PrismaClient();
+const url = resolvePrismaDatabaseUrl(process.env.DATABASE_URL);
+const prisma = new PrismaClient(url ? { datasources: { db: { url } } } : undefined);
 
 async function main() {
   const passwordHash = await bcrypt.hash("password123", 10);
   const accountData = [
     ["admin@example.com", "System Admin", Role.ADMIN], ["manager@example.com", "IT Manager", Role.MANAGER],
-    ["helpdesk@example.com", "IT Helpdesk", Role.IT_HELPDESK], ["user@example.com", "Sample User", Role.USER],
+    ["helpdesk@example.com", "IT Helpdesk", Role.IT_HELPDESK], ["security@example.com", "Security Analyst", Role.SECURITY_ANALYST],
+    ["user@example.com", "Sample User", Role.USER],
   ] as const;
   const users = await Promise.all(accountData.map(([email, name, role]) => prisma.user.upsert({ where: { email }, update: {}, create: { email, name, role, passwordHash } })));
-  const [admin, manager, helpdesk, user] = users;
+  const [admin, manager, helpdesk, , user] = users;
 
   const chrome = await prisma.software.upsert({ where: { name_vendor: { name: "Google Chrome", vendor: "Google" } }, update: {}, create: { name: "Google Chrome", vendor: "Google", currentVersion: "128.0.6613" } });
   const office = await prisma.software.upsert({ where: { name_vendor: { name: "Microsoft Office", vendor: "Microsoft" } }, update: {}, create: { name: "Microsoft Office", vendor: "Microsoft", currentVersion: "2024" } });
@@ -30,7 +33,7 @@ async function main() {
   const existingTicket = await prisma.ticket.findFirst({ where: { title: "Không thể cài bản vá Windows" } });
   if (!existingTicket) await prisma.ticket.create({ data: { title: "Không thể cài bản vá Windows", description: "Thiết bị báo lỗi khi khởi động lại.", status: TicketStatus.OPEN, priority: PatchSeverity.HIGH, createdById: user.id, assignedToId: helpdesk.id } });
   await prisma.policy.upsert({ where: { name: "Chính sách cập nhật mặc định" }, update: {}, create: { name: "Chính sách cập nhật mặc định", maxDeferralHours: 24, configuredById: admin.id } });
-  console.log("Seed hoàn tất: 4 users, 3 software, 3 patches, 3 devices, 1 plan, 1 ticket.");
+  console.log("Seed hoàn tất: 5 users, 3 software, 3 patches, 3 devices, 1 plan, 1 ticket.");
 }
 
 main().catch(error => { console.error(error); process.exit(1); }).finally(() => prisma.$disconnect());

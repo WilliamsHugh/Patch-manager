@@ -1,2 +1,2 @@
 import { Controller, Get } from "@nestjs/common"; import { Role } from "@prisma/client"; import { Roles } from "../../common/decorators/roles.decorator"; import { ReportsService } from "./reports.service";
-@Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK) @Controller("reports") export class ReportsController { constructor(private service: ReportsService) {} @Get("overview") overview() { return this.service.overview(); } }
+@Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.SECURITY_ANALYST) @Controller("reports") export class ReportsController { constructor(private service: ReportsService) {} @Get("overview") overview() { return this.service.overview(); } }

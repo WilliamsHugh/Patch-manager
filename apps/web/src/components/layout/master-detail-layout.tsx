@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import type { User } from "@patch-management/shared";
+import { Role, type User } from "@patch-management/shared";
 import { getAccessToken, getStoredUser } from "@/lib/auth-storage";
 import { logout } from "@/lib/auth";
 
 const navigation = [
   { icon: "⌂", label: "Dashboard", href: "/dashboard", description: "Tổng quan tình trạng cập nhật và vận hành hệ thống." },
+  { icon: "♙", label: "Users", href: "/users", description: "Quản lý tài khoản, vai trò và trạng thái truy cập." },
   { icon: "◫", label: "Software", href: "/software", description: "Quản lý danh mục phần mềm và phiên bản hiện tại." },
   { icon: "⇩", label: "Patches", href: "/patches", description: "Theo dõi bản vá và mức độ nghiêm trọng." },
   { icon: "▣", label: "Devices", href: "/devices", description: "Tra cứu thiết bị, người sở hữu và trạng thái agent." },
@@ -18,6 +19,8 @@ const navigation = [
   { icon: "⚙", label: "Policies", href: "/policies", description: "Cấu hình chính sách cập nhật và khởi động lại." },
   { icon: "☷", label: "Audit Logs", href: "/audit-logs", description: "Theo dõi lịch sử thao tác trong hệ thống." },
 ];
+
+const securityAnalystPaths = new Set(["/dashboard", "/software", "/patches", "/devices", "/deployment-plans", "/reports", "/audit-logs"]);
 
 export function MasterDetailLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -40,10 +43,15 @@ export function MasterDetailLayout({ children }: { children: ReactNode }) {
     setUser(sessionUser);
     setCheckingSession(false);
   }, [router]);
+  const visibleNavigation = useMemo(() => navigation.filter(item => {
+    if (item.href === "/users") return user?.role === Role.ADMIN;
+    if (user?.role === Role.SECURITY_ANALYST) return securityAnalystPaths.has(item.href);
+    return true;
+  }), [user?.role]);
   const selection = useMemo(() => {
     if (selectedPath.startsWith("/profile")) return { label: "Hồ sơ cá nhân", description: "Xem thông tin tài khoản, vai trò và các thiết bị được giao." };
-    return navigation.find(item => selectedPath.startsWith(item.href)) ?? navigation[0];
-  }, [selectedPath]);
+    return visibleNavigation.find(item => selectedPath.startsWith(item.href)) ?? visibleNavigation[0];
+  }, [selectedPath, visibleNavigation]);
   const initials = user?.name.split(/\s+/).filter(Boolean).slice(-2).map(part => part[0]).join("").toUpperCase() || "U";
 
   async function handleLogout() {
@@ -68,7 +76,7 @@ export function MasterDetailLayout({ children }: { children: ReactNode }) {
         <div className="serviceTitle"><span className="serviceIcon">↻</span><div><b>PatchFlow</b><small>Update Manager</small></div><button onClick={() => setCollapsed(value => !value)} aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}>{collapsed ? "〉" : "〈"}</button></div>
         <label className="navSearch"><span>⌕</span><input placeholder="Tìm kiếm trong menu" /></label>
         <nav className="moduleNav">
-          {navigation.map(item => <Link key={item.href} href={item.href} prefetch onClick={() => setSelectedPath(item.href)} className={selectedPath.startsWith(item.href) ? "active" : ""} aria-current={selectedPath.startsWith(item.href) ? "page" : undefined}><span>{item.icon}</span><b>{item.label}</b></Link>)}
+          {visibleNavigation.map(item => <Link key={item.href} href={item.href} prefetch onClick={() => setSelectedPath(item.href)} className={selectedPath.startsWith(item.href) ? "active" : ""} aria-current={selectedPath.startsWith(item.href) ? "page" : undefined}><span>{item.icon}</span><b>{item.label}</b></Link>)}
         </nav>
         <div className="navGroup">Hỗ trợ</div>
         <nav className="moduleNav supportNav"><button><span>?</span><b>Trợ giúp & hỗ trợ</b></button><button><span>♧</span><b>Gửi phản hồi</b></button></nav>

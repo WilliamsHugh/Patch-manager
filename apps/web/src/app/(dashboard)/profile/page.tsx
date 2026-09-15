@@ -11,6 +11,7 @@ const roleLabels: Record<User["role"], string> = {
   ADMIN: "Quản trị viên",
   MANAGER: "Quản lý",
   IT_HELPDESK: "IT Helpdesk",
+  SECURITY_ANALYST: "Chuyên viên phân tích bảo mật",
   USER: "Người dùng",
 };
 
