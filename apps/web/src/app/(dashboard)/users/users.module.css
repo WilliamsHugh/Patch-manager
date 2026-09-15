@@ -1,0 +1,22 @@
+.page{margin:20px 28px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+.head{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px;border-bottom:1px solid var(--line)}
+.head h2{margin:0;font-size:16px}.head p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.tools{display:flex;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.tools input{height:34px;width:min(340px,100%);border:1px solid #8a8886;padding:0 10px}
+.tableWrap{overflow-x:auto}.table{min-width:760px}
+.table th,.table td{padding:0 16px}.table th{font-size:11px}.table td{font-size:12px}
+.nameButton{border:0;background:none;padding:0;color:#0067b8;font-weight:600}
+.status{display:inline-block;padding:4px 8px;font-size:11px;background:#fde7e9;color:#a4262c}.active{background:#dff6dd;color:#107c10}
+.empty{padding:45px 20px;text-align:center;color:var(--muted)}
+.alert{margin:14px 18px;padding:10px 12px;background:#fde7e9;border-left:3px solid var(--red);color:#a4262c;font-size:12px}
+.dialogBackdrop{position:fixed;inset:48px 0 0;background:rgba(0,0,0,.28);z-index:55;display:flex;justify-content:flex-end}
+.dialog{height:100%;width:min(440px,100%);overflow:auto;background:#fff;box-shadow:-4px 0 18px rgba(0,0,0,.2);padding:20px}
+.dialogHead{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:15px}
+.dialogHead h2{margin:0;font-size:19px}.close{border:0;background:none;font-size:23px}
+.form{display:flex;flex-direction:column;gap:15px;padding-top:18px}.form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600}
+.form input,.form select{height:36px;border:1px solid #8a8886;background:#fff;padding:0 9px}
+.hint{color:var(--muted);font-size:11px;line-height:1.5}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.actions button{height:34px;border:1px solid #8a8886;background:#fff;padding:0 12px;font-size:12px}
+.actions .save{border-color:var(--azure);background:var(--azure);color:#fff;font-weight:600}
+.actions .danger{color:#a4262c;border-color:#a4262c}
+@media(max-width:800px){.page{margin:12px}.head{align-items:flex-start;flex-direction:column}.tools input{width:100%}}

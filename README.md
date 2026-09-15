@@ -104,9 +104,12 @@ Mọi route trừ `/api/health`, `/api/auth/login` và `/api/auth/refresh` yêu 
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/users/me`
+- `GET|POST /api/users` (chỉ `ADMIN`; dữ liệu trả về không gồm hash mật khẩu/token)
+- `GET|PATCH|DELETE /api/users/:id` (chỉ `ADMIN`; `DELETE` khóa tài khoản, không xóa dữ liệu)
 - `GET /api/software`
 - `GET /api/patches`
 - `GET /api/devices`
+- `GET /api/devices/me` (thiết bị cá nhân của `USER`)
 - `GET|POST /api/deployment-plans`
 - `PATCH /api/deployment-plans/:id/review`
 - `POST /api/deployment-plans/:id/deploy`

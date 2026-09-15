@@ -9,6 +9,7 @@ import { logout } from "@/lib/auth";
 
 const navigation = [
   { icon: "⌂", label: "Dashboard", href: "/dashboard", description: "Tổng quan tình trạng cập nhật và vận hành hệ thống." },
+  { icon: "♙", label: "Users", href: "/users", description: "Quản lý tài khoản, vai trò và trạng thái truy cập." },
   { icon: "◫", label: "Software", href: "/software", description: "Quản lý danh mục phần mềm và phiên bản hiện tại." },
   { icon: "⇩", label: "Patches", href: "/patches", description: "Theo dõi bản vá và mức độ nghiêm trọng." },
   { icon: "▣", label: "Devices", href: "/devices", description: "Tra cứu thiết bị, người sở hữu và trạng thái agent." },
@@ -42,7 +43,11 @@ export function MasterDetailLayout({ children }: { children: ReactNode }) {
     setUser(sessionUser);
     setCheckingSession(false);
   }, [router]);
-  const visibleNavigation = useMemo(() => user?.role === Role.SECURITY_ANALYST ? navigation.filter(item => securityAnalystPaths.has(item.href)) : navigation, [user?.role]);
+  const visibleNavigation = useMemo(() => navigation.filter(item => {
+    if (item.href === "/users") return user?.role === Role.ADMIN;
+    if (user?.role === Role.SECURITY_ANALYST) return securityAnalystPaths.has(item.href);
+    return true;
+  }), [user?.role]);
   const selection = useMemo(() => {
     if (selectedPath.startsWith("/profile")) return { label: "Hồ sơ cá nhân", description: "Xem thông tin tài khoản, vai trò và các thiết bị được giao." };
     return visibleNavigation.find(item => selectedPath.startsWith(item.href)) ?? visibleNavigation[0];
