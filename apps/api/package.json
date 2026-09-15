@@ -11,6 +11,7 @@
     "test:rbac": "tsx --test test/rbac.spec.ts",
     "test:users": "tsx --test test/users.spec.ts",
     "test:audit": "tsx --test test/audit.spec.ts",
+    "test:prisma-url": "tsx --test test/prisma-url.spec.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",

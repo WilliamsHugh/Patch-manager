@@ -45,7 +45,7 @@ npm run db:migrate -- --name init
 npm run db:seed
 ```
 
-Với Supabase hoặc môi trường đã có migration trong repository, dùng `npm run db:migrate:deploy` thay cho `db:migrate -- --name init`, sau đó mới chạy `npm run db:seed`. Không chạy seed trước khi migration tạo bảng. Nếu pooler kết nối chậm, có thể thêm `sslmode=require` và `connect_timeout=30` vào URL Supabase; với `DATABASE_URL` dùng transaction pooler, thêm `connection_limit=5` để giới hạn số kết nối từ Prisma Client. Không commit URL chứa mật khẩu.
+Với Supabase hoặc môi trường đã có migration trong repository, dùng `npm run db:migrate:deploy` thay cho `db:migrate -- --name init`, sau đó mới chạy `npm run db:seed`. Không chạy seed trước khi migration tạo bảng. Prisma Client của API và seed tự thêm mặc định `sslmode=require`, `connect_timeout=30` và giới hạn 5 kết nối cho transaction pooler Supabase nếu URL chưa khai báo các tham số này. Prisma Migrate vẫn đọc `DIRECT_URL` trực tiếp; nếu pooler kết nối chậm, thêm `sslmode=require&connect_timeout=30` vào `DIRECT_URL` trong `.env`. Không commit URL chứa mật khẩu.
 
 Seed tạo năm tài khoản, tất cả dùng mật khẩu `password123`:
 

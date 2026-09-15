@@ -1,7 +1,9 @@
 import { DeviceStatus, PatchSeverity, PlanStatus, PrismaClient, Role, TicketStatus } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
+import { resolvePrismaDatabaseUrl } from "../src/prisma/prisma-url";
 
-const prisma = new PrismaClient();
+const url = resolvePrismaDatabaseUrl(process.env.DATABASE_URL);
+const prisma = new PrismaClient(url ? { datasources: { db: { url } } } : undefined);
 
 async function main() {
   const passwordHash = await bcrypt.hash("password123", 10);
