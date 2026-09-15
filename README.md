@@ -33,7 +33,7 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-Sửa `DATABASE_URL`, `JWT_ACCESS_SECRET` và `JWT_REFRESH_SECRET` trong `apps/api/.env`. Không commit file môi trường thật lên Git.
+Sửa `DATABASE_URL`, `DIRECT_URL`, `JWT_ACCESS_SECRET` và `JWT_REFRESH_SECRET` trong `apps/api/.env`. Không commit file môi trường thật lên Git. Với PostgreSQL local, hai URL có thể giống nhau. Với Supabase, `DATABASE_URL` dùng pooler transaction `6543` cho API, còn `DIRECT_URL` dùng kết nối direct/session `5432` cho Prisma Migrate.
 
 ## Khởi tạo cơ sở dữ liệu
 
@@ -44,6 +44,8 @@ npm run db:generate
 npm run db:migrate -- --name init
 npm run db:seed
 ```
+
+Với Supabase hoặc môi trường đã có migration trong repository, dùng `npm run db:migrate:deploy` thay cho `db:migrate -- --name init`, sau đó mới chạy `npm run db:seed`. Không chạy seed trước khi migration tạo bảng. Nếu pooler kết nối chậm, có thể thêm `sslmode=require` và `connect_timeout=30` vào URL Supabase; với `DATABASE_URL` dùng transaction pooler, thêm `connection_limit=5` để giới hạn số kết nối từ Prisma Client. Không commit URL chứa mật khẩu.
 
 Seed tạo năm tài khoản, tất cả dùng mật khẩu `password123`:
 
