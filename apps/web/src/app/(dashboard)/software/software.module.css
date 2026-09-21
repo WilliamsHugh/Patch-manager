@@ -42,6 +42,13 @@
 
 .formActions button:first-child {
   border-color: var(--azure);
+  background: var(--azure);
+  color: #fff;
+  font-weight: 600;
+}
+
+.formActions button:first-child:not(:disabled):hover {
+  background: var(--azure-hover);
 }
 
 .formError {
