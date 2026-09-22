@@ -1,1 +1,1 @@
-import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Reports" description="Thống kê tình trạng cập nhật và hiệu quả triển khai." fields={["BÁO CÁO","KHOẢNG THỜI GIAN","NGƯỜI TẠO","THAO TÁC"]}/>}
+import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Reports" description="Analyze update compliance and deployment performance." fields={["REPORT","DATE RANGE","CREATED BY","ACTIONS"]}/>}

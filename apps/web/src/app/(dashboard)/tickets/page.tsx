@@ -1,1 +1,1 @@
-import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Tickets" description="Tiếp nhận và xử lý yêu cầu hỗ trợ từ người dùng." fields={["TIÊU ĐỀ","NGƯỜI TẠO","ƯU TIÊN","TRẠNG THÁI"]}/>}
+import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Tickets" description="Receive and resolve user support requests." fields={["TITLE","CREATED BY","PRIORITY","STATUS"]}/>}

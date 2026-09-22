@@ -1,1 +1,1 @@
-import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Devices" description="Tra cứu thiết bị, người sở hữu và trạng thái agent." fields={["HOSTNAME","NGƯỜI DÙNG","HỆ ĐIỀU HÀNH","TRẠNG THÁI"]}/>}
+import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Devices" description="Find devices, owners, and agent status." fields={["HOSTNAME","OWNER","OPERATING SYSTEM","STATUS"]}/>}

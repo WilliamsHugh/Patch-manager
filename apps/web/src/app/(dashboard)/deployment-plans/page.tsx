@@ -87,7 +87,7 @@ export default function DeploymentPlansPage() {
       setPatches(patchData);
       setSelectedId((current) => current ?? planData[0]?.id ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không tải được dữ liệu kế hoạch triển khai");
+      setError(err instanceof Error ? err.message : "Unable to load deployment plans");
     } finally {
       setLoading(false);
     }
@@ -135,7 +135,7 @@ export default function DeploymentPlansPage() {
     event.preventDefault();
     if (!canManage) return;
     if (!form.deviceIds.length || !form.patchIds.length) {
-      setError("Chọn ít nhất một thiết bị và một bản vá");
+      setError("Select at least one device and one patch");
       return;
     }
 
@@ -164,7 +164,7 @@ export default function DeploymentPlansPage() {
       setSelectedId(saved.id);
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không lưu được kế hoạch");
+      setError(err instanceof Error ? err.message : "Unable to save the deployment plan");
     } finally {
       setSaving(false);
     }
@@ -172,7 +172,7 @@ export default function DeploymentPlansPage() {
 
   async function deletePlan(plan: DeploymentPlan) {
     if (!canManage || !editableStatuses.has(plan.status)) return;
-    if (!window.confirm(`Xóa kế hoạch "${plan.name}"? Thao tác này không thể hoàn tác.`)) return;
+    if (!window.confirm(`Delete plan "${plan.name}"? This action cannot be undone.`)) return;
 
     setSaving(true);
     setError(null);
@@ -182,7 +182,7 @@ export default function DeploymentPlansPage() {
       setSelectedId((current) => (current === plan.id ? null : current));
       if (editingId === plan.id) resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không xóa được kế hoạch");
+      setError(err instanceof Error ? err.message : "Unable to delete the deployment plan");
     } finally {
       setSaving(false);
     }
@@ -197,9 +197,9 @@ export default function DeploymentPlansPage() {
 
   return (
     <div className={styles.page}>
-      <section className={styles.metrics} aria-label="Tổng quan kế hoạch">
+      <section className={styles.metrics} aria-label="Plan overview">
         <div>
-          <span>Tất cả</span>
+          <span>All</span>
           <b>{totals.all}</b>
         </div>
         <div>
@@ -207,7 +207,7 @@ export default function DeploymentPlansPage() {
           <b>{totals.drafts}</b>
         </div>
         <div>
-          <span>Chờ duyệt</span>
+          <span>Pending approval</span>
           <b>{totals.pending}</b>
         </div>
       </section>
@@ -215,21 +215,21 @@ export default function DeploymentPlansPage() {
       <section className={styles.panel}>
         <div className={styles.toolbar}>
           <label>
-            <span>Tìm kiếm</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tên kế hoạch hoặc người tạo" />
+            <span>Search</span>
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Plan name or creator" />
           </label>
           <label>
-            <span>Trạng thái</span>
+            <span>Status</span>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}>
               {statusOptions.map((status) => (
                 <option key={status} value={status}>
-                  {status === "ALL" ? "Tất cả" : status}
+                  {status === "ALL" ? "All" : status}
                 </option>
               ))}
             </select>
           </label>
           <button type="button" onClick={loadData} disabled={loading}>
-            Làm mới
+            Refresh
           </button>
         </div>
 
@@ -238,19 +238,19 @@ export default function DeploymentPlansPage() {
         <div className={styles.contentGrid}>
           <div className={styles.listPane}>
             {loading ? (
-              <div className={styles.state}>Đang tải kế hoạch triển khai...</div>
+              <div className={styles.state}>Loading deployment plans...</div>
             ) : filteredPlans.length === 0 ? (
-              <div className={styles.state}>Chưa có kế hoạch phù hợp.</div>
+              <div className={styles.state}>No matching deployment plans found.</div>
             ) : (
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>Tên kế hoạch</th>
-                    <th>Người tạo</th>
-                    <th>Thiết bị</th>
+                    <th>Plan name</th>
+                    <th>Created by</th>
+                    <th>Devices</th>
                     <th>Task</th>
-                    <th>Lịch triển khai</th>
-                    <th>Trạng thái</th>
+                    <th>Schedule</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -276,41 +276,41 @@ export default function DeploymentPlansPage() {
               <>
                 <div className={styles.detailHeader}>
                   <div>
-                    <span>Chi tiết</span>
+                    <span>Details</span>
                     <h2>{selectedPlan.name}</h2>
                   </div>
                   {canManage && editableStatuses.has(selectedPlan.status) && (
                     <div className={styles.actions}>
                       <button type="button" onClick={() => startEdit(selectedPlan)}>
-                        Sửa
+                        Edit
                       </button>
                       <button type="button" onClick={() => deletePlan(selectedPlan)} disabled={saving}>
-                        Xóa
+                        Delete
                       </button>
                     </div>
                   )}
                 </div>
                 <dl className={styles.facts}>
                   <div>
-                    <dt>Người tạo</dt>
+                    <dt>Created by</dt>
                     <dd>{selectedPlan.createdBy.name}</dd>
                   </div>
                   <div>
-                    <dt>Lịch chạy</dt>
+                    <dt>Schedule</dt>
                     <dd>{formatDate(selectedPlan.scheduledAt)}</dd>
                   </div>
                   <div>
-                    <dt>Thiết bị</dt>
+                    <dt>Devices</dt>
                     <dd>{selectedPlan.devices.map((item) => item.device.hostname).join(", ")}</dd>
                   </div>
                   <div>
-                    <dt>Bản vá</dt>
+                    <dt>Patches</dt>
                     <dd>{uniquePatchLabels(selectedPlan.tasks).join(", ")}</dd>
                   </div>
                 </dl>
               </>
             ) : (
-              <div className={styles.state}>Chọn một kế hoạch để xem chi tiết.</div>
+              <div className={styles.state}>Select a plan to view its details.</div>
             )}
           </aside>
         </div>
@@ -319,29 +319,29 @@ export default function DeploymentPlansPage() {
       {canManage && (
         <section className={styles.formPanel}>
           <div className={styles.formTitle}>
-            <h2>{editingId ? "Chỉnh sửa kế hoạch" : "Tạo kế hoạch"}</h2>
+            <h2>{editingId ? "Edit deployment plan" : "Create deployment plan"}</h2>
             {editingId && (
               <button type="button" onClick={resetForm}>
-                Hủy sửa
+                Cancel editing
               </button>
             )}
           </div>
           <form onSubmit={submitPlan} className={styles.form}>
             <label>
-              <span>Tên kế hoạch</span>
+              <span>Plan name</span>
               <input required minLength={3} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
             </label>
             <label>
-              <span>Lịch triển khai</span>
+              <span>Deployment schedule</span>
               <input type="datetime-local" value={form.scheduledAt} onChange={(event) => setForm({ ...form, scheduledAt: event.target.value })} />
             </label>
             <label className={styles.fullWidth}>
-              <span>Mô tả</span>
+              <span>Description</span>
               <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
             </label>
 
             <fieldset>
-              <legend>Thiết bị</legend>
+              <legend>Devices</legend>
               <div className={styles.checkGrid}>
                 {devices.map((device) => (
                   <label key={device.id}>
@@ -357,7 +357,7 @@ export default function DeploymentPlansPage() {
             </fieldset>
 
             <fieldset>
-              <legend>Bản vá</legend>
+              <legend>Patches</legend>
               <div className={styles.checkGrid}>
                 {patches.map((patch) => (
                   <label key={patch.id}>
@@ -371,7 +371,7 @@ export default function DeploymentPlansPage() {
             </fieldset>
 
             <button className={styles.primary} type="submit" disabled={saving}>
-              {saving ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Tạo draft"}
+              {saving ? "Saving..." : editingId ? "Save changes" : "Create draft"}
             </button>
           </form>
         </section>
@@ -381,8 +381,8 @@ export default function DeploymentPlansPage() {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "Chưa đặt lịch";
-  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+  if (!value) return "Not scheduled";
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }
 
 function uniquePatchLabels(tasks: DeploymentTask[]) {

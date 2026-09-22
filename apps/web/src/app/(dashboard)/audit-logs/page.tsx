@@ -1,1 +1,1 @@
-import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Audit Logs" description="Theo dõi lịch sử thao tác quan trọng trong hệ thống." fields={["THỜI GIAN","NGƯỜI THỰC HIỆN","HÀNH ĐỘNG","ĐỐI TƯỢNG"]}/>}
+import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Audit Logs" description="Review important activity across the system." fields={["TIME","ACTOR","ACTION","ENTITY"]}/>}

@@ -1,1 +1,1 @@
-import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Patches" description="Theo dõi bản vá, mức độ nghiêm trọng và phần mềm bị ảnh hưởng." fields={["MÃ BẢN VÁ","PHẦN MỀM","MỨC ĐỘ","NGÀY PHÁT HÀNH"]}/>}
+import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Patches" description="Track patches, severity, and affected software." fields={["PATCH ID","SOFTWARE","SEVERITY","RELEASE DATE"]}/>}
