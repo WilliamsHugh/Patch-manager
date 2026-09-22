@@ -33,7 +33,7 @@ export class AuditInterceptor implements NestInterceptor {
           metadata: { method: request.method, route: request.route?.path ?? null },
         });
       } catch {
-        this.logger.warn(`Không ghi được audit log cho ${action.action}`);
+        this.logger.warn(`Failed to record audit log for ${action.action}`);
       }
       return result;
     }));

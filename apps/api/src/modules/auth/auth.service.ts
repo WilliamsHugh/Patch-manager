@@ -55,7 +55,7 @@ export class AuthService {
   }
 
   private rejectCredentials(): never {
-    throw new UnauthorizedException("Thông tin đăng nhập hoặc phiên làm việc không hợp lệ");
+    throw new UnauthorizedException("Invalid credentials or session");
   }
 }
 

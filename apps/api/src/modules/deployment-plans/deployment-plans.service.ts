@@ -30,7 +30,7 @@ export class DeploymentPlansService {
       where: { id },
       include: planInclude,
     });
-    if (!plan) throw new NotFoundException("Không tìm thấy kế hoạch triển khai");
+    if (!plan) throw new NotFoundException("Deployment plan not found");
     return plan;
   }
 
@@ -70,9 +70,9 @@ export class DeploymentPlansService {
         tasks: { select: { patchId: true } },
       },
     });
-    if (!plan) throw new NotFoundException("Không tìm thấy kế hoạch triển khai");
+    if (!plan) throw new NotFoundException("Deployment plan not found");
     if (!editableStatuses.includes(plan.status)) {
-      throw new BadRequestException("Chỉ được chỉnh sửa kế hoạch ở trạng thái DRAFT hoặc CHANGES_REQUESTED");
+      throw new BadRequestException("Only plans with DRAFT or CHANGES_REQUESTED status can be edited");
     }
 
     const deviceIds = dto.deviceIds ? [...new Set(dto.deviceIds)] : plan.devices.map((device) => device.deviceId);
@@ -112,9 +112,9 @@ export class DeploymentPlansService {
 
   async remove(id: string) {
     const plan = await this.prisma.deploymentPlan.findUnique({ where: { id } });
-    if (!plan) throw new NotFoundException("Không tìm thấy kế hoạch triển khai");
+    if (!plan) throw new NotFoundException("Deployment plan not found");
     if (plan.status !== PlanStatus.DRAFT) {
-      throw new BadRequestException("Chỉ được xóa kế hoạch ở trạng thái DRAFT");
+      throw new BadRequestException("Only plans with DRAFT status can be deleted");
     }
 
     await this.prisma.deploymentPlan.delete({ where: { id } });
@@ -123,7 +123,7 @@ export class DeploymentPlansService {
 
   async review(id: string, dto: ReviewDeploymentPlanDto, reviewerId: string) {
     const plan = await this.prisma.deploymentPlan.findUnique({ where: { id } });
-    if (!plan) throw new NotFoundException("Không tìm thấy kế hoạch triển khai");
+    if (!plan) throw new NotFoundException("Deployment plan not found");
 
     return this.prisma.deploymentPlan.update({
       where: { id },
@@ -133,8 +133,8 @@ export class DeploymentPlansService {
 
   async deploy(id: string) {
     const plan = await this.prisma.deploymentPlan.findUnique({ where: { id } });
-    if (!plan) throw new NotFoundException("Không tìm thấy kế hoạch");
-    if (plan.status !== PlanStatus.APPROVED) throw new BadRequestException("Chỉ kế hoạch đã duyệt mới được triển khai");
+    if (!plan) throw new NotFoundException("Deployment plan not found");
+    if (plan.status !== PlanStatus.APPROVED) throw new BadRequestException("Only approved plans can be deployed");
     return this.prisma
       .$transaction([
         this.prisma.deploymentPlan.update({ where: { id }, data: { status: PlanStatus.DEPLOYING } }),
@@ -155,10 +155,10 @@ export class DeploymentPlansService {
     const missingPatchIds = patchIds.filter((patchId) => !foundPatchIds.has(patchId));
 
     if (missingDeviceIds.length) {
-      throw new NotFoundException(`Không tìm thấy thiết bị: ${missingDeviceIds.join(", ")}`);
+      throw new NotFoundException(`Devices not found: ${missingDeviceIds.join(", ")}`);
     }
     if (missingPatchIds.length) {
-      throw new NotFoundException(`Không tìm thấy bản vá: ${missingPatchIds.join(", ")}`);
+      throw new NotFoundException(`Patches not found: ${missingPatchIds.join(", ")}`);
     }
   }
 }

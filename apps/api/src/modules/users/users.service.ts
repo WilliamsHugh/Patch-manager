@@ -24,7 +24,7 @@ export class UsersService {
       where: { id },
       select: { ...safeUserSelect, devices: true },
     });
-    if (!user) throw new NotFoundException("Không tìm thấy tài khoản");
+    if (!user) throw new NotFoundException("User account not found");
     return user;
   }
 
@@ -40,14 +40,14 @@ export class UsersService {
       where: { id },
       select: { ...safeUserSelect, _count: { select: { devices: true } } },
     });
-    if (!user) throw new NotFoundException("Không tìm thấy tài khoản");
+    if (!user) throw new NotFoundException("User account not found");
     return user;
   }
 
   async create(dto: CreateUserDto) {
     const email = dto.email.trim().toLowerCase();
     const name = dto.name.trim();
-    if (!name) throw new BadRequestException("Tên tài khoản không được để trống");
+    if (!name) throw new BadRequestException("Account name cannot be empty");
     try {
       return await this.prisma.user.create({
         data: { email, name, role: dto.role, passwordHash: await bcrypt.hash(dto.password, 10) },
@@ -60,11 +60,11 @@ export class UsersService {
 
   async update(id: string, dto: UpdateUserDto, actorId: string) {
     if (id === actorId && (dto.role !== undefined || dto.isActive === false)) {
-      throw new BadRequestException("Không thể tự đổi role hoặc khóa tài khoản của mình");
+      throw new BadRequestException("You cannot change your own role or deactivate your own account");
     }
     const name = dto.name?.trim();
-    if (dto.name !== undefined && !name) throw new BadRequestException("Tên tài khoản không được để trống");
-    if (Object.keys(dto).length === 0) throw new BadRequestException("Không có trường nào để cập nhật");
+    if (dto.name !== undefined && !name) throw new BadRequestException("Account name cannot be empty");
+    if (Object.keys(dto).length === 0) throw new BadRequestException("No fields were provided for update");
     try {
       return await this.prisma.user.update({
         where: { id },
@@ -85,7 +85,7 @@ export class UsersService {
   }
 
   async deactivate(id: string, actorId: string) {
-    if (id === actorId) throw new BadRequestException("Không thể tự khóa tài khoản của mình");
+    if (id === actorId) throw new BadRequestException("You cannot deactivate your own account");
     try {
       return await this.prisma.user.update({
         where: { id },
@@ -99,8 +99,8 @@ export class UsersService {
 
   private handlePrismaError(error: unknown): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") throw new ConflictException("Email đã được sử dụng");
-      if (error.code === "P2025") throw new NotFoundException("Không tìm thấy tài khoản");
+      if (error.code === "P2002") throw new ConflictException("Email address is already in use");
+      if (error.code === "P2025") throw new NotFoundException("User account not found");
     }
     throw error;
   }

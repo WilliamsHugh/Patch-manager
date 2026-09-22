@@ -65,7 +65,7 @@ test("role and status changes revoke refresh sessions", async () => {
 
 test("admin cannot demote or deactivate own account", async () => {
   const service = new UsersService({ user: {} } as never);
-  await assert.rejects(service.update("u1", { role: Role.USER }, "u1"), /Không thể tự đổi role/);
-  await assert.rejects(service.update("u1", { isActive: false }, "u1"), /Không thể tự đổi role/);
-  await assert.rejects(service.deactivate("u1", "u1"), /Không thể tự khóa/);
+  await assert.rejects(service.update("u1", { role: Role.USER }, "u1"), /cannot change your own role/);
+  await assert.rejects(service.update("u1", { isActive: false }, "u1"), /cannot change your own role/);
+  await assert.rejects(service.deactivate("u1", "u1"), /cannot deactivate your own account/);
 });
