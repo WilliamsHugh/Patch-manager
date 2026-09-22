@@ -1,8 +1,8 @@
 # Patch Management System
 
-Monorepo cho hệ thống quản lý bản vá phần mềm. Frontend giữ nguyên giao diện Azure Update Manager đã dựng, backend được chia theo domain để nhóm có thể phát triển song song.
+A monorepo for an enterprise patch management system. The frontend follows the existing Azure Update Manager-inspired interface, while the backend is organized by domain so the team can work in parallel.
 
-## Kiến trúc
+## Architecture
 
 ```text
 patch-management-system/
@@ -10,22 +10,22 @@ patch-management-system/
 │   ├── web/                 # Next.js App Router + TypeScript
 │   └── api/                 # NestJS + Prisma REST API
 ├── packages/
-│   └── shared/              # Enum và interface dùng chung
-├── package.json             # npm workspaces + script toàn monorepo
+│   └── shared/              # Shared enums and interfaces
+├── package.json             # npm workspaces and monorepo scripts
 └── README.md
 ```
 
-Backend dùng PostgreSQL qua Prisma. Frontend gọi API thông qua biến `NEXT_PUBLIC_API_URL`.
+The backend uses PostgreSQL through Prisma. The frontend calls the API through `NEXT_PUBLIC_API_URL`.
 
-## Yêu cầu môi trường
+## Requirements
 
-- Node.js 20 trở lên
-- npm 10 trở lên
-- PostgreSQL 15 trở lên
+- Node.js 20 or later
+- npm 10 or later
+- PostgreSQL 15 or later
 
-## Cài đặt
+## Installation
 
-Tại thư mục gốc:
+Run from the repository root:
 
 ```bash
 npm install
@@ -33,11 +33,11 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-Sửa `DATABASE_URL`, `DIRECT_URL`, `JWT_ACCESS_SECRET` và `JWT_REFRESH_SECRET` trong `apps/api/.env`. Không commit file môi trường thật lên Git. Với PostgreSQL local, hai URL có thể giống nhau. Với Supabase, `DATABASE_URL` dùng pooler transaction `6543` cho API, còn `DIRECT_URL` dùng kết nối direct/session `5432` cho Prisma Migrate.
+Set `DATABASE_URL`, `DIRECT_URL`, `JWT_ACCESS_SECRET`, and `JWT_REFRESH_SECRET` in `apps/api/.env`. Never commit real environment files. For local PostgreSQL, both database URLs may be identical. With Supabase, use the transaction pooler on port `6543` for `DATABASE_URL` and a direct/session connection on port `5432` for Prisma Migrate through `DIRECT_URL`.
 
-## Khởi tạo cơ sở dữ liệu
+## Database setup
 
-Tạo database PostgreSQL tên `patch_management`, sau đó chạy:
+Create a PostgreSQL database named `patch_management`, then run:
 
 ```bash
 npm run db:generate
@@ -45,9 +45,9 @@ npm run db:migrate -- --name init
 npm run db:seed
 ```
 
-Với Supabase hoặc môi trường đã có migration trong repository, dùng `npm run db:migrate:deploy` thay cho `db:migrate -- --name init`, sau đó mới chạy `npm run db:seed`. Không chạy seed trước khi migration tạo bảng. Prisma Client của API và seed tự thêm mặc định `sslmode=require`, `connect_timeout=30` và giới hạn 5 kết nối cho transaction pooler Supabase nếu URL chưa khai báo các tham số này. Prisma Migrate vẫn đọc `DIRECT_URL` trực tiếp; nếu pooler kết nối chậm, thêm `sslmode=require&connect_timeout=30` vào `DIRECT_URL` trong `.env`. Không commit URL chứa mật khẩu.
+For Supabase or an environment that already has repository migrations, run `npm run db:migrate:deploy` instead of `db:migrate -- --name init`, then run `npm run db:seed`. Do not seed before migrations have created the tables. The API Prisma Client and seed script automatically add `sslmode=require`, `connect_timeout=30`, and a five-connection limit for the Supabase transaction pooler when those parameters are absent. Prisma Migrate reads `DIRECT_URL` directly; if the direct connection is slow, add `sslmode=require&connect_timeout=30` to `DIRECT_URL`. Never commit a URL containing a password.
 
-Seed tạo năm tài khoản, tất cả dùng mật khẩu `password123`:
+The seed creates five accounts. All use the password `password123`:
 
 | Email | Role |
 |---|---|
@@ -57,29 +57,29 @@ Seed tạo năm tài khoản, tất cả dùng mật khẩu `password123`:
 | `security@example.com` | `SECURITY_ANALYST` |
 | `user@example.com` | `USER` |
 
-Seed cũng tạo software, patch, device, kế hoạch đang chờ duyệt, ticket và policy mẫu. Chỉ sử dụng thông tin đăng nhập này trong môi trường phát triển.
+The seed also creates sample software, patches, devices, a pending deployment plan, a ticket, and a policy. Use these credentials only in development environments.
 
-## Vai trò và phạm vi quyền
+## Roles and permissions
 
-Hệ thống dùng role enum đơn giản thay vì một schema RBAC động, phù hợp với phạm vi đồ án:
+The system uses a simple role enum rather than a dynamic RBAC schema, which is appropriate for the current project scope:
 
-| Role | Trách nhiệm chính |
+| Role | Primary responsibilities |
 |---|---|
-| `ADMIN` | Quản lý tài khoản, danh mục phần mềm, policy và audit log |
-| `MANAGER` | Xem báo cáo, theo dõi và review kế hoạch triển khai |
-| `IT_HELPDESK` | Lập/triển khai kế hoạch, theo dõi thiết bị và xử lý ticket |
-| `SECURITY_ANALYST` | Đọc dữ liệu phần mềm, bản vá, thiết bị, kế hoạch; xem báo cáo và audit log để đánh giá rủi ro |
-| `USER` | Theo dõi thiết bị cá nhân, thông báo và ticket |
+| `ADMIN` | Manage accounts, the software catalog, policies, and audit logs |
+| `MANAGER` | View reports and monitor or review deployment plans |
+| `IT_HELPDESK` | Create and deploy plans, monitor devices, and handle tickets |
+| `SECURITY_ANALYST` | Read software, patch, device, plan, report, and audit data to assess risk |
+| `USER` | Monitor assigned devices, notifications, and tickets |
 
-`SECURITY_ANALYST` có quyền chỉ đọc đối với dữ liệu quản trị và triển khai trong scaffold hiện tại. Role này không được tạo/sửa/xóa phần mềm, sửa policy, review hoặc triển khai kế hoạch. Module CVE/CVSS chuyên sâu được dành cho giai đoạn mở rộng và không yêu cầu thay đổi sang schema RBAC 24 bảng.
+`SECURITY_ANALYST` currently has read-only access to administrative and deployment data. This role cannot create, edit, or delete software; modify policies; review plans; or deploy plans. Advanced CVE/CVSS functionality is reserved for a later phase and does not require migration to a 24-table dynamic RBAC schema.
 
-## Chạy local
+## Local development
 
 ```bash
-# Chạy cả hai ứng dụng
+# Run both applications
 npm run dev
 
-# Hoặc chạy riêng
+# Or run each application separately
 npm run dev:web
 npm run dev:api
 ```
@@ -89,7 +89,7 @@ npm run dev:api
 - Backend API: `http://localhost:4000/api`
 - Health check: `GET http://localhost:4000/api/health`
 
-## Kiểm tra mã nguồn
+## Code checks
 
 ```bash
 npm run lint
@@ -100,18 +100,18 @@ npm run build:api
 
 ## API scaffold
 
-Mọi route trừ `/api/health`, `/api/auth/login` và `/api/auth/refresh` yêu cầu `Authorization: Bearer <accessToken>`.
+Every route except `/api/health`, `/api/auth/login`, and `/api/auth/refresh` requires `Authorization: Bearer <accessToken>`.
 
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/users/me`
-- `GET|POST /api/users` (chỉ `ADMIN`; dữ liệu trả về không gồm hash mật khẩu/token)
-- `GET|PATCH|DELETE /api/users/:id` (chỉ `ADMIN`; `DELETE` khóa tài khoản, không xóa dữ liệu)
+- `GET|POST /api/users` (`ADMIN` only; responses exclude password and token hashes)
+- `GET|PATCH|DELETE /api/users/:id` (`ADMIN` only; `DELETE` deactivates the account without deleting its data)
 - `GET /api/software`
 - `GET /api/patches`
 - `GET /api/devices`
-- `GET /api/devices/me` (thiết bị cá nhân của `USER`)
+- `GET /api/devices/me` (devices assigned to the current `USER`)
 - `GET|POST /api/deployment-plans`
 - `PATCH /api/deployment-plans/:id/review`
 - `POST /api/deployment-plans/:id/deploy`
@@ -125,9 +125,9 @@ Mọi route trừ `/api/health`, `/api/auth/login` và `/api/auth/refresh` yêu 
 - `PATCH /api/policies/:id`
 - `GET /api/agent/status`
 
-Audit log ghi các thay đổi tài khoản, phần mềm, kế hoạch triển khai, ticket, policy và đăng xuất. Chỉ lưu hành động, người thực hiện, ID đối tượng và route; không lưu body hay token. Nếu ghi log thất bại, API vẫn trả kết quả thao tác và server cảnh báo (cơ chế best-effort ở giai đoạn scaffold, chưa có outbox/transaction đảm bảo tuyệt đối).
+Audit logs record account, software, deployment plan, ticket, policy, and logout changes. They store only the action, actor, entity ID, and route—never request bodies or tokens. Audit recording is best-effort at the scaffold stage: an audit failure produces a server warning but does not fail the original API operation. An outbox or shared transaction can be added later for stronger guarantees.
 
-Ví dụ đăng nhập:
+Example login request:
 
 ```bash
 curl -X POST http://localhost:4000/api/auth/login \
@@ -135,27 +135,27 @@ curl -X POST http://localhost:4000/api/auth/login \
   -d '{"email":"helpdesk@example.com","password":"password123"}'
 ```
 
-## Gợi ý chia việc cho ba thành viên
+## Suggested work split for three team members
 
-1. **Nền tảng và quản trị:** `auth`, `users`, `roles`, `policies`, `audit-logs`, migration và bảo mật.
-2. **Tài sản, bản vá và phân tích bảo mật:** `software`, `patches`, `devices`, `agent`, báo cáo rủi ro và quyền `SECURITY_ANALYST`.
-3. **Vận hành và frontend:** `tickets`, `notifications`, `reports`, kết nối API và hoàn thiện các page Next.js.
+1. **Platform and administration:** `auth`, `users`, `roles`, `policies`, `audit-logs`, migrations, and security.
+2. **Assets, patches, and security analysis:** `software`, `patches`, `devices`, `agent`, risk reports, and `SECURITY_ANALYST` permissions.
+3. **Operations and frontend:** `tickets`, `notifications`, `reports`, API integration, and completion of the Next.js pages.
 
-Các thay đổi schema nên được review chung. Contract dùng chung đặt tại `packages/shared`; không khai báo lặp enum nghiệp vụ ở từng app.
+Review schema changes as a team. Put shared contracts in `packages/shared` and avoid redeclaring business enums in individual applications.
 
-## Triển khai
+## Deployment
 
 ### Vercel — frontend
 
-- Import repository và chọn Root Directory `apps/web`.
-- Khai báo `NEXT_PUBLIC_API_URL=https://<render-service>/api`.
-- Dùng build command mặc định của Next.js.
+- Import the repository and select `apps/web` as the Root Directory.
+- Set `NEXT_PUBLIC_API_URL=https://<render-service>/api`.
+- Use the default Next.js build command.
 
 ### Render — backend
 
-- Build command từ root: `npm install && npm run db:generate && npm run build:api`.
+- Build command from the repository root: `npm install && npm run db:generate && npm run build:api`.
 - Start command: `npm run start:prod --workspace=@patch-management/api`.
-- Khai báo `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `FRONTEND_URL` và `PORT`.
-- Gắn Render PostgreSQL và chạy `npm run db:migrate -- --name init` ở môi trường chuẩn bị trước khi phát hành.
+- Set `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `FRONTEND_URL`, and `PORT`.
+- Attach Render PostgreSQL and run `npm run db:migrate -- --name init` in a preparation environment before release.
 
-Không dùng tài khoản seed hoặc JWT secret mẫu trong production.
+Never use seed accounts or example JWT secrets in production.
