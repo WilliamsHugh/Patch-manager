@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { DeviceStatus, PatchSeverity, PlanStatus, PrismaClient, Role, TicketStatus } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import { resolvePrismaDatabaseUrl } from "../src/prisma/prisma-url";
