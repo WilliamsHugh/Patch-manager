@@ -38,6 +38,18 @@ export class DevicesController {
     return this.service.findMine(user.id);
   }
 
+  // Phải đặt trước @Get(":id")
+  @Roles(
+    Role.ADMIN,
+    Role.MANAGER,
+    Role.IT_HELPDESK,
+    Role.SECURITY_ANALYST,
+  )
+  @Get(":id/compliance")
+  findCompliance(@Param("id") id: string) {
+    return this.service.findCompliance(id);
+  }
+
   @Roles(
     Role.ADMIN,
     Role.MANAGER,

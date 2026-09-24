@@ -99,6 +99,71 @@ export class DevicesService {
     return device;
   }
 
+  async findCompliance(deviceId: string) {
+    const device = await this.prisma.device.findUnique({
+      where: { id: deviceId },
+      include: {
+        installedSoftware: {
+          include: {
+            software: {
+              include: {
+                patches: {
+                  select: {
+                    id: true,
+                    code: true,
+                    title: true,
+                    severity: true,
+                    releasedAt: true,
+                    requiresRestart: true,
+                  },
+                  orderBy: {
+                    releasedAt: "desc",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!device) {
+      throw new NotFoundException("Device not found");
+    }
+
+    const missingPatches = device.installedSoftware.flatMap((installation) => {
+      const currentVersion = installation.software.currentVersion;
+
+      if (
+        !currentVersion ||
+        !isOlderVersion(installation.version, currentVersion)
+      ) {
+        return [];
+      }
+
+      return installation.software.patches.map((patch) => ({
+        patchId: patch.id,
+        patchCode: patch.code,
+        title: patch.title,
+        severity: patch.severity,
+        releasedAt: patch.releasedAt,
+        requiresRestart: patch.requiresRestart,
+        softwareId: installation.software.id,
+        softwareName: installation.software.name,
+        vendor: installation.software.vendor,
+        installedVersion: installation.version,
+        currentVersion,
+      }));
+    });
+
+    return {
+      deviceId: device.id,
+      hostname: device.hostname,
+      totalMissing: missingPatches.length,
+      missingPatches,
+    };
+  }
+
   async create(dto: CreateDeviceDto) {
     const hostname = dto.hostname.trim();
     const operatingSystem = dto.operatingSystem.trim();
@@ -168,6 +233,7 @@ export class DevicesService {
     if (dto.ownerId !== undefined) {
       if (dto.ownerId) {
         await this.assertOwnerExists(dto.ownerId);
+
         data.owner = {
           connect: { id: dto.ownerId },
         };
@@ -242,4 +308,33 @@ export class DevicesService {
 
     throw error;
   }
+}
+
+function isOlderVersion(
+  installedVersion: string,
+  currentVersion: string,
+): boolean {
+  const installed = extractVersionNumbers(installedVersion);
+  const current = extractVersionNumbers(currentVersion);
+
+  const length = Math.max(installed.length, current.length);
+
+  for (let index = 0; index < length; index += 1) {
+    const installedPart = installed[index] ?? 0;
+    const currentPart = current[index] ?? 0;
+
+    if (installedPart < currentPart) {
+      return true;
+    }
+
+    if (installedPart > currentPart) {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+function extractVersionNumbers(version: string): number[] {
+  return (version.match(/\d+/g) ?? []).map(Number);
 }

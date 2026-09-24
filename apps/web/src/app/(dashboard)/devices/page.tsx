@@ -1,9 +1,43 @@
 "use client";
+
 import styles from "./devices.module.css";
 import { FormEvent, useEffect, useState } from "react";
 import { Role } from "@patch-management/shared";
 import { ApiError, apiClient } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
+
+type InstalledSoftware = {
+  id: string;
+  version: string;
+  installedAt?: string | null;
+  software: {
+    id: string;
+    name: string;
+    vendor: string;
+    currentVersion?: string | null;
+  };
+};
+
+type MissingPatch = {
+  patchId: string;
+  patchCode: string;
+  title: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  releasedAt: string;
+  requiresRestart: boolean;
+  softwareId: string;
+  softwareName: string;
+  vendor: string;
+  installedVersion: string;
+  currentVersion: string;
+};
+
+type ComplianceResult = {
+  deviceId: string;
+  hostname: string;
+  totalMissing: number;
+  missingPatches: MissingPatch[];
+};
 
 type Device = {
   id: string;
@@ -17,6 +51,7 @@ type Device = {
     name: string;
     email: string;
   } | null;
+  installedSoftware?: InstalledSoftware[];
 };
 
 type DeviceForm = {
@@ -40,6 +75,12 @@ const emptyForm: DeviceForm = {
 export default function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selected, setSelected] = useState<Device | null>(null);
+
+  const [compliance, setCompliance] =
+    useState<ComplianceResult | null>(null);
+  const [complianceLoading, setComplianceLoading] = useState(false);
+  const [complianceError, setComplianceError] = useState("");
+
   const [form, setForm] = useState<DeviceForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -55,46 +96,77 @@ export default function DevicesPage() {
   }, []);
 
   async function loadDevices(search = query) {
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
+    try {
+      const currentUser = getStoredUser();
+      const isNormalUser = currentUser?.role === Role.USER;
+
+      const path = isNormalUser
+        ? "/devices/me"
+        : search.trim()
+          ? `/devices?q=${encodeURIComponent(search.trim())}`
+          : "/devices";
+
+      const data = await apiClient<Device[]>(path);
+
+      if (isNormalUser && search.trim()) {
+        const keyword = search.trim().toLowerCase();
+
+        setDevices(
+          data.filter((device) =>
+            `${device.hostname} ${device.operatingSystem} ${
+              device.department ?? ""
+            } ${device.ipAddress ?? ""}`
+              .toLowerCase()
+              .includes(keyword),
+          ),
+        );
+      } else {
+        setDevices(data);
+      }
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Không thể tải danh sách thiết bị.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function selectDevice(device: Device) {
+    setSelected(device);
+    setCompliance(null);
+    setComplianceError("");
+
     const currentUser = getStoredUser();
-    const isNormalUser = currentUser?.role === Role.USER;
 
-    const path = isNormalUser
-      ? "/devices/me"
-      : search.trim()
-        ? `/devices?q=${encodeURIComponent(search.trim())}`
-        : "/devices";
+    if (currentUser?.role === Role.USER) {
+      return;
+    }
 
-    const data = await apiClient<Device[]>(path);
+    setComplianceLoading(true);
 
-    if (isNormalUser && search.trim()) {
-      const keyword = search.trim().toLowerCase();
-
-      const filtered = data.filter((device) =>
-        `${device.hostname} ${device.operatingSystem} ${
-          device.department ?? ""
-        } ${device.ipAddress ?? ""}`
-          .toLowerCase()
-          .includes(keyword),
+    try {
+      const result = await apiClient<ComplianceResult>(
+        `/devices/${device.id}/compliance`,
       );
 
-      setDevices(filtered);
-    } else {
-      setDevices(data);
+      setCompliance(result);
+    } catch (err) {
+      setComplianceError(
+        err instanceof ApiError
+          ? err.message
+          : "Không thể tải thông tin bản vá còn thiếu.",
+      );
+    } finally {
+      setComplianceLoading(false);
     }
-  } catch (err) {
-    setError(
-      err instanceof ApiError
-        ? err.message
-        : "Không thể tải danh sách thiết bị.",
-    );
-  } finally {
-    setLoading(false);
   }
-}
+
   function startCreate() {
     if (!isAdmin) return;
 
@@ -153,9 +225,7 @@ export default function DevicesPage() {
       await loadDevices();
     } catch (err) {
       setFormError(
-        err instanceof ApiError
-          ? err.message
-          : "Không thể lưu thiết bị.",
+        err instanceof ApiError ? err.message : "Không thể lưu thiết bị.",
       );
     } finally {
       setSaving(false);
@@ -178,14 +248,13 @@ export default function DevicesPage() {
 
       if (selected?.id === device.id) {
         setSelected(null);
+        setCompliance(null);
       }
 
       await loadDevices();
     } catch (err) {
       setError(
-        err instanceof ApiError
-          ? err.message
-          : "Không thể xóa thiết bị.",
+        err instanceof ApiError ? err.message : "Không thể xóa thiết bị.",
       );
     }
   }
@@ -194,6 +263,13 @@ export default function DevicesPage() {
     if (status === "ONLINE") return "Online";
     if (status === "NEEDS_ATTENTION") return "Needs attention";
     return "Offline";
+  }
+
+  function softwareIsUpToDate(item: InstalledSoftware) {
+    return (
+      Boolean(item.software.currentVersion) &&
+      item.version === item.software.currentVersion
+    );
   }
 
   return (
@@ -273,7 +349,7 @@ export default function DevicesPage() {
                 {devices.map((device) => (
                   <tr
                     key={device.id}
-                    onClick={() => setSelected(device)}
+                    onClick={() => void selectDevice(device)}
                     style={{ cursor: "pointer" }}
                   >
                     <td>
@@ -293,10 +369,7 @@ export default function DevicesPage() {
 
                     {isAdmin && (
                       <td onClick={(event) => event.stopPropagation()}>
-                        <button onClick={() => startEdit(device)}>
-                          Sửa
-                        </button>
-
+                        <button onClick={() => startEdit(device)}>Sửa</button>
                         <button onClick={() => void removeDevice(device)}>
                           Xóa
                         </button>
@@ -404,6 +477,7 @@ export default function DevicesPage() {
       {selected && (
         <section className="panel">
           <h2>Chi tiết thiết bị</h2>
+
           <p>
             <b>Hostname:</b> {selected.hostname}
           </p>
@@ -422,6 +496,154 @@ export default function DevicesPage() {
           <p>
             <b>Trạng thái:</b> {statusLabel(selected.status)}
           </p>
+
+          <div
+            style={{
+              marginTop: 24,
+              paddingTop: 20,
+              borderTop: "1px solid #e5e7eb",
+            }}
+          >
+            <h3>Phần mềm đã cài đặt</h3>
+
+            {!selected.installedSoftware?.length ? (
+              <p>Thiết bị chưa có dữ liệu phần mềm.</p>
+            ) : (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>PHẦN MỀM</th>
+                      <th>VENDOR</th>
+                      <th>PHIÊN BẢN ĐANG CÀI</th>
+                      <th>PHIÊN BẢN HIỆN TẠI</th>
+                      <th>ĐỐI CHIẾU</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {selected.installedSoftware.map((item) => {
+                      const upToDate = softwareIsUpToDate(item);
+
+                      return (
+                        <tr key={item.id}>
+                          <td>{item.software.name}</td>
+                          <td>{item.software.vendor}</td>
+                          <td>{item.version}</td>
+                          <td>{item.software.currentVersion ?? "—"}</td>
+                          <td>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "4px 10px",
+                                borderRadius: 999,
+                                background: upToDate
+                                  ? "#dcfce7"
+                                  : "#fee2e2",
+                                color: upToDate ? "#166534" : "#b91c1c",
+                                fontSize: 12,
+                              }}
+                            >
+                              {upToDate ? "Up to date" : "Needs update"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div
+            style={{
+              marginTop: 28,
+              paddingTop: 20,
+              borderTop: "1px solid #e5e7eb",
+            }}
+          >
+            <h3>Bản vá còn thiếu</h3>
+
+            {complianceLoading && <p>Đang kiểm tra bản vá...</p>}
+
+            {complianceError && (
+              <div className="infoBox">
+                <b>Lỗi</b>
+                <p>{complianceError}</p>
+              </div>
+            )}
+
+            {!complianceLoading &&
+              !complianceError &&
+              compliance &&
+              compliance.missingPatches.length === 0 && (
+                <p style={{ color: "#166534" }}>
+                  Thiết bị đã đầy đủ bản vá.
+                </p>
+              )}
+
+            {!complianceLoading &&
+              !complianceError &&
+              compliance &&
+              compliance.missingPatches.length > 0 && (
+                <div className="tableWrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>PHẦN MỀM</th>
+                        <th>PHIÊN BẢN ĐANG CÀI</th>
+                        <th>PHIÊN BẢN HIỆN TẠI</th>
+                        <th>MÃ BẢN VÁ</th>
+                        <th>MỨC ĐỘ</th>
+                        <th>KHỞI ĐỘNG LẠI</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {compliance.missingPatches.map((patch) => (
+                        <tr key={patch.patchId}>
+                          <td>
+                            <b>{patch.softwareName}</b>
+                            <br />
+                            <small>{patch.vendor}</small>
+                          </td>
+
+                          <td>{patch.installedVersion}</td>
+                          <td>{patch.currentVersion}</td>
+
+                          <td>
+                            <b>{patch.patchCode}</b>
+                            <br />
+                            <small>{patch.title}</small>
+                          </td>
+
+                          <td>
+                            <span
+                              style={{
+                                color:
+                                  patch.severity === "CRITICAL"
+                                    ? "#b91c1c"
+                                    : patch.severity === "HIGH"
+                                      ? "#c2410c"
+                                      : "#92400e",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {patch.severity}
+                            </span>
+                          </td>
+
+                          <td>
+                            {patch.requiresRestart ? "Có" : "Không"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+          </div>
         </section>
       )}
     </main>
