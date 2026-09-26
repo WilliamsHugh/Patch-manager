@@ -39,6 +39,14 @@ type ComplianceResult = {
   missingPatches: MissingPatch[];
 };
 
+type AgentStatus = {
+  id: string;
+  version: string;
+  isConnected: boolean;
+  lastHeartbeatAt: string | null;
+  lastScanAt: string | null;
+};
+
 type Device = {
   id: string;
   hostname: string;
@@ -46,12 +54,16 @@ type Device = {
   ipAddress?: string | null;
   department?: string | null;
   status: "ONLINE" | "OFFLINE" | "NEEDS_ATTENTION";
+
   owner?: {
     id: string;
     name: string;
     email: string;
   } | null;
+
   installedSoftware?: InstalledSoftware[];
+
+  agentStatus?: AgentStatus | null;
 };
 
 type DeviceForm = {
@@ -125,6 +137,17 @@ export default function DevicesPage() {
         );
       } else {
         setDevices(data);
+        if (
+          selected &&
+          !data.some(
+            (device) => device.id == selected.id
+          )
+        ){
+          setSelected(null);
+          setCompliance(null);
+          setComplianceError("");
+
+        }
       }
     } catch (err) {
       setError(
@@ -310,7 +333,11 @@ export default function DevicesPage() {
             type="button"
             onClick={() => {
               setQuery("");
+              setSelected(null);
+              setCompliance(null);
+              setComplianceError("");
               void loadDevices("");
+
             }}
           >
             Đặt lại
@@ -341,6 +368,8 @@ export default function DevicesPage() {
                   <th>HỆ ĐIỀU HÀNH</th>
                   <th>IP</th>
                   <th>TRẠNG THÁI</th>
+                  <th>AGENT</th>
+                  <th>HEARTBEAT</th>
                   {isAdmin && <th>THAO TÁC</th>}
                 </tr>
               </thead>
@@ -365,6 +394,30 @@ export default function DevicesPage() {
                       >
                         {statusLabel(device.status)}
                       </span>
+                    </td>
+
+                    <td>
+                      <span
+                        className={`deviceState ${
+                          device.agentStatus?.isConnected
+                            ? "online"
+                            : "offline"
+                        }`}
+                      >
+                        {device.agentStatus
+                          ? device.agentStatus.isConnected
+                            ? "Connected"
+                            : "Offline"
+                          : "Chưa cài"}
+                      </span>
+                    </td>
+
+                    <td>
+                      {device.agentStatus?.lastHeartbeatAt
+                        ? new Date(
+                            device.agentStatus.lastHeartbeatAt,
+                          ).toLocaleString("vi-VN")
+                        : "—"}
                     </td>
 
                     {isAdmin && (
@@ -495,6 +548,38 @@ export default function DevicesPage() {
           </p>
           <p>
             <b>Trạng thái:</b> {statusLabel(selected.status)}
+          </p>
+
+          <p>
+            <b>Agent:</b>{" "}
+            {selected.agentStatus
+              ? selected.agentStatus.isConnected
+                ? "Connected"
+                : "Offline"
+              : "Chưa cài"}
+          </p>
+
+          <p>
+            <b>Agent version:</b>{" "}
+            {selected.agentStatus?.version ?? "—"}
+          </p>
+
+          <p>
+            <b>Last heartbeat:</b>{" "}
+            {selected.agentStatus?.lastHeartbeatAt
+              ? new Date(
+                  selected.agentStatus.lastHeartbeatAt,
+                ).toLocaleString("vi-VN")
+              : "—"}
+          </p>
+
+          <p>
+            <b>Last scan:</b>{" "}
+            {selected.agentStatus?.lastScanAt
+              ? new Date(
+                  selected.agentStatus.lastScanAt,
+                ).toLocaleString("vi-VN")
+              : "—"}
           </p>
 
           <div

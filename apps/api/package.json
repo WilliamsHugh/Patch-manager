@@ -13,6 +13,7 @@
     "test:audit": "tsx --test test/audit.spec.ts",
     "test:prisma-url": "tsx --test test/prisma-url.spec.ts",
     "test:devices-compliance": "tsx --test test/devices-compliance.spec.ts",
+    "test:agent": "tsx --test test/agent.spec.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
