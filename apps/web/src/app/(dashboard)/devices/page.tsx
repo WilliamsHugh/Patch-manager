@@ -17,6 +17,16 @@ type Device = {
     name: string;
     email: string;
   } | null;
+    installedSoftware?: {
+    id: string;
+    version: string | null;
+    software: {
+      id: string;
+      name: string;
+      vendor: string | null;
+      currentVersion: string | null;
+    };
+  }[];
 };
 
 type DeviceForm = {
@@ -194,6 +204,21 @@ export default function DevicesPage() {
     if (status === "ONLINE") return "Online";
     if (status === "NEEDS_ATTENTION") return "Needs attention";
     return "Offline";
+  }
+    function softwareStatus(
+    installed: NonNullable<Device["installedSoftware"]>[number],
+  ) {
+    const currentVersion = installed.software.currentVersion;
+
+    if (!currentVersion) {
+      return "Chưa khai báo phiên bản hiện tại";
+    }
+
+    if (installed.version === currentVersion) {
+      return "Đã cập nhật";
+    }
+
+    return "Cần cập nhật";
   }
 
   return (
@@ -422,6 +447,37 @@ export default function DevicesPage() {
           <p>
             <b>Trạng thái:</b> {statusLabel(selected.status)}
           </p>
+          <h3>Phần mềm đã cài</h3>
+
+{!selected.installedSoftware?.length ? (
+  <p>Thiết bị này chưa có phần mềm được ghi nhận.</p>
+) : (
+  <div className="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TÊN PHẦN MỀM</th>
+          <th>VENDOR</th>
+          <th>PHIÊN BẢN ĐÃ CÀI</th>
+          <th>PHIÊN BẢN HIỆN TẠI</th>
+          <th>TRẠNG THÁI</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {selected.installedSoftware.map((installed) => (
+          <tr key={installed.id}>
+            <td>{installed.software.name}</td>
+            <td>{installed.software.vendor ?? "—"}</td>
+            <td>{installed.version ?? "—"}</td>
+            <td>{installed.software.currentVersion ?? "—"}</td>
+            <td>{softwareStatus(installed)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
         </section>
       )}
     </main>
