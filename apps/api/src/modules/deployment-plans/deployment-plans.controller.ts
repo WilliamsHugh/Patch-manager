@@ -45,6 +45,13 @@ export class DeploymentPlansController {
     return this.service.remove(id);
   }
 
+  @Roles(Role.IT_HELPDESK)
+  @AuditAction("PLAN_SUBMITTED", "DeploymentPlan")
+  @Post(":id/submit")
+  submitForApproval(@Param("id") id: string, @CurrentUser() user: { id: string; role: Role }) {
+    return this.service.submitForApproval(id, user);
+  }
+
   @Roles(Role.MANAGER)
   @AuditAction("PLAN_REVIEWED", "DeploymentPlan")
   @Patch(":id/review")

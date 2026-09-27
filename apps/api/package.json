@@ -12,6 +12,7 @@
     "test:users": "tsx --test test/users.spec.ts",
     "test:audit": "tsx --test test/audit.spec.ts",
     "test:prisma-url": "tsx --test test/prisma-url.spec.ts",
+    "test:workflow": "tsx --test test/workflow.spec.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
