@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
 import { Role } from "@prisma/client";
 import { AuditAction } from "../../common/decorators/audit-action.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { AssignTicketDto } from "./dto/assign-ticket.dto";
 import { CreateTicketDto } from "./dto/create-ticket.dto";
 import { UpdateTicketStatusDto } from "./dto/update-ticket-status.dto";
 import { TicketsService } from "./tickets.service";
@@ -13,8 +14,11 @@ export class TicketsController {
 
   @Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.USER)
   @Get()
-  findAll(@CurrentUser() user: { id: string; role: Role }) {
-    return this.service.findAll(user);
+  findAll(
+    @CurrentUser() user: { id: string; role: Role },
+    @Query("assignedToMe") assignedToMe?: string,
+  ) {
+    return this.service.findAll(user, { assignedToMe: assignedToMe === "true" });
   }
 
   @Roles(Role.USER, Role.IT_HELPDESK)
@@ -27,7 +31,22 @@ export class TicketsController {
   @Roles(Role.IT_HELPDESK, Role.MANAGER, Role.ADMIN)
   @AuditAction("TICKET_STATUS_CHANGED", "Ticket")
   @Patch(":id/status")
-  update(@Param("id") id: string, @Body() dto: UpdateTicketStatusDto) {
-    return this.service.updateStatus(id, dto);
+  updateStatus(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTicketStatusDto,
+    @CurrentUser() user: { id: string; role: Role },
+  ) {
+    return this.service.updateStatus(id, dto, user);
+  }
+
+  @Roles(Role.IT_HELPDESK, Role.MANAGER, Role.ADMIN)
+  @AuditAction("TICKET_ASSIGNED", "Ticket")
+  @Patch(":id/assign")
+  assign(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: AssignTicketDto,
+    @CurrentUser() user: { id: string; role: Role },
+  ) {
+    return this.service.assign(id, dto, user);
   }
 }
