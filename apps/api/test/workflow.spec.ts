@@ -2,9 +2,10 @@ import "reflect-metadata";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { TICKET_TRANSITIONS } from "@patch-management/shared";
 import { PlanStatus, Role, TicketStatus } from "@prisma/client";
 import { DeploymentPlansService } from "../src/modules/deployment-plans/deployment-plans.service";
-import { TICKET_TRANSITIONS, TicketsService } from "../src/modules/tickets/tickets.service";
+import { TicketsService } from "../src/modules/tickets/tickets.service";
 
 function ticketPrismaMock(ticket: Record<string, unknown> | null, queries: unknown[] = []) {
   return {

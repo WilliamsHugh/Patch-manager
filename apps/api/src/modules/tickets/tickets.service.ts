@@ -1,23 +1,17 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma, Role, TicketStatus } from "@prisma/client";
+import { TICKET_TRANSITIONS } from "@patch-management/shared";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AssignTicketDto } from "./dto/assign-ticket.dto";
+import { CreateTicketCommentDto } from "./dto/create-ticket-comment.dto";
 import { CreateTicketDto } from "./dto/create-ticket.dto";
 import { UpdateTicketStatusDto } from "./dto/update-ticket-status.dto";
-
-// Linear workflow from the delivery plan: OPEN -> IN_PROGRESS -> WAITING_USER -> RESOLVED -> CLOSED.
-// Forward moves may skip intermediate states; only RESOLVED can be reopened; CLOSED is terminal.
-export const TICKET_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
-  [TicketStatus.OPEN]: [TicketStatus.IN_PROGRESS, TicketStatus.CLOSED],
-  [TicketStatus.IN_PROGRESS]: [TicketStatus.WAITING_USER, TicketStatus.RESOLVED, TicketStatus.CLOSED],
-  [TicketStatus.WAITING_USER]: [TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED, TicketStatus.CLOSED],
-  [TicketStatus.RESOLVED]: [TicketStatus.CLOSED, TicketStatus.IN_PROGRESS],
-  [TicketStatus.CLOSED]: [],
-};
 
 const OPERATION_ROLES: Role[] = [Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK];
 
 type StatusActor = { id: string; role: Role };
+
+const commentInclude = { author: { select: { id: true, name: true } } } satisfies Prisma.TicketCommentInclude;
 
 @Injectable()
 export class TicketsService {
@@ -36,7 +30,7 @@ export class TicketsService {
       include: {
         createdBy: { select: { id: true, name: true, email: true } },
         assignedTo: { select: { id: true, name: true } },
-        comments: { include: { author: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
+        comments: { include: commentInclude, orderBy: { createdAt: "asc" } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -124,5 +118,38 @@ export class TicketsService {
 
     const [updated] = await this.prisma.$transaction(operations);
     return updated;
+  }
+
+  async addComment(id: string, dto: CreateTicketCommentDto, author: { id: string; role: Role }) {
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id },
+      select: { id: true, createdById: true, assignedToId: true, status: true },
+    });
+    if (!ticket) throw new NotFoundException("Ticket not found");
+
+    const isRequester = ticket.createdById === author.id;
+    const isAssignee = ticket.assignedToId === author.id;
+    if (author.role === Role.USER && !isRequester) {
+      throw new ForbiddenException("You can only comment on your own tickets");
+    }
+    if (!OPERATION_ROLES.includes(author.role) && !isRequester && !isAssignee) {
+      throw new ForbiddenException("Only requesters, assignees, and operations roles can comment");
+    }
+    if (ticket.status === TicketStatus.CLOSED && !OPERATION_ROLES.includes(author.role)) {
+      throw new ForbiddenException("Closed tickets are read-only");
+    }
+
+    return this.prisma.ticketComment.create({
+      data: { ticketId: id, authorId: author.id, content: dto.content.trim() },
+      include: commentInclude,
+    });
+  }
+
+  listAssignables() {
+    return this.prisma.user.findMany({
+      where: { role: { in: [Role.IT_HELPDESK, Role.MANAGER, Role.ADMIN] }, isActive: true },
+      select: { id: true, name: true, role: true },
+      orderBy: [{ role: "asc" }, { name: "asc" }],
+    });
   }
 }

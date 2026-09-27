@@ -4,6 +4,7 @@ import { AuditAction } from "../../common/decorators/audit-action.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { AssignTicketDto } from "./dto/assign-ticket.dto";
+import { CreateTicketCommentDto } from "./dto/create-ticket-comment.dto";
 import { CreateTicketDto } from "./dto/create-ticket.dto";
 import { UpdateTicketStatusDto } from "./dto/update-ticket-status.dto";
 import { TicketsService } from "./tickets.service";
@@ -19,6 +20,12 @@ export class TicketsController {
     @Query("assignedToMe") assignedToMe?: string,
   ) {
     return this.service.findAll(user, { assignedToMe: assignedToMe === "true" });
+  }
+
+  @Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK)
+  @Get("assignables")
+  listAssignables() {
+    return this.service.listAssignables();
   }
 
   @Roles(Role.USER, Role.IT_HELPDESK)
@@ -48,5 +55,16 @@ export class TicketsController {
     @CurrentUser() user: { id: string; role: Role },
   ) {
     return this.service.assign(id, dto, user);
+  }
+
+  @Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.USER)
+  @AuditAction("TICKET_COMMENTED", "Ticket")
+  @Post(":id/comments")
+  addComment(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: CreateTicketCommentDto,
+    @CurrentUser() user: { id: string; role: Role },
+  ) {
+    return this.service.addComment(id, dto, user);
   }
 }
