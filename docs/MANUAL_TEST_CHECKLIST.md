@@ -43,7 +43,8 @@ Frontend: `http://localhost:3000`. API: `http://localhost:4000/api`. The five de
 - [x] Helpdesk deletes the temporary `DRAFT` plan after confirmation; plans in other states cannot be deleted. Do not delete the seeded plan.
 - [x] **API:** `MANAGER` can read plans; `USER` receives `403` from the plan-list API.
 - [ ] **UI:** `MANAGER` does not see the plan edit form.
-- [x] **API-only:** Manager calls `PATCH /deployment-plans/:id/review` with `APPROVED`, `REJECTED`, and `CHANGES_REQUESTED`; reviewer, time, and note are saved. Other roles receive `403`.
+- [x] **API-only:** Helpdesk calls `POST /deployment-plans/:id/submit` to move a `DRAFT` (or `CHANGES_REQUESTED`) plan to `PENDING_APPROVAL`; only the plan creator (or Admin) may submit, and active managers receive a notification.
+- [x] **API-only:** Manager calls `PATCH /deployment-plans/:id/review` with `APPROVED`, `REJECTED`, and `CHANGES_REQUESTED`; reviewer, time, and note are saved. Only `PENDING_APPROVAL` plans can be reviewed, a manager cannot review their own plan, and other roles receive `403`.
 - [x] **API-only:** Helpdesk calls `POST /deployment-plans/:id/deploy` only for an `APPROVED` plan; the plan becomes `DEPLOYING` and tasks become `PENDING`. An unapproved plan is rejected, and Manager cannot deploy.
 - [x] **API-only:** `GET /deployment-tasks` reflects plan tasks; record an issue if task and plan statuses are inconsistent.
 
@@ -53,7 +54,8 @@ Frontend: `http://localhost:3000`. API: `http://localhost:4000/api`. The five de
 - [ ] **UI:** User opens `/profile` and sees the correct assigned devices.
 - [x] User receives `403` from the system-wide `GET /devices`; Helpdesk, Manager, Admin, and Security Analyst can read the device list.
 - [x] User creates a temporary ticket through `POST /tickets`, then `GET /tickets` shows only that user’s tickets. Another user cannot see it.
-- [x] Helpdesk sees the ticket list and changes the temporary ticket status through `PATCH /tickets/:id/status`; User and Security Analyst cannot change status.
+- [x] Helpdesk sees the ticket list, assigns it with `PATCH /tickets/:id/assign` (inactive users and closed tickets are rejected), and changes the temporary ticket status through `PATCH /tickets/:id/status`; User and Security Analyst cannot change status.
+- [x] Ticket status changes follow the workflow `OPEN -> IN_PROGRESS -> WAITING_USER -> RESOLVED -> CLOSED` (forward moves may skip steps, only `RESOLVED` reopens, `CLOSED` is final); invalid moves return `400`, and the creator/assignee (never the actor) receive notifications. Helpdesk can filter with `GET /tickets?assignedToMe=true`.
 - [x] `GET /notifications` returns only notifications for the signed-in account and does not expose another user’s notifications.
 
 ## 6. Security Analyst, policies, reports, and audit (API-only)
