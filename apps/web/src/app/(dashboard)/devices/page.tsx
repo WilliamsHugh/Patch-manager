@@ -75,6 +75,8 @@ type DeviceForm = {
   ownerId: string;
 };
 
+const HEARTBEAT_TIMEOUT_MS = 5 * 60 * 1000;
+
 const emptyForm: DeviceForm = {
   hostname: "",
   operatingSystem: "",
@@ -105,8 +107,13 @@ export default function DevicesPage() {
   useEffect(() => {
     setIsAdmin(getStoredUser()?.role === Role.ADMIN);
     void loadDevices();
-  }, []);
 
+    const timer = window.setInterval(() => {
+      void loadDevices();
+    }, 60_000);
+
+    return () => window.clearInterval(timer);
+  }, []);
   async function loadDevices(search = query) {
     setLoading(true);
     setError("");
@@ -399,16 +406,14 @@ export default function DevicesPage() {
                     <td>
                       <span
                         className={`deviceState ${
-                          device.agentStatus?.isConnected
+                          getAgentState(device.agentStatus) === "CONNECTED"
                             ? "online"
                             : "offline"
                         }`}
                       >
-                        {device.agentStatus
-                          ? device.agentStatus.isConnected
-                            ? "Connected"
-                            : "Offline"
-                          : "Chưa cài"}
+                        {formatAgentState(
+                          getAgentState(device.agentStatus),
+                        )}
                       </span>
                     </td>
 
@@ -552,11 +557,9 @@ export default function DevicesPage() {
 
           <p>
             <b>Agent:</b>{" "}
-            {selected.agentStatus
-              ? selected.agentStatus.isConnected
-                ? "Connected"
-                : "Offline"
-              : "Chưa cài"}
+            {formatAgentState(
+              getAgentState(selected.agentStatus),
+            )}
           </p>
 
           <p>
@@ -733,4 +736,36 @@ export default function DevicesPage() {
       )}
     </main>
   );
+  }
+
+function getAgentState(
+  agentStatus: AgentStatus | null | undefined,
+) {
+  if (!agentStatus) {
+    return "NOT_INSTALLED" as const;
+  }
+
+  if (!agentStatus.isConnected || !agentStatus.lastHeartbeatAt) {
+    return "OFFLINE" as const;
+  }
+
+  const heartbeatTime = new Date(
+    agentStatus.lastHeartbeatAt,
+  ).getTime();
+
+  if (Number.isNaN(heartbeatTime)) {
+    return "OFFLINE" as const;
+  }
+
+  return Date.now() - heartbeatTime <= HEARTBEAT_TIMEOUT_MS
+    ? ("CONNECTED" as const)
+    : ("OFFLINE" as const);
+}
+
+function formatAgentState(
+  state: ReturnType<typeof getAgentState>,
+) {
+  if (state === "CONNECTED") return "Connected";
+  if (state === "NOT_INSTALLED") return "Chưa cài";
+  return "Offline";
 }

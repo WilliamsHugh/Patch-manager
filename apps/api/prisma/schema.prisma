@@ -25,6 +25,7 @@
 
   enum PlanStatus {
     DRAFT
+    TESTING
     PENDING_APPROVAL
     APPROVED
     REJECTED
@@ -33,6 +34,8 @@
     COMPLETED
     FAILED
     ROLLED_BACK
+    PENDING_SECURITY_REVIEW
+    PENDING_MANAGER_APPROVAL
   }
 
   enum TaskStatus {
@@ -77,6 +80,8 @@
     updatedAt DateTime @updatedAt
     devices Device[]
     createdPlans DeploymentPlan[] @relation("PlanCreator")
+    testedPlans DeploymentPlan[] @relation("PlanTester")
+    securityReviewedPlans DeploymentPlan[] @relation("PlanSecurityReviewer")
     reviewedPlans DeploymentPlan[] @relation("PlanReviewer")
     createdTickets Ticket[] @relation("TicketCreator")
     assignedTickets Ticket[] @relation("TicketAssignee")
@@ -147,11 +152,19 @@
     description String?
     status PlanStatus @default(DRAFT)
     scheduledAt DateTime?
+    testNote String?
+    testedAt DateTime?
+    testedById String?
+    securityReviewNote String?
+    securityReviewedAt DateTime?
+    securityReviewedById String?
     reviewNote String?
     reviewedAt DateTime?
     createdById String
     reviewedById String?
     createdBy User @relation("PlanCreator", fields: [createdById], references: [id])
+    testedBy User? @relation("PlanTester", fields: [testedById], references: [id], onDelete: SetNull)
+    securityReviewedBy User? @relation("PlanSecurityReviewer", fields: [securityReviewedById], references: [id], onDelete: SetNull)
     reviewedBy User? @relation("PlanReviewer", fields: [reviewedById], references: [id])
     devices DeploymentPlanDevice[]
     tasks DeploymentTask[]
@@ -247,12 +260,13 @@
   }
 
   model AgentStatus {
-    id String @id @default(uuid())
-    version String
-    isConnected Boolean @default(false)
-    lastHeartbeatAt DateTime?
-    lastScanAt DateTime?
-    deviceId String @unique
-    device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-    updatedAt DateTime @updatedAt
-  }
+  id String @id @default(uuid())
+  version String
+  isConnected Boolean @default(false)
+  lastHeartbeatAt DateTime?
+  lastScanAt DateTime?
+  lastScanResult Json?
+  deviceId String @unique
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+}

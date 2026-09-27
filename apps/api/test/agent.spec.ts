@@ -368,3 +368,29 @@ test("scan rejects an unknown device", async () => {
   );
 
 });
+
+test("returns offline when heartbeat is older than five minutes", async () => {
+  const { prisma } = createPrismaMock();
+
+  prisma.agentStatus.findMany = async () => [
+    {
+      id: "agent-stale",
+      version: "agent-1.0.0",
+      isConnected: true,
+      lastHeartbeatAt: new Date(Date.now() - 6 * 60 * 1000),
+      lastScanAt: null,
+      deviceId: "device-stale",
+      updatedAt: new Date(),
+      device: {
+        id: "device-stale",
+        hostname: "STALE-DEVICE",
+        status: "ONLINE",
+      },
+    },
+  ];
+
+  const service = new AgentService(prisma as never);
+  const result = await service.findAllStatus();
+
+  assert.equal(result[0].connectionState, "OFFLINE");
+});
