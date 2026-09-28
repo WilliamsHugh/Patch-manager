@@ -55,6 +55,13 @@ const navigation = [
       "Theo dõi bản vá và mức độ nghiêm trọng.",
   },
   {
+    icon: "⚠",
+    label: "Security Inventory",
+    href: "/security-inventory",
+    description:
+      "Phân tích rủi ro bản vá theo severity và CVE-lite.",
+  },
+  {
     icon: "▣",
     label: "Devices",
     href: "/devices",
@@ -103,6 +110,7 @@ const securityAnalystPaths =
     "/dashboard",
     "/software",
     "/patches",
+    "/security-inventory",
     "/devices",
     "/deployment-plans",
     "/reports",

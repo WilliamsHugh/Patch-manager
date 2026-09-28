@@ -19,12 +19,13 @@ import { ReportsModule } from "./modules/reports/reports.module";
 import { AuditLogsModule } from "./modules/audit-logs/audit-logs.module";
 import { PoliciesModule } from "./modules/policies/policies.module";
 import { AgentModule } from "./modules/agent/agent.module";
+import { SecurityInventoryModule } from "./modules/security-inventory/security-inventory.module";
 import { AuditInterceptor } from "./common/interceptors/audit.interceptor";
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, UsersModule, RolesModule, SoftwareModule,
     PatchesModule, DevicesModule, DeploymentPlansModule, DeploymentTasksModule, TicketsModule, NotificationsModule,
-    ReportsModule, AuditLogsModule, PoliciesModule, AgentModule],
+    ReportsModule, AuditLogsModule, PoliciesModule, AgentModule, SecurityInventoryModule],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }, { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor }],

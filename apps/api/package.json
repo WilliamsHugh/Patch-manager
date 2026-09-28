@@ -12,6 +12,7 @@
     "test:users": "tsx --test test/users.spec.ts",
     "test:audit": "tsx --test test/audit.spec.ts",
     "test:prisma-url": "tsx --test test/prisma-url.spec.ts",
+    "test:security-inventory": "tsx --test test/security-inventory.spec.ts",
     "test:devices-compliance": "tsx --test test/devices-compliance.spec.ts",
     "test:agent": "tsx --test test/agent.spec.ts",
     "prisma:generate": "prisma generate",
