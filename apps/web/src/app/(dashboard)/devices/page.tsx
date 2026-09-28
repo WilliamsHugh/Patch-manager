@@ -47,6 +47,8 @@ type AgentStatus = {
   lastScanAt: string | null;
 };
 
+const HEARTBEAT_TIMEOUT_MS = 5 * 60 * 1000;
+
 type Device = {
   id: string;
   hostname: string;
@@ -399,15 +401,13 @@ export default function DevicesPage() {
                     <td>
                       <span
                         className={`deviceState ${
-                          device.agentStatus?.isConnected
+                          getAgentState(device.agentStatus) === "CONNECTED"
                             ? "online"
                             : "offline"
                         }`}
                       >
                         {device.agentStatus
-                          ? device.agentStatus.isConnected
-                            ? "Connected"
-                            : "Offline"
+                          ? formatAgentState(getAgentState(device.agentStatus))
                           : "Chưa cài"}
                       </span>
                     </td>
@@ -553,9 +553,7 @@ export default function DevicesPage() {
           <p>
             <b>Agent:</b>{" "}
             {selected.agentStatus
-              ? selected.agentStatus.isConnected
-                ? "Connected"
-                : "Offline"
+              ? formatAgentState(getAgentState(selected.agentStatus))
               : "Chưa cài"}
           </p>
 
@@ -733,4 +731,24 @@ export default function DevicesPage() {
       )}
     </main>
   );
+}
+
+function getAgentState(agentStatus: AgentStatus | null | undefined) {
+  if (!agentStatus?.isConnected || !agentStatus.lastHeartbeatAt) {
+    return "OFFLINE" as const;
+  }
+
+  const heartbeatTime = new Date(agentStatus.lastHeartbeatAt).getTime();
+
+  if (Number.isNaN(heartbeatTime)) {
+    return "OFFLINE" as const;
+  }
+
+  return Date.now() - heartbeatTime <= HEARTBEAT_TIMEOUT_MS
+    ? ("CONNECTED" as const)
+    : ("OFFLINE" as const);
+}
+
+function formatAgentState(state: ReturnType<typeof getAgentState>) {
+  return state === "CONNECTED" ? "Connected" : "Offline";
 }

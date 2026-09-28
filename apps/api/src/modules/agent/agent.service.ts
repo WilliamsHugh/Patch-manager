@@ -139,7 +139,7 @@ export class AgentService {
     const now = new Date();
 
 
-    return this.prisma.agentStatus.upsert({
+    const agent = await this.prisma.agentStatus.upsert({
 
       where:{
         deviceId,
@@ -183,6 +183,13 @@ export class AgentService {
       },
 
     });
+
+    await this.prisma.device.update({
+      where: { id: deviceId },
+      data: { status: "ONLINE" },
+    });
+
+    return agent;
 
   }
 
