@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Devices" description="Find devices, owners, and agent status." fields={["HOSTNAME","OWNER","OPERATING SYSTEM","STATUS"]}/>}
-=======
 "use client";
 
 import styles from "./devices.module.css";
@@ -772,4 +769,3 @@ function formatAgentState(
   if (state === "NOT_INSTALLED") return "Chưa cài";
   return "Offline";
 }
->>>>>>> feature/security-risk-inventory

@@ -116,20 +116,10 @@
   min-width: 150px;
 
   border-color: var(--azure);
-<<<<<<< HEAD
-  background: var(--azure);
-  color: #fff;
-  font-weight: 600;
-}
-
-.formActions button:first-child:not(:disabled):hover {
-  background: var(--azure-hover);
-=======
 
   background: var(--azure);
 
   color: #ffffff;
->>>>>>> feature/security-risk-inventory
 }
 
 .formActions button:first-child:hover {

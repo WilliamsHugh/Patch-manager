@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-import { ModulePlaceholder } from "@/components/ui/module-placeholder"; export default function Page(){return <ModulePlaceholder title="Patches" description="Track patches, severity, and affected software." fields={["PATCH ID","SOFTWARE","SEVERITY","RELEASE DATE"]}/>}
-=======
 "use client";
 
 import { useEffect, useState } from "react";
@@ -711,4 +708,3 @@ export default function Page() {
     </>
   );
 }
->>>>>>> feature/security-risk-inventory

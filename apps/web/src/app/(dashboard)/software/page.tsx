@@ -152,16 +152,12 @@ export default function SoftwarePage() {
         );
       });
     } catch (err) {
-<<<<<<< HEAD
-      setError(getErrorMessage(err, "Unable to load the software catalog."));
-=======
       setError(
         getErrorMessage(
           err,
           "Không tải được danh mục phần mềm.",
         ),
       );
->>>>>>> feature/security-risk-inventory
     } finally {
       setLoading(false);
     }
@@ -182,16 +178,12 @@ export default function SoftwarePage() {
 
       setSelected(detail);
     } catch (err) {
-<<<<<<< HEAD
-      notify(getErrorMessage(err, "Unable to load software details."));
-=======
       notify(
         getErrorMessage(
           err,
           "Không tải được chi tiết phần mềm.",
         ),
       );
->>>>>>> feature/security-risk-inventory
     }
   }
 
@@ -244,13 +236,6 @@ export default function SoftwarePage() {
         });
 
       if (editingId) {
-<<<<<<< HEAD
-        await apiClient<Software>(`/software/${editingId}`, { method: "PATCH", body });
-        notify("Software updated.");
-      } else {
-        await apiClient<Software>("/software", { method: "POST", body });
-        notify("Software created.");
-=======
         await apiClient<Software>(
           `/software/${editingId}`,
           {
@@ -274,23 +259,18 @@ export default function SoftwarePage() {
         notify(
           "Đã tạo phần mềm.",
         );
->>>>>>> feature/security-risk-inventory
       }
 
       resetForm();
 
       await loadSoftware();
     } catch (err) {
-<<<<<<< HEAD
-      setFormError(getErrorMessage(err, "Unable to save the software entry."));
-=======
       setFormError(
         getErrorMessage(
           err,
           "Không lưu được phần mềm.",
         ),
       );
->>>>>>> feature/security-risk-inventory
     } finally {
       setSaving(false);
     }
@@ -329,20 +309,6 @@ export default function SoftwarePage() {
     });
   }
 
-<<<<<<< HEAD
-  async function remove(item: Software) {
-    if (!isAdmin) return;
-    const ok = window.confirm(`Delete "${item.vendor} ${item.name}"? Related patches may also be affected.`);
-    if (!ok) return;
-    try {
-      await apiClient<{ deleted: boolean }>(`/software/${item.id}`, { method: "DELETE" });
-      notify("Software deleted.");
-      if (selected?.id === item.id) setSelected(null);
-      if (editingId === item.id) resetForm();
-      await loadSoftware();
-    } catch (err) {
-      notify(getErrorMessage(err, "Unable to delete the software entry."));
-=======
   // ==========================
   // DELETE
   // ==========================
@@ -397,7 +363,6 @@ export default function SoftwarePage() {
           "Không xóa được phần mềm.",
         ),
       );
->>>>>>> feature/security-risk-inventory
     }
   }
 
@@ -441,12 +406,6 @@ export default function SoftwarePage() {
 
         <div className="dataHead">
           <div>
-<<<<<<< HEAD
-            <h2>Software catalog</h2>
-            <p>Manage software names, vendors, and current versions.</p>
-          </div>
-          <button className="primary" onClick={() => void loadSoftware()} disabled={loading}>↻ Refresh</button>
-=======
             <h2>
               Danh mục phần mềm
             </h2>
@@ -468,7 +427,6 @@ export default function SoftwarePage() {
           >
             ↻ Làm mới
           </button>
->>>>>>> feature/security-risk-inventory
         </div>
 
         {/* ======================
@@ -476,15 +434,6 @@ export default function SoftwarePage() {
         ====================== */}
 
         {isAdmin && (
-<<<<<<< HEAD
-          <form className={styles.formBar} onSubmit={submit}>
-            <label>Software name<input value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} maxLength={120} required /></label>
-            <label>Vendor<input value={form.vendor} onChange={event => setForm({ ...form, vendor: event.target.value })} maxLength={120} required /></label>
-            <label>Version<input value={form.currentVersion} onChange={event => setForm({ ...form, currentVersion: event.target.value })} maxLength={80} placeholder="Optional" /></label>
-            <div className={styles.formActions}>
-              <button className="primary" disabled={saving}>{saving ? "Saving..." : editingId ? "Save changes" : "Create new"}</button>
-              {editingId && <button type="button" onClick={resetForm}>Cancel</button>}
-=======
           <form
             className={
               styles.formBar
@@ -604,7 +553,6 @@ export default function SoftwarePage() {
                   Hủy
                 </button>
               )}
->>>>>>> feature/security-risk-inventory
             </div>
 
             {formError && (
@@ -624,51 +572,6 @@ export default function SoftwarePage() {
         ====================== */}
 
         <div className="tableTools">
-<<<<<<< HEAD
-          <label><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search by name, vendor, or version" /></label>
-          <button onClick={() => setQuery("")}>⟳ Reset</button>
-        </div>
-
-        {error && <div className={styles.stateBox}><b>Failed to load data</b><p>{error}</p><button className="primary" onClick={() => void loadSoftware()}>Try again</button></div>}
-        {loading && !error && <div className={styles.stateBox}>Loading software catalog...</div>}
-
-        {!loading && !error && (
-          <div className="tableWrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>SOFTWARE NAME</th>
-                  <th>VENDOR</th>
-                  <th>VERSION</th>
-                  <th>PATCHES</th>
-                  <th>INSTALLATIONS</th>
-                  {isAdmin && <th>ACTIONS</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(item => (
-                  <tr key={item.id} onClick={() => void loadDetail(item.id)}>
-                    <td><button className="machineName">◫ {item.name}</button></td>
-                    <td>{item.vendor}</td>
-                    <td>{item.currentVersion || "—"}</td>
-                    <td>{item._count?.patches ?? 0}</td>
-                    <td>{item._count?.installations ?? 0}</td>
-                    {isAdmin && (
-                      <td className={styles.actions} onClick={event => event.stopPropagation()}>
-                        <button onClick={() => startEdit(item)} title="Edit software">✎</button>
-                        <button onClick={() => void remove(item)} title="Delete software">⌫</button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filtered.length === 0 && <div className="empty">No matching software found.</div>}
-          </div>
-        )}
-
-        {!loading && !error && <div className="tableFoot"><span>Showing {filtered.length} of {items.length} software entries</span><div><button disabled>‹</button><b>1</b><button disabled>›</button></div></div>}
-=======
           <label>
             <span>⌕</span>
 
@@ -923,7 +826,6 @@ export default function SoftwarePage() {
               </div>
             </div>
           )}
->>>>>>> feature/security-risk-inventory
       </section>
 
       {/* ======================
@@ -931,17 +833,6 @@ export default function SoftwarePage() {
       ====================== */}
 
       {selected && (
-<<<<<<< HEAD
-        <div className="drawerBackdrop" onClick={() => setSelected(null)}>
-          <aside className="drawer" onClick={event => event.stopPropagation()}>
-            <div className="drawerHead"><div><small>SOFTWARE DETAILS</small><h2>◫ {selected.name}</h2></div><button onClick={() => setSelected(null)}>×</button></div>
-            <dl>
-              <div><dt>Vendor</dt><dd>{selected.vendor}</dd></div>
-              <div><dt>Current version</dt><dd>{selected.currentVersion || "—"}</dd></div>
-              <div><dt>Patch count</dt><dd>{selected._count?.patches ?? selected.patches?.length ?? 0}</dd></div>
-              <div><dt>Installation count</dt><dd>{selected._count?.installations ?? 0}</dd></div>
-              <div><dt>Last updated</dt><dd>{new Date(selected.updatedAt).toLocaleString("en-US")}</dd></div>
-=======
         <div
           className="drawerBackdrop"
           onClick={() =>
@@ -1046,19 +937,11 @@ export default function SoftwarePage() {
                   )}
                 </dd>
               </div>
->>>>>>> feature/security-risk-inventory
             </dl>
 
             {selected.patches
               ?.length ? (
               <>
-<<<<<<< HEAD
-                <h3>Related patches</h3>
-                <div className={styles.patchList}>{selected.patches.slice(0, 6).map(patch => <span key={patch.id}>{patch.code} · {patch.severity}</span>)}</div>
-              </>
-            ) : <div className="infoBox">ⓘ No related patches are available.</div>}
-            {isAdmin && <button className="drawerAction primary" onClick={() => startEdit(selected)}>✎ Edit software</button>}
-=======
                 <h3>
                   Bản vá liên quan
                 </h3>
@@ -1113,7 +996,6 @@ export default function SoftwarePage() {
                 phần mềm
               </button>
             )}
->>>>>>> feature/security-risk-inventory
           </aside>
         </div>
       )}
