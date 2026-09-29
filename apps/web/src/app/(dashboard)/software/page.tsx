@@ -1,9 +1,21 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import { Role } from "@patch-management/shared";
-import { ApiError, apiClient } from "@/lib/api";
+
+import {
+  ApiError,
+  apiClient,
+} from "@/lib/api";
+
 import { getStoredUser } from "@/lib/auth";
+
 import styles from "./software.module.css";
 
 type Software = {
@@ -13,8 +25,19 @@ type Software = {
   currentVersion: string | null;
   createdAt: string;
   updatedAt: string;
-  _count?: { patches: number; installations: number };
-  patches?: { id: string; code: string; title: string; severity: string; releasedAt: string }[];
+
+  _count?: {
+    patches: number;
+    installations: number;
+  };
+
+  patches?: {
+    id: string;
+    code: string;
+    title: string;
+    severity: string;
+    releasedAt: string;
+  }[];
 };
 
 type SoftwareForm = {
@@ -23,88 +46,290 @@ type SoftwareForm = {
   currentVersion: string;
 };
 
-const emptyForm: SoftwareForm = { name: "", vendor: "", currentVersion: "" };
+const emptyForm: SoftwareForm = {
+  name: "",
+  vendor: "",
+  currentVersion: "",
+};
 
 export default function SoftwarePage() {
-  const [items, setItems] = useState<Software[]>([]);
-  const [selected, setSelected] = useState<Software | null>(null);
-  const [query, setQuery] = useState("");
-  const [form, setForm] = useState<SoftwareForm>(emptyForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [formError, setFormError] = useState("");
-  const [toast, setToast] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [items, setItems] =
+    useState<Software[]>([]);
+
+  const [selected, setSelected] =
+    useState<Software | null>(null);
+
+  const [query, setQuery] =
+    useState("");
+
+  const [form, setForm] =
+    useState<SoftwareForm>(emptyForm);
+
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [formError, setFormError] =
+    useState("");
+
+  const [toast, setToast] =
+    useState("");
+
+  const [isAdmin, setIsAdmin] =
+    useState(false);
+
+  // ==========================
+  // INITIAL LOAD + ROLE
+  // ==========================
 
   useEffect(() => {
-    setIsAdmin(getStoredUser()?.role === Role.ADMIN);
+    const user = getStoredUser();
+
+    setIsAdmin(
+      user?.role === Role.ADMIN,
+    );
+
     void loadSoftware();
   }, []);
 
+  // ==========================
+  // SEARCH
+  // ==========================
+
   const filtered = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return items;
-    return items.filter(item => `${item.name} ${item.vendor} ${item.currentVersion ?? ""}`.toLowerCase().includes(normalized));
+    const normalized =
+      query.trim().toLowerCase();
+
+    if (!normalized) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      const text = `
+        ${item.name}
+        ${item.vendor}
+        ${item.currentVersion ?? ""}
+      `.toLowerCase();
+
+      return text.includes(normalized);
+    });
   }, [items, query]);
+
+  // ==========================
+  // LOAD SOFTWARE
+  // ==========================
 
   async function loadSoftware() {
     setLoading(true);
     setError("");
+
     try {
-      const data = await apiClient<Software[]>("/software");
+      const data =
+        await apiClient<Software[]>(
+          "/software",
+        );
+
       setItems(data);
-      setSelected(current => current ? data.find(item => item.id === current.id) ?? null : null);
+
+      setSelected((current) => {
+        if (!current) {
+          return null;
+        }
+
+        return (
+          data.find(
+            (item) =>
+              item.id === current.id,
+          ) ?? null
+        );
+      });
     } catch (err) {
+<<<<<<< HEAD
       setError(getErrorMessage(err, "Unable to load the software catalog."));
+=======
+      setError(
+        getErrorMessage(
+          err,
+          "Không tải được danh mục phần mềm.",
+        ),
+      );
+>>>>>>> feature/security-risk-inventory
     } finally {
       setLoading(false);
     }
   }
 
-  async function loadDetail(id: string) {
+  // ==========================
+  // LOAD DETAIL
+  // ==========================
+
+  async function loadDetail(
+    id: string,
+  ) {
     try {
-      setSelected(await apiClient<Software>(`/software/${id}`));
+      const detail =
+        await apiClient<Software>(
+          `/software/${id}`,
+        );
+
+      setSelected(detail);
     } catch (err) {
+<<<<<<< HEAD
       notify(getErrorMessage(err, "Unable to load software details."));
+=======
+      notify(
+        getErrorMessage(
+          err,
+          "Không tải được chi tiết phần mềm.",
+        ),
+      );
+>>>>>>> feature/security-risk-inventory
     }
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  // ==========================
+  // CREATE / UPDATE
+  // ==========================
+
+  async function submit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
-    if (!isAdmin) return;
+
+    if (!isAdmin) {
+      return;
+    }
+
+    const name = form.name.trim();
+    const vendor =
+      form.vendor.trim();
+
+    const currentVersion =
+      form.currentVersion.trim();
+
+    if (!name) {
+      setFormError(
+        "Tên phần mềm không được để trống.",
+      );
+      return;
+    }
+
+    if (!vendor) {
+      setFormError(
+        "Nhà cung cấp không được để trống.",
+      );
+      return;
+    }
+
     setSaving(true);
     setFormError("");
+
     try {
-      const body = JSON.stringify({
-        name: form.name,
-        vendor: form.vendor,
-        currentVersion: form.currentVersion || undefined,
-      });
+      const body =
+        JSON.stringify({
+          name,
+          vendor,
+
+          currentVersion:
+            currentVersion ||
+            undefined,
+        });
+
       if (editingId) {
+<<<<<<< HEAD
         await apiClient<Software>(`/software/${editingId}`, { method: "PATCH", body });
         notify("Software updated.");
       } else {
         await apiClient<Software>("/software", { method: "POST", body });
         notify("Software created.");
+=======
+        await apiClient<Software>(
+          `/software/${editingId}`,
+          {
+            method: "PATCH",
+            body,
+          },
+        );
+
+        notify(
+          "Đã cập nhật phần mềm.",
+        );
+      } else {
+        await apiClient<Software>(
+          "/software",
+          {
+            method: "POST",
+            body,
+          },
+        );
+
+        notify(
+          "Đã tạo phần mềm.",
+        );
+>>>>>>> feature/security-risk-inventory
       }
+
       resetForm();
+
       await loadSoftware();
     } catch (err) {
+<<<<<<< HEAD
       setFormError(getErrorMessage(err, "Unable to save the software entry."));
+=======
+      setFormError(
+        getErrorMessage(
+          err,
+          "Không lưu được phần mềm.",
+        ),
+      );
+>>>>>>> feature/security-risk-inventory
     } finally {
       setSaving(false);
     }
   }
 
-  function startEdit(item: Software) {
-    if (!isAdmin) return;
-    setEditingId(item.id);
-    setForm({ name: item.name, vendor: item.vendor, currentVersion: item.currentVersion ?? "" });
+  // ==========================
+  // EDIT
+  // ==========================
+
+  function startEdit(
+    item: Software,
+  ) {
+    if (!isAdmin) {
+      return;
+    }
+
+    setSelected(null);
+
+    setEditingId(
+      item.id,
+    );
+
+    setForm({
+      name: item.name,
+      vendor: item.vendor,
+
+      currentVersion:
+        item.currentVersion ?? "",
+    });
+
     setFormError("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
+<<<<<<< HEAD
   async function remove(item: Software) {
     if (!isAdmin) return;
     const ok = window.confirm(`Delete "${item.vendor} ${item.name}"? Related patches may also be affected.`);
@@ -117,32 +342,141 @@ export default function SoftwarePage() {
       await loadSoftware();
     } catch (err) {
       notify(getErrorMessage(err, "Unable to delete the software entry."));
+=======
+  // ==========================
+  // DELETE
+  // ==========================
+
+  async function remove(
+    item: Software,
+  ) {
+    if (!isAdmin) {
+      return;
+    }
+
+    const ok =
+      window.confirm(
+        `Bạn có chắc muốn xóa phần mềm "${item.vendor} ${item.name}" không?`,
+      );
+
+    if (!ok) {
+      return;
+    }
+
+    try {
+      await apiClient<{
+        deleted: boolean;
+      }>(
+        `/software/${item.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      notify(
+        "Đã xóa phần mềm.",
+      );
+
+      if (
+        selected?.id === item.id
+      ) {
+        setSelected(null);
+      }
+
+      if (
+        editingId === item.id
+      ) {
+        resetForm();
+      }
+
+      await loadSoftware();
+    } catch (err) {
+      notify(
+        getErrorMessage(
+          err,
+          "Không xóa được phần mềm.",
+        ),
+      );
+>>>>>>> feature/security-risk-inventory
     }
   }
 
+  // ==========================
+  // RESET FORM
+  // ==========================
+
   function resetForm() {
     setEditingId(null);
-    setForm(emptyForm);
+
+    setForm({
+      ...emptyForm,
+    });
+
     setFormError("");
   }
 
-  function notify(message: string) {
+  // ==========================
+  // TOAST
+  // ==========================
+
+  function notify(
+    message: string,
+  ) {
     setToast(message);
-    window.setTimeout(() => setToast(""), 2600);
+
+    window.setTimeout(
+      () => {
+        setToast("");
+      },
+      2600,
+    );
   }
 
   return (
     <>
       <section className="dataPanel">
+        {/* ======================
+            HEADER
+        ====================== */}
+
         <div className="dataHead">
           <div>
+<<<<<<< HEAD
             <h2>Software catalog</h2>
             <p>Manage software names, vendors, and current versions.</p>
           </div>
           <button className="primary" onClick={() => void loadSoftware()} disabled={loading}>↻ Refresh</button>
+=======
+            <h2>
+              Danh mục phần mềm
+            </h2>
+
+            <p>
+              Quản lý tên phần mềm,
+              nhà cung cấp và phiên
+              bản hiện tại.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="primary"
+            onClick={() =>
+              void loadSoftware()
+            }
+            disabled={loading}
+          >
+            ↻ Làm mới
+          </button>
+>>>>>>> feature/security-risk-inventory
         </div>
 
+        {/* ======================
+            ADMIN CREATE / EDIT
+        ====================== */}
+
         {isAdmin && (
+<<<<<<< HEAD
           <form className={styles.formBar} onSubmit={submit}>
             <label>Software name<input value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} maxLength={120} required /></label>
             <label>Vendor<input value={form.vendor} onChange={event => setForm({ ...form, vendor: event.target.value })} maxLength={120} required /></label>
@@ -150,12 +484,147 @@ export default function SoftwarePage() {
             <div className={styles.formActions}>
               <button className="primary" disabled={saving}>{saving ? "Saving..." : editingId ? "Save changes" : "Create new"}</button>
               {editingId && <button type="button" onClick={resetForm}>Cancel</button>}
+=======
+          <form
+            className={
+              styles.formBar
+            }
+            onSubmit={submit}
+          >
+            <label>
+              Tên phần mềm
+
+              <input
+                type="text"
+                value={form.name}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    name:
+                      event.target
+                        .value,
+                  })
+                }
+                maxLength={120}
+                required
+                placeholder="Ví dụ: Mozilla Firefox"
+              />
+            </label>
+
+            <label>
+              Nhà cung cấp
+
+              <input
+                type="text"
+                value={
+                  form.vendor
+                }
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    vendor:
+                      event.target
+                        .value,
+                  })
+                }
+                maxLength={120}
+                required
+                placeholder="Ví dụ: Mozilla"
+              />
+            </label>
+
+            <label>
+              Phiên bản
+
+              <input
+                type="text"
+                value={
+                  form.currentVersion
+                }
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+
+                    currentVersion:
+                      event.target
+                        .value,
+                  })
+                }
+                maxLength={80}
+                placeholder="Tùy chọn"
+              />
+            </label>
+
+            <div
+              className={
+                styles.formActions
+              }
+              style={{
+                display: "flex",
+                alignItems:
+                  "flex-end",
+                gap: 8,
+              }}
+            >
+              <button
+                type="submit"
+                className="primary"
+                disabled={saving}
+                style={{
+                  minWidth: 150,
+                  minHeight: 34,
+                  padding:
+                    "0 14px",
+                  whiteSpace:
+                    "nowrap",
+                }}
+              >
+                {saving
+                  ? "Đang lưu..."
+                  : editingId
+                    ? "Lưu thay đổi"
+                    : "＋ Thêm phần mềm"}
+              </button>
+
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={
+                    resetForm
+                  }
+                  disabled={
+                    saving
+                  }
+                  style={{
+                    minHeight: 34,
+                    padding:
+                      "0 14px",
+                  }}
+                >
+                  Hủy
+                </button>
+              )}
+>>>>>>> feature/security-risk-inventory
             </div>
-            {formError && <div className={styles.formError}>{formError}</div>}
+
+            {formError && (
+              <div
+                className={
+                  styles.formError
+                }
+              >
+                {formError}
+              </div>
+            )}
           </form>
         )}
 
+        {/* ======================
+            SEARCH
+        ====================== */}
+
         <div className="tableTools">
+<<<<<<< HEAD
           <label><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search by name, vendor, or version" /></label>
           <button onClick={() => setQuery("")}>⟳ Reset</button>
         </div>
@@ -199,9 +668,270 @@ export default function SoftwarePage() {
         )}
 
         {!loading && !error && <div className="tableFoot"><span>Showing {filtered.length} of {items.length} software entries</span><div><button disabled>‹</button><b>1</b><button disabled>›</button></div></div>}
+=======
+          <label>
+            <span>⌕</span>
+
+            <input
+              type="text"
+              value={query}
+              onChange={(event) =>
+                setQuery(
+                  event.target
+                    .value,
+                )
+              }
+              placeholder="Tìm theo tên, nhà cung cấp hoặc phiên bản"
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={() =>
+              setQuery("")
+            }
+          >
+            ⟳ Đặt lại
+          </button>
+        </div>
+
+        {/* ======================
+            ERROR
+        ====================== */}
+
+        {error && (
+          <div
+            className={
+              styles.stateBox
+            }
+          >
+            <b>
+              Lỗi tải dữ liệu
+            </b>
+
+            <p>{error}</p>
+
+            <button
+              type="button"
+              className="primary"
+              onClick={() =>
+                void loadSoftware()
+              }
+            >
+              Thử lại
+            </button>
+          </div>
+        )}
+
+        {/* ======================
+            LOADING
+        ====================== */}
+
+        {loading &&
+          !error && (
+            <div
+              className={
+                styles.stateBox
+              }
+            >
+              Đang tải danh mục
+              phần mềm...
+            </div>
+          )}
+
+        {/* ======================
+            TABLE
+        ====================== */}
+
+        {!loading &&
+          !error && (
+            <div className="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>
+                      TÊN PHẦN MỀM
+                    </th>
+
+                    <th>
+                      NHÀ CUNG CẤP
+                    </th>
+
+                    <th>
+                      PHIÊN BẢN
+                    </th>
+
+                    <th>
+                      BẢN VÁ
+                    </th>
+
+                    <th>
+                      CÀI ĐẶT
+                    </th>
+
+                    {isAdmin && (
+                      <th>
+                        THAO TÁC
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filtered.map(
+                    (item) => (
+                      <tr
+                        key={
+                          item.id
+                        }
+                        onClick={() =>
+                          void loadDetail(
+                            item.id,
+                          )
+                        }
+                      >
+                        <td>
+                          <button
+                            type="button"
+                            className="machineName"
+                            onClick={(
+                              event,
+                            ) => {
+                              event.stopPropagation();
+
+                              void loadDetail(
+                                item.id,
+                              );
+                            }}
+                          >
+                            ◫{" "}
+                            {
+                              item.name
+                            }
+                          </button>
+                        </td>
+
+                        <td>
+                          {
+                            item.vendor
+                          }
+                        </td>
+
+                        <td>
+                          {item.currentVersion ||
+                            "—"}
+                        </td>
+
+                        <td>
+                          {item
+                            ._count
+                            ?.patches ??
+                            0}
+                        </td>
+
+                        <td>
+                          {item
+                            ._count
+                            ?.installations ??
+                            0}
+                        </td>
+
+                        {isAdmin && (
+                          <td
+                            className={
+                              styles.actions
+                            }
+                            onClick={(
+                              event,
+                            ) =>
+                              event.stopPropagation()
+                            }
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                startEdit(
+                                  item,
+                                )
+                              }
+                              title="Sửa phần mềm"
+                            >
+                              ✎
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void remove(
+                                  item,
+                                )
+                              }
+                              title="Xóa phần mềm"
+                            >
+                              ⌫
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+
+              {filtered.length ===
+                0 && (
+                <div className="empty">
+                  Chưa có phần mềm
+                  phù hợp.
+                </div>
+              )}
+            </div>
+          )}
+
+        {/* ======================
+            TABLE FOOTER
+        ====================== */}
+
+        {!loading &&
+          !error && (
+            <div className="tableFoot">
+              <span>
+                Hiển thị{" "}
+                {
+                  filtered.length
+                }{" "}
+                / {items.length}{" "}
+                phần mềm
+              </span>
+
+              <div>
+                <button
+                  type="button"
+                  disabled
+                >
+                  ‹
+                </button>
+
+                <b>1</b>
+
+                <button
+                  type="button"
+                  disabled
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          )}
+>>>>>>> feature/security-risk-inventory
       </section>
 
+      {/* ======================
+          DETAIL DRAWER
+      ====================== */}
+
       {selected && (
+<<<<<<< HEAD
         <div className="drawerBackdrop" onClick={() => setSelected(null)}>
           <aside className="drawer" onClick={event => event.stopPropagation()}>
             <div className="drawerHead"><div><small>SOFTWARE DETAILS</small><h2>◫ {selected.name}</h2></div><button onClick={() => setSelected(null)}>×</button></div>
@@ -211,25 +941,221 @@ export default function SoftwarePage() {
               <div><dt>Patch count</dt><dd>{selected._count?.patches ?? selected.patches?.length ?? 0}</dd></div>
               <div><dt>Installation count</dt><dd>{selected._count?.installations ?? 0}</dd></div>
               <div><dt>Last updated</dt><dd>{new Date(selected.updatedAt).toLocaleString("en-US")}</dd></div>
+=======
+        <div
+          className="drawerBackdrop"
+          onClick={() =>
+            setSelected(null)
+          }
+        >
+          <aside
+            className="drawer"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="drawerHead">
+              <div>
+                <small>
+                  CHI TIẾT PHẦN MỀM
+                </small>
+
+                <h2>
+                  ◫{" "}
+                  {
+                    selected.name
+                  }
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSelected(
+                    null,
+                  )
+                }
+              >
+                ×
+              </button>
+            </div>
+
+            <dl>
+              <div>
+                <dt>
+                  Nhà cung cấp
+                </dt>
+
+                <dd>
+                  {
+                    selected.vendor
+                  }
+                </dd>
+              </div>
+
+              <div>
+                <dt>
+                  Phiên bản hiện tại
+                </dt>
+
+                <dd>
+                  {selected.currentVersion ||
+                    "—"}
+                </dd>
+              </div>
+
+              <div>
+                <dt>
+                  Số bản vá
+                </dt>
+
+                <dd>
+                  {selected
+                    ._count
+                    ?.patches ??
+                    selected
+                      .patches
+                      ?.length ??
+                    0}
+                </dd>
+              </div>
+
+              <div>
+                <dt>
+                  Số lượt cài đặt
+                </dt>
+
+                <dd>
+                  {selected
+                    ._count
+                    ?.installations ??
+                    0}
+                </dd>
+              </div>
+
+              <div>
+                <dt>
+                  Cập nhật cuối
+                </dt>
+
+                <dd>
+                  {new Date(
+                    selected.updatedAt,
+                  ).toLocaleString(
+                    "vi-VN",
+                  )}
+                </dd>
+              </div>
+>>>>>>> feature/security-risk-inventory
             </dl>
-            {selected.patches?.length ? (
+
+            {selected.patches
+              ?.length ? (
               <>
+<<<<<<< HEAD
                 <h3>Related patches</h3>
                 <div className={styles.patchList}>{selected.patches.slice(0, 6).map(patch => <span key={patch.id}>{patch.code} · {patch.severity}</span>)}</div>
               </>
             ) : <div className="infoBox">ⓘ No related patches are available.</div>}
             {isAdmin && <button className="drawerAction primary" onClick={() => startEdit(selected)}>✎ Edit software</button>}
+=======
+                <h3>
+                  Bản vá liên quan
+                </h3>
+
+                <div
+                  className={
+                    styles.patchList
+                  }
+                >
+                  {selected.patches
+                    .slice(0, 6)
+                    .map(
+                      (
+                        patch,
+                      ) => (
+                        <span
+                          key={
+                            patch.id
+                          }
+                        >
+                          {
+                            patch.code
+                          }{" "}
+                          ·{" "}
+                          {
+                            patch.severity
+                          }
+                        </span>
+                      ),
+                    )}
+                </div>
+              </>
+            ) : (
+              <div className="infoBox">
+                ⓘ Chưa có bản vá
+                liên quan trong hệ
+                thống.
+              </div>
+            )}
+
+            {isAdmin && (
+              <button
+                type="button"
+                className="drawerAction primary"
+                onClick={() =>
+                  startEdit(
+                    selected,
+                  )
+                }
+              >
+                ✎ Chỉnh sửa
+                phần mềm
+              </button>
+            )}
+>>>>>>> feature/security-risk-inventory
           </aside>
         </div>
       )}
 
-      <div className={`toast ${toast ? "show" : ""}`}>✓ {toast}</div>
+      {/* ======================
+          TOAST
+      ====================== */}
+
+      <div
+        className={`toast ${
+          toast
+            ? "show"
+            : ""
+        }`}
+      >
+        ✓ {toast}
+      </div>
     </>
   );
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof ApiError && Array.isArray(error.message)) return error.message.join(", ");
-  if (error instanceof Error && error.message) return error.message;
+function getErrorMessage(
+  error: unknown,
+  fallback: string,
+) {
+  if (
+    error instanceof ApiError &&
+    Array.isArray(
+      error.message,
+    )
+  ) {
+    return error.message.join(
+      ", ",
+    );
+  }
+
+  if (
+    error instanceof Error &&
+    error.message
+  ) {
+    return error.message;
+  }
+
   return fallback;
 }
