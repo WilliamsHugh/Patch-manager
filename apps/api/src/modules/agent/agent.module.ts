@@ -5,9 +5,6 @@ import { AgentTokenGuard } from "./agent-token.guard";
 
 @Module({
   controllers: [AgentController],
-  providers: [
-    AgentService,
-    AgentTokenGuard,
-  ],
+  providers: [AgentService, AgentTokenGuard],
 })
 export class AgentModule {}

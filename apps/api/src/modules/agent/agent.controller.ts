@@ -1,31 +1,15 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { Role } from "@prisma/client";
-import { Public } from "../../common/decorators/public.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
-import { AgentTokenGuard } from "./agent-token.guard";
+import { Public } from "../../common/decorators/public.decorator";
 import { AgentService } from "./agent.service";
-import {
-  AgentHeartbeatDto,
-  AgentScanDto,
-} from "./dto/agent-event.dto";
+import { AgentTokenGuard } from "./agent-token.guard";
 
 @Controller("agent")
 export class AgentController {
   constructor(private readonly service: AgentService) {}
 
-  @Roles(
-    Role.ADMIN,
-    Role.MANAGER,
-    Role.IT_HELPDESK,
-    Role.SECURITY_ANALYST,
-  )
+  @Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.SECURITY_ANALYST)
   @Get("status")
   status() {
     return this.service.findAllStatus();
@@ -36,18 +20,15 @@ export class AgentController {
   @Post(":deviceId/heartbeat")
   heartbeat(
     @Param("deviceId") deviceId: string,
-    @Body() dto: AgentHeartbeatDto,
+    @Body("version") version?: string,
   ) {
-    return this.service.heartbeat(deviceId, dto);
+    return this.service.heartbeat(deviceId, version);
   }
 
   @Public()
   @UseGuards(AgentTokenGuard)
   @Post(":deviceId/scan")
-  scan(
-    @Param("deviceId") deviceId: string,
-    @Body() dto: AgentScanDto,
-  ) {
-    return this.service.scan(deviceId, dto);
+  scan(@Param("deviceId") deviceId: string) {
+    return this.service.recordScan(deviceId);
   }
 }
