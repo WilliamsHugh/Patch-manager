@@ -25,12 +25,14 @@ This contract protects the project's Azure Update Manager-inspired interface whi
 - Do not introduce a second visual system with a separate full-page gray canvas, large rounded cards, prominent shadows, oversized headings, or hard-coded duplicate color palettes. Functional status colors are allowed when they remain consistent with the shared tokens.
 - Avoid broad global selectors and `!important` for module-specific styling. A CSS module must not unexpectedly restyle the shared shell or another route. New CSS should be responsive without causing horizontal overflow at common desktop and mobile widths.
 - Keep buttons, inputs, tables, badges, focus states, and empty/error states visually consistent with existing dashboard modules. Do not change a working module's behavior merely to restyle it.
+- Use `DashboardActionButton` for dashboard-module Refresh and Reset controls. Its Azure-blue, 32px command style is the shared baseline; do not recreate these controls with page-specific button CSS.
 
 ## 4. Content and accessibility
 
 - All user-facing UI copy must be in **English**, including labels, navigation descriptions, placeholders, validation and error messages, loading states, button text, and `aria-label` values. Technical identifiers and data values are exempt.
 - Use semantic headings in order: the shared layout provides the page `<h1>`; content starts at `<h2>` when a heading is needed. Give icon-only controls an accessible name and visible keyboard focus.
 - Provide loading, empty, and error states for data-backed modules. Preserve role-aware action visibility and existing API behavior while changing presentation.
+- Render the panel/card structure immediately when a dashboard route is selected. Show padded loading or empty content inside it while API requests run; independent data sources should not hold unrelated cards behind a combined loading gate.
 
 ## 5. Required checks before a frontend PR
 

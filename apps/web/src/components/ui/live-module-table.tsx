@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/lib/api";
+import { DashboardActionButton } from "./dashboard-action-button";
 
 type Column<T> = { label: string; value: (row: T) => string };
 
@@ -27,9 +28,10 @@ export function LiveModuleTable<T extends { id: string }>({
   ), [rows, columns, query]);
 
   return <section className="dataPanel modulePanel">
-    <div className="dataHead"><div><h2>{title}</h2><p>{description}</p></div><button type="button" onClick={() => void load()}>Refresh data</button></div>
-    <div className="tableTools"><label><span>⌕</span><input aria-label={`Search ${title.toLowerCase()}`} placeholder={`Search ${title.toLowerCase()}...`} value={query} onChange={event => setQuery(event.target.value)} /></label><button type="button" onClick={() => setQuery("")}>Reset</button></div>
-    {error && <p role="alert">{error}</p>}
-    {loading ? <p>Loading {title.toLowerCase()}...</p> : !error && <><div className="tableWrap"><table><thead><tr>{columns.map(column => <th key={column.label}>{column.label}</th>)}</tr></thead><tbody>{filtered.map(row => <tr key={row.id}>{columns.map(column => <td key={column.label}>{column.value(row) || "—"}</td>)}</tr>)}</tbody></table>{filtered.length === 0 && <div className="empty">{rows.length ? "No results match the current search." : `No ${title.toLowerCase()} exist in the database.`}</div>}</div><div className="tableFoot"><span>Showing {filtered.length} of {rows.length}</span></div></>}
+    <div className="dataHead"><div><h2>{title}</h2><p>{description}</p></div><DashboardActionButton onClick={() => void load()} disabled={loading}>Refresh data</DashboardActionButton></div>
+    <div className="tableTools"><label><span>⌕</span><input aria-label={`Search ${title.toLowerCase()}`} placeholder={`Search ${title.toLowerCase()}...`} value={query} onChange={event => setQuery(event.target.value)} /></label><DashboardActionButton onClick={() => setQuery("")}>Reset</DashboardActionButton></div>
+    {error && <p className="panelMessage" role="alert">{error}</p>}
+    {loading && !rows.length && <p className="panelMessage" role="status">Loading {title.toLowerCase()}...</p>}
+    {!error && <><div className="tableWrap"><table><thead><tr>{columns.map(column => <th key={column.label}>{column.label}</th>)}</tr></thead><tbody>{filtered.map(row => <tr key={row.id}>{columns.map(column => <td key={column.label}>{column.value(row) || "—"}</td>)}</tr>)}</tbody></table>{!loading && filtered.length === 0 && <div className="empty">{rows.length ? "No results match the current search." : `No ${title.toLowerCase()} exist in the database.`}</div>}</div><div className="tableFoot"><span>Showing {filtered.length} of {rows.length}</span></div></>}
   </section>;
 }
