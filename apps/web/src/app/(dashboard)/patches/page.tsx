@@ -61,8 +61,7 @@ export default function Page() {
   const [formError, setFormError] =
     useState<string | null>(null);
 
-  // Quyền quản lý Patch:
-  // chỉ ADMIN được tạo / sửa / xóa
+  // Only administrators may create, edit, or delete patches.
   const [isAdmin, setIsAdmin] =
     useState(false);
 
@@ -82,7 +81,7 @@ export default function Page() {
       setError(
         err instanceof Error
           ? err.message
-          : "Không thể tải danh sách phần mềm.",
+          : "Could not load the software list.",
       );
     }
   }
@@ -128,7 +127,7 @@ export default function Page() {
       setError(
         err instanceof Error
           ? err.message
-          : "Không thể tải danh sách bản vá.",
+          : "Could not load patches.",
       );
     } finally {
       setLoading(false);
@@ -211,7 +210,7 @@ export default function Page() {
       setError(
         err instanceof Error
           ? err.message
-          : "Không thể tải chi tiết bản vá.",
+          : "Could not load patch details.",
       );
     }
   }
@@ -229,35 +228,35 @@ export default function Page() {
   ) {
     if (!isAdmin) {
       setFormError(
-        "Bạn không có quyền thay đổi bản vá.",
+        "You do not have permission to change patches.",
       );
       return;
     }
 
     if (!form.code.trim()) {
       setFormError(
-        "Mã bản vá không được để trống.",
+        "Patch code is required.",
       );
       return;
     }
 
     if (!form.title.trim()) {
       setFormError(
-        "Tiêu đề không được để trống.",
+        "Title is required.",
       );
       return;
     }
 
     if (!form.softwareId) {
       setFormError(
-        "Vui lòng chọn phần mềm.",
+        "Select software.",
       );
       return;
     }
 
     if (!form.releasedAt) {
       setFormError(
-        "Vui lòng chọn ngày phát hành.",
+        "Select a release date.",
       );
       return;
     }
@@ -316,7 +315,7 @@ export default function Page() {
       setFormError(
         err instanceof Error
           ? err.message
-          : "Không thể lưu bản vá.",
+          : "Could not save the patch.",
       );
     } finally {
       setSaving(false);
@@ -336,7 +335,7 @@ export default function Page() {
 
     const confirmed =
       window.confirm(
-        `Bạn có chắc muốn xóa bản vá "${patch.code}" không?`,
+        `Delete patch "${patch.code}"? This action cannot be undone.`,
       );
 
     if (!confirmed) {
@@ -373,7 +372,7 @@ export default function Page() {
       setError(
         err instanceof Error
           ? err.message
-          : "Không thể xóa bản vá.",
+          : "Could not delete the patch.",
       );
     }
   }
@@ -417,6 +416,7 @@ export default function Page() {
     setSearch("");
     setSeverity("");
     setSoftwareId("");
+    if (!severity && !softwareId) void loadPatches();
   }
 
   return (
@@ -427,17 +427,15 @@ export default function Page() {
         <div className="dataHead">
           <div>
             <h2>
-              Danh sách bản vá
+              Patch list
             </h2>
 
             <p>
-              Quản lý bản vá, mức độ
-              nghiêm trọng và phần mềm
-              bị ảnh hưởng.
+              Manage patches, severity, and affected software.
             </p>
           </div>
 
-          {/* Chỉ ADMIN thấy nút tạo */}
+          {/* Only administrators can create patches. */}
           {isAdmin && (
             <button
               type="button"
@@ -446,7 +444,7 @@ export default function Page() {
                 openCreateForm
               }
             >
-              ＋ Tạo bản vá
+              ＋ Create patch
             </button>
           )}
         </div>
@@ -459,7 +457,7 @@ export default function Page() {
 
             <input
               type="text"
-              placeholder="Tìm mã, tiêu đề, phần mềm..."
+              placeholder="Search code, title, or software..."
               value={search}
               onChange={(event) =>
                 setSearch(
@@ -479,7 +477,7 @@ export default function Page() {
             }
           >
             <option value="">
-              Tất cả mức độ
+              All severities
             </option>
 
             <option
@@ -487,7 +485,7 @@ export default function Page() {
                 PatchSeverity.LOW
               }
             >
-              Thấp
+              Low
             </option>
 
             <option
@@ -495,7 +493,7 @@ export default function Page() {
                 PatchSeverity.MEDIUM
               }
             >
-              Trung bình
+              Medium
             </option>
 
             <option
@@ -503,7 +501,7 @@ export default function Page() {
                 PatchSeverity.HIGH
               }
             >
-              Cao
+              High
             </option>
 
             <option
@@ -511,7 +509,7 @@ export default function Page() {
                 PatchSeverity.CRITICAL
               }
             >
-              Nghiêm trọng
+              Critical
             </option>
           </select>
 
@@ -524,7 +522,7 @@ export default function Page() {
             }
           >
             <option value="">
-              Tất cả phần mềm
+              All software
             </option>
 
             {software.map(
@@ -546,16 +544,7 @@ export default function Page() {
               resetFilters
             }
           >
-            ⟳ Đặt lại
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              void loadPatches()
-            }
-          >
-            ⟳ Làm mới
+            Reset
           </button>
         </div>
 
@@ -563,7 +552,7 @@ export default function Page() {
 
         {loading && (
           <div className="empty">
-            Đang tải danh sách bản vá...
+            Loading patches...
           </div>
         )}
 
@@ -587,7 +576,7 @@ export default function Page() {
                 void loadPatches()
               }
             >
-              Thử lại
+              Try again
             </button>
           </div>
         )}
@@ -599,15 +588,14 @@ export default function Page() {
           patches.length === 0 && (
             <div className="empty">
               <b>
-                Không có bản vá phù hợp
+                No matching patches
               </b>
 
               <p>
-                Hãy thay đổi bộ lọc
-                hoặc kiểm tra lại dữ liệu.
+                Change the filters or check the available data.
               </p>
 
-              {/* Chỉ ADMIN được tạo */}
+              {/* Only administrators can create patches. */}
               {isAdmin && (
                 <button
                   type="button"
@@ -616,7 +604,7 @@ export default function Page() {
                     openCreateForm
                   }
                 >
-                  ＋ Tạo bản vá
+                  ＋ Create patch
                 </button>
               )}
             </div>
@@ -630,8 +618,7 @@ export default function Page() {
           filteredPatches.length ===
             0 && (
             <div className="empty">
-              Không tìm thấy bản vá
-              theo từ khóa.
+              No patches match your search.
             </div>
           )}
 

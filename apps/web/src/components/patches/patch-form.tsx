@@ -114,14 +114,15 @@ export function PatchForm({
 
             <h2>
               {patch
-                ? "Chỉnh sửa bản vá"
-                : "Tạo bản vá"}
+                ? "Edit patch"
+                : "Create patch"}
             </h2>
           </div>
 
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close patch form"
           >
             ×
           </button>
@@ -137,7 +138,7 @@ export function PatchForm({
             </div>
           )}
 
-          {/* MÃ BẢN VÁ */}
+          {/* PATCH CODE */}
           <label
             style={{
               display: "flex",
@@ -146,7 +147,7 @@ export function PatchForm({
               marginTop: 22,
             }}
           >
-            <b>Mã bản vá *</b>
+            <b>Patch code *</b>
 
             <input
               value={form.code}
@@ -156,12 +157,12 @@ export function PatchForm({
                   code: event.target.value,
                 }))
               }
-              placeholder="Ví dụ: CVE-2026-1234"
+              placeholder="Example: CVE-2026-1234"
               required
             />
           </label>
 
-          {/* TIÊU ĐỀ */}
+          {/* TITLE */}
           <label
             style={{
               display: "flex",
@@ -170,7 +171,7 @@ export function PatchForm({
               marginTop: 18,
             }}
           >
-            <b>Tiêu đề *</b>
+            <b>Title *</b>
 
             <input
               value={form.title}
@@ -185,7 +186,7 @@ export function PatchForm({
             />
           </label>
 
-          {/* PHẦN MỀM */}
+          {/* SOFTWARE */}
           <label
             style={{
               display: "flex",
@@ -194,7 +195,7 @@ export function PatchForm({
               marginTop: 18,
             }}
           >
-            <b>Phần mềm *</b>
+            <b>Software *</b>
 
             <select
               value={form.softwareId}
@@ -208,7 +209,7 @@ export function PatchForm({
               required
             >
               <option value="">
-                Chọn phần mềm
+                Select software
               </option>
 
               {software.map((item) => (
@@ -231,7 +232,7 @@ export function PatchForm({
               marginTop: 18,
             }}
           >
-            <b>Mức độ *</b>
+            <b>Severity *</b>
 
             <select
               value={form.severity}
@@ -248,19 +249,19 @@ export function PatchForm({
               <option
                 value={PatchSeverity.LOW}
               >
-                Thấp
+                Low
               </option>
 
               <option
                 value={PatchSeverity.MEDIUM}
               >
-                Trung bình
+                Medium
               </option>
 
               <option
                 value={PatchSeverity.HIGH}
               >
-                Cao
+                High
               </option>
 
               <option
@@ -268,7 +269,7 @@ export function PatchForm({
                   PatchSeverity.CRITICAL
                 }
               >
-                Nghiêm trọng
+                Critical
               </option>
             </select>
           </label>
@@ -282,7 +283,7 @@ export function PatchForm({
               marginTop: 18,
             }}
           >
-            <b>Phiên bản</b>
+            <b>Version</b>
 
             <input
               value={form.version}
@@ -292,7 +293,7 @@ export function PatchForm({
                   version: event.target.value,
                 }))
               }
-              placeholder="Ví dụ: 129.0"
+              placeholder="Example: 129.0"
             />
           </label>
 
@@ -305,7 +306,7 @@ export function PatchForm({
               marginTop: 18,
             }}
           >
-            <b>Ngày phát hành *</b>
+            <b>Release date *</b>
 
             <input
               type="date"
@@ -330,7 +331,7 @@ export function PatchForm({
               marginTop: 18,
             }}
           >
-            <b>Mô tả</b>
+            <b>Description</b>
 
             <textarea
               value={form.description}
@@ -342,7 +343,7 @@ export function PatchForm({
                 }))
               }
               rows={4}
-              placeholder="Mô tả nội dung bản vá..."
+              placeholder="Describe this patch..."
             />
           </label>
 
@@ -370,7 +371,7 @@ export function PatchForm({
             />
 
             <span>
-              Yêu cầu khởi động lại thiết bị
+              Device restart required
             </span>
           </label>
 
@@ -382,10 +383,10 @@ export function PatchForm({
               disabled={saving}
             >
               {saving
-                ? "Đang lưu..."
+                ? "Saving..."
                 : patch
-                  ? "Lưu thay đổi"
-                  : "Tạo bản vá"}
+                  ? "Save changes"
+                  : "Create patch"}
             </button>
 
             <button
@@ -394,7 +395,7 @@ export function PatchForm({
               onClick={onClose}
               disabled={saving}
             >
-              Hủy
+              Cancel
             </button>
           </div>
         </form>

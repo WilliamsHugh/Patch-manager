@@ -32,19 +32,19 @@ interface PatchTableProps {
 }
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("vi-VN");
+  return new Date(value).toLocaleDateString("en-US");
 }
 
 function severityLabel(severity: PatchSeverity) {
   switch (severity) {
     case PatchSeverity.CRITICAL:
-      return "Nghiêm trọng";
+      return "Critical";
     case PatchSeverity.HIGH:
-      return "Cao";
+      return "High";
     case PatchSeverity.MEDIUM:
-      return "Trung bình";
+      return "Medium";
     case PatchSeverity.LOW:
-      return "Thấp";
+      return "Low";
     default:
       return severity;
   }
@@ -63,14 +63,14 @@ export function PatchTable({
         <table>
           <thead>
             <tr>
-              <th>MÃ BẢN VÁ</th>
-              <th>TIÊU ĐỀ</th>
-              <th>PHẦN MỀM</th>
-              <th>MỨC ĐỘ</th>
-              <th>PHIÊN BẢN</th>
-              <th>NGÀY PHÁT HÀNH</th>
-              <th>KHỞI ĐỘNG LẠI</th>
-              <th>THAO TÁC</th>
+              <th>PATCH CODE</th>
+              <th>TITLE</th>
+              <th>SOFTWARE</th>
+              <th>SEVERITY</th>
+              <th>VERSION</th>
+              <th>RELEASE DATE</th>
+              <th>RESTART</th>
+              <th>ACTIONS</th>
             </tr>
           </thead>
 
@@ -103,7 +103,7 @@ export function PatchTable({
                 <td>{formatDate(patch.releasedAt)}</td>
 
                 <td>
-                  {patch.requiresRestart ? "Có" : "Không"}
+                  {patch.requiresRestart ? "Yes" : "No"}
                 </td>
 
                 <td>
@@ -124,7 +124,7 @@ export function PatchTable({
                         cursor: "pointer",
                       }}
                     >
-                      Xem
+                      View
                     </button>
 
                     {canManage && (
@@ -139,7 +139,7 @@ export function PatchTable({
                             cursor: "pointer",
                           }}
                         >
-                          Chỉnh sửa
+                          Edit
                         </button>
 
                         <button
@@ -152,7 +152,7 @@ export function PatchTable({
                             cursor: "pointer",
                           }}
                         >
-                          Xóa
+                          Delete
                         </button>
                       </>
                     )}
@@ -166,7 +166,7 @@ export function PatchTable({
 
       <div className="tableFoot">
         <span>
-          Tổng cộng: <b>{patches.length}</b> bản vá
+          Total: <strong>{patches.length}</strong> patches
         </span>
       </div>
     </>

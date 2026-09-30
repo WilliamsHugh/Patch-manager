@@ -10,7 +10,7 @@ interface PatchDetailProps {
 }
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("vi-VN");
+  return new Date(value).toLocaleDateString("en-US");
 }
 
 function severityLabel(
@@ -18,16 +18,16 @@ function severityLabel(
 ) {
   switch (severity) {
     case "CRITICAL":
-      return "Nghiêm trọng";
+      return "Critical";
 
     case "HIGH":
-      return "Cao";
+      return "High";
 
     case "MEDIUM":
-      return "Trung bình";
+      return "Medium";
 
     case "LOW":
-      return "Thấp";
+      return "Low";
 
     default:
       return severity;
@@ -61,6 +61,7 @@ export function PatchDetail({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close patch details"
           >
             ×
           </button>
@@ -68,20 +69,20 @@ export function PatchDetail({
 
         <div style={{ marginTop: 24 }}>
           <p>
-            <b>Tiêu đề:</b>
+            <b>Title:</b>
             <br />
             {patch.title}
           </p>
 
           <p style={{ marginTop: 16 }}>
-            <b>Phần mềm:</b>
+            <b>Software:</b>
             <br />
             {patch.software.name} —{" "}
             {patch.software.vendor}
           </p>
 
           <p style={{ marginTop: 16 }}>
-            <b>Mức độ:</b>
+            <b>Severity:</b>
             <br />
             {severityLabel(
               patch.severity,
@@ -89,13 +90,13 @@ export function PatchDetail({
           </p>
 
           <p style={{ marginTop: 16 }}>
-            <b>Phiên bản:</b>
+            <b>Version:</b>
             <br />
             {patch.version ?? "—"}
           </p>
 
           <p style={{ marginTop: 16 }}>
-            <b>Ngày phát hành:</b>
+            <b>Release date:</b>
             <br />
             {formatDate(
               patch.releasedAt,
@@ -103,18 +104,18 @@ export function PatchDetail({
           </p>
 
           <p style={{ marginTop: 16 }}>
-            <b>Khởi động lại:</b>
+            <b>Restart required:</b>
             <br />
             {patch.requiresRestart
-              ? "Có"
-              : "Không"}
+              ? "Yes"
+              : "No"}
           </p>
 
           <p style={{ marginTop: 16 }}>
-            <b>Mô tả:</b>
+            <b>Description:</b>
             <br />
             {patch.description ||
-              "Không có mô tả."}
+              "No description available."}
           </p>
 
           <div style={{ marginTop: 30 }}>
@@ -126,7 +127,7 @@ export function PatchDetail({
                   onEdit(patch)
                 }
               >
-                Chỉnh sửa
+                Edit
               </button>
             )}
 
@@ -135,7 +136,7 @@ export function PatchDetail({
               className="drawerAction"
               onClick={onClose}
             >
-              Đóng
+              Close
             </button>
           </div>
         </div>

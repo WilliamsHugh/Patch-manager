@@ -20,3 +20,4 @@
 .sidebarCollapsed .persistentSidebar .serviceTitle .serviceIcon{width:28px;height:28px;font-size:18px;flex:none}
 .sidebarCollapsed .persistentSidebar .serviceTitle .sidebarToggle{display:grid;position:absolute;left:38px;top:18px;width:22px;height:28px;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;z-index:2}
 .sidebarCollapsed .persistentSidebar .serviceTitle .sidebarToggle:hover{background:transparent;color:var(--azure)}
+@media(max-width:800px){.sidebarCollapsed .persistentSidebar .serviceTitle .sidebarToggle{position:static;width:28px;height:28px;margin-left:auto}}

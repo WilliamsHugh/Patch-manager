@@ -160,7 +160,7 @@ export default function DevicesPage() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Không thể tải danh sách thiết bị.",
+          : "Could not load devices.",
       );
     } finally {
       setLoading(false);
@@ -190,7 +190,7 @@ export default function DevicesPage() {
       setComplianceError(
         err instanceof ApiError
           ? err.message
-          : "Không thể tải thông tin bản vá còn thiếu.",
+          : "Could not load missing patch information.",
       );
     } finally {
       setComplianceLoading(false);
@@ -255,7 +255,7 @@ export default function DevicesPage() {
       await loadDevices();
     } catch (err) {
       setFormError(
-        err instanceof ApiError ? err.message : "Không thể lưu thiết bị.",
+        err instanceof ApiError ? err.message : "Could not save the device.",
       );
     } finally {
       setSaving(false);
@@ -266,7 +266,7 @@ export default function DevicesPage() {
     if (!isAdmin) return;
 
     const confirmed = window.confirm(
-      `Bạn có chắc muốn xóa thiết bị "${device.hostname}" không?`,
+      `Are you sure you want to delete "${device.hostname}"?`,
     );
 
     if (!confirmed) return;
@@ -284,7 +284,7 @@ export default function DevicesPage() {
       await loadDevices();
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Không thể xóa thiết bị.",
+        err instanceof ApiError ? err.message : "Could not delete the device.",
       );
     }
   }
@@ -303,37 +303,35 @@ export default function DevicesPage() {
   }
 
   return (
-    <main className={`${styles.devicesPage} page`}>
-      <div className="pageHeader">
-        <div>
-          <p className="eyebrow">INVENTORY</p>
-          <h1>Devices</h1>
-          <p>Tra cứu thiết bị, người sở hữu và trạng thái agent.</p>
+    <section className={styles.page} aria-label="Device inventory">
+      <section className="dataPanel">
+        <div className="dataHead">
+          <div>
+            <h2>Device inventory</h2>
+            <p>Review devices, owners, agent status, and patch compliance.</p>
+          </div>
+          {isAdmin && (
+            <button type="button" className="primary" onClick={startCreate}>
+              ＋ Add device
+            </button>
+          )}
         </div>
-
-        {isAdmin && (
-          <button className="primary" onClick={startCreate}>
-            + Tạo mới
-          </button>
-        )}
-      </div>
-
-      <section className="panel">
         <form
-          className="tableTools"
+          className={styles.filters}
           onSubmit={(event) => {
             event.preventDefault();
             void loadDevices();
           }}
         >
           <input
+            aria-label="Search devices"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Tìm hostname, người dùng, phòng ban hoặc IP..."
+            placeholder="Search hostname, owner, department, or IP..."
           />
 
           <button className="primary" type="submit">
-            Tìm kiếm
+            Search
           </button>
 
           <button
@@ -344,24 +342,23 @@ export default function DevicesPage() {
               setCompliance(null);
               setComplianceError("");
               void loadDevices("");
-
             }}
           >
-            Đặt lại
+            Reset
           </button>
         </form>
 
         {error && (
-          <div className="infoBox">
-            <b>Lỗi</b>
+          <div className={styles.error} role="alert">
+            <b>Error</b>
             <p>{error}</p>
           </div>
         )}
 
-        {loading && <div className="empty">Đang tải dữ liệu...</div>}
+        {loading && <div className="empty">Loading devices...</div>}
 
         {!loading && !error && devices.length === 0 && (
-          <div className="empty">Không tìm thấy thiết bị.</div>
+          <div className="empty">No devices found.</div>
         )}
 
         {!loading && !error && devices.length > 0 && (
@@ -370,14 +367,14 @@ export default function DevicesPage() {
               <thead>
                 <tr>
                   <th>HOSTNAME</th>
-                  <th>NGƯỜI DÙNG</th>
-                  <th>PHÒNG BAN</th>
-                  <th>HỆ ĐIỀU HÀNH</th>
+                  <th>OWNER</th>
+                  <th>DEPARTMENT</th>
+                  <th>OPERATING SYSTEM</th>
                   <th>IP</th>
-                  <th>TRẠNG THÁI</th>
+                  <th>STATUS</th>
                   <th>AGENT</th>
                   <th>HEARTBEAT</th>
-                  {isAdmin && <th>THAO TÁC</th>}
+                  {isAdmin && <th>ACTIONS</th>}
                 </tr>
               </thead>
 
@@ -385,13 +382,21 @@ export default function DevicesPage() {
                 {devices.map((device) => (
                   <tr
                     key={device.id}
+                    className={styles.selectableRow}
                     onClick={() => void selectDevice(device)}
-                    style={{ cursor: "pointer" }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        void selectDevice(device);
+                      }
+                    }}
+                    tabIndex={0}
+                    aria-label={`View details for ${device.hostname}`}
                   >
                     <td>
                       <b>{device.hostname}</b>
                     </td>
-                    <td>{device.owner?.name ?? "Chưa gán"}</td>
+                    <td>{device.owner?.name ?? "Unassigned"}</td>
                     <td>{device.department ?? "—"}</td>
                     <td>{device.operatingSystem}</td>
                     <td>{device.ipAddress ?? "—"}</td>
@@ -421,15 +426,15 @@ export default function DevicesPage() {
                       {device.agentStatus?.lastHeartbeatAt
                         ? new Date(
                             device.agentStatus.lastHeartbeatAt,
-                          ).toLocaleString("vi-VN")
+                          ).toLocaleString("en-US")
                         : "—"}
                     </td>
 
                     {isAdmin && (
                       <td onClick={(event) => event.stopPropagation()}>
-                        <button onClick={() => startEdit(device)}>Sửa</button>
-                        <button onClick={() => void removeDevice(device)}>
-                          Xóa
+                        <button type="button" className={styles.actionButton} onClick={() => startEdit(device)}>Edit</button>
+                        <button type="button" className={styles.dangerButton} onClick={() => void removeDevice(device)}>
+                          Delete
                         </button>
                       </td>
                     )}
@@ -441,13 +446,12 @@ export default function DevicesPage() {
         )}
       </section>
 
-      {(isAdmin || selected) && (
-        <section className="panel">
-          {isAdmin && (
-            <form onSubmit={submit}>
-              <h2>{editingId ? "Sửa thiết bị" : "Thêm thiết bị"}</h2>
+      {isAdmin && (
+        <section className={`dataPanel ${styles.formPanel}`}>
+            <form className={styles.deviceForm} onSubmit={submit}>
+              <h2>{editingId ? "Edit device" : "Add device"}</h2>
 
-              {formError && <div className="infoBox">{formError}</div>}
+              {formError && <div className={styles.error} role="alert">{formError}</div>}
 
               <label>
                 Hostname
@@ -461,7 +465,7 @@ export default function DevicesPage() {
               </label>
 
               <label>
-                Hệ điều hành
+                Operating system
                 <input
                   value={form.operatingSystem}
                   onChange={(event) =>
@@ -475,7 +479,7 @@ export default function DevicesPage() {
               </label>
 
               <label>
-                Địa chỉ IP
+                IP address
                 <input
                   value={form.ipAddress}
                   onChange={(event) =>
@@ -485,7 +489,7 @@ export default function DevicesPage() {
               </label>
 
               <label>
-                Phòng ban
+                Department
                 <input
                   value={form.department}
                   onChange={(event) =>
@@ -495,7 +499,7 @@ export default function DevicesPage() {
               </label>
 
               <label>
-                Trạng thái
+                Status
                 <select
                   value={form.status}
                   onChange={(event) =>
@@ -520,39 +524,38 @@ export default function DevicesPage() {
                   onChange={(event) =>
                     setForm({ ...form, ownerId: event.target.value })
                   }
-                  placeholder="UUID người sở hữu, có thể bỏ trống"
+                  placeholder="Owner UUID (optional)"
                 />
               </label>
 
               <button className="primary" disabled={saving}>
-                {saving ? "Đang lưu..." : "Lưu thiết bị"}
+                {saving ? "Saving..." : "Save device"}
               </button>
             </form>
-          )}
         </section>
       )}
 
       {selected && (
-        <section className="panel">
-          <h2>Chi tiết thiết bị</h2>
+        <section className={`dataPanel ${styles.detailPanel}`}>
+          <h2>Device details</h2>
 
           <p>
             <b>Hostname:</b> {selected.hostname}
           </p>
           <p>
-            <b>Người dùng:</b> {selected.owner?.name ?? "Chưa gán"}
+            <b>Owner:</b> {selected.owner?.name ?? "Unassigned"}
           </p>
           <p>
-            <b>Hệ điều hành:</b> {selected.operatingSystem}
+            <b>Operating system:</b> {selected.operatingSystem}
           </p>
           <p>
-            <b>Phòng ban:</b> {selected.department ?? "—"}
+            <b>Department:</b> {selected.department ?? "—"}
           </p>
           <p>
-            <b>Địa chỉ IP:</b> {selected.ipAddress ?? "—"}
+            <b>IP address:</b> {selected.ipAddress ?? "—"}
           </p>
           <p>
-            <b>Trạng thái:</b> {statusLabel(selected.status)}
+            <b>Status:</b> {statusLabel(selected.status)}
           </p>
 
           <p>
@@ -572,7 +575,7 @@ export default function DevicesPage() {
             {selected.agentStatus?.lastHeartbeatAt
               ? new Date(
                   selected.agentStatus.lastHeartbeatAt,
-                ).toLocaleString("vi-VN")
+                ).toLocaleString("en-US")
               : "—"}
           </p>
 
@@ -581,31 +584,25 @@ export default function DevicesPage() {
             {selected.agentStatus?.lastScanAt
               ? new Date(
                   selected.agentStatus.lastScanAt,
-                ).toLocaleString("vi-VN")
+                ).toLocaleString("en-US")
               : "—"}
           </p>
 
-          <div
-            style={{
-              marginTop: 24,
-              paddingTop: 20,
-              borderTop: "1px solid #e5e7eb",
-            }}
-          >
-            <h3>Phần mềm đã cài đặt</h3>
+          <div className={styles.detailSection}>
+            <h3>Installed software</h3>
 
             {!selected.installedSoftware?.length ? (
-              <p>Thiết bị chưa có dữ liệu phần mềm.</p>
+              <p>No installed software data is available for this device.</p>
             ) : (
               <div className="tableWrap">
                 <table>
                   <thead>
                     <tr>
-                      <th>PHẦN MỀM</th>
+                      <th>SOFTWARE</th>
                       <th>VENDOR</th>
-                      <th>PHIÊN BẢN ĐANG CÀI</th>
-                      <th>PHIÊN BẢN HIỆN TẠI</th>
-                      <th>ĐỐI CHIẾU</th>
+                      <th>INSTALLED VERSION</th>
+                      <th>CURRENT VERSION</th>
+                      <th>COMPLIANCE</th>
                     </tr>
                   </thead>
 
@@ -620,18 +617,7 @@ export default function DevicesPage() {
                           <td>{item.version}</td>
                           <td>{item.software.currentVersion ?? "—"}</td>
                           <td>
-                            <span
-                              style={{
-                                display: "inline-block",
-                                padding: "4px 10px",
-                                borderRadius: 999,
-                                background: upToDate
-                                  ? "#dcfce7"
-                                  : "#fee2e2",
-                                color: upToDate ? "#166534" : "#b91c1c",
-                                fontSize: 12,
-                              }}
-                            >
+                            <span className={`${styles.complianceBadge} ${upToDate ? styles.compliant : styles.nonCompliant}`}>
                               {upToDate ? "Up to date" : "Needs update"}
                             </span>
                           </td>
@@ -644,20 +630,14 @@ export default function DevicesPage() {
             )}
           </div>
 
-          <div
-            style={{
-              marginTop: 28,
-              paddingTop: 20,
-              borderTop: "1px solid #e5e7eb",
-            }}
-          >
-            <h3>Bản vá còn thiếu</h3>
+          <div className={styles.detailSection}>
+            <h3>Missing patches</h3>
 
-            {complianceLoading && <p>Đang kiểm tra bản vá...</p>}
+            {complianceLoading && <p>Checking patch compliance...</p>}
 
             {complianceError && (
-              <div className="infoBox">
-                <b>Lỗi</b>
+              <div className={styles.error} role="alert">
+                <b>Error</b>
                 <p>{complianceError}</p>
               </div>
             )}
@@ -666,8 +646,8 @@ export default function DevicesPage() {
               !complianceError &&
               compliance &&
               compliance.missingPatches.length === 0 && (
-                <p style={{ color: "#166534" }}>
-                  Thiết bị đã đầy đủ bản vá.
+                <p className={styles.successMessage}>
+                  This device has no missing patches.
                 </p>
               )}
 
@@ -679,12 +659,12 @@ export default function DevicesPage() {
                   <table>
                     <thead>
                       <tr>
-                        <th>PHẦN MỀM</th>
-                        <th>PHIÊN BẢN ĐANG CÀI</th>
-                        <th>PHIÊN BẢN HIỆN TẠI</th>
-                        <th>MÃ BẢN VÁ</th>
-                        <th>MỨC ĐỘ</th>
-                        <th>KHỞI ĐỘNG LẠI</th>
+                        <th>SOFTWARE</th>
+                        <th>INSTALLED VERSION</th>
+                        <th>CURRENT VERSION</th>
+                        <th>PATCH CODE</th>
+                        <th>SEVERITY</th>
+                        <th>RESTART REQUIRED</th>
                       </tr>
                     </thead>
 
@@ -707,23 +687,13 @@ export default function DevicesPage() {
                           </td>
 
                           <td>
-                            <span
-                              style={{
-                                color:
-                                  patch.severity === "CRITICAL"
-                                    ? "#b91c1c"
-                                    : patch.severity === "HIGH"
-                                      ? "#c2410c"
-                                      : "#92400e",
-                                fontWeight: 600,
-                              }}
-                            >
+                            <span className={`${styles.severity} ${styles[patch.severity.toLowerCase()]}`}>
                               {patch.severity}
                             </span>
                           </td>
 
                           <td>
-                            {patch.requiresRestart ? "Có" : "Không"}
+                            {patch.requiresRestart ? "Yes" : "No"}
                           </td>
                         </tr>
                       ))}
@@ -734,7 +704,7 @@ export default function DevicesPage() {
           </div>
         </section>
       )}
-    </main>
+    </section>
   );
   }
 
@@ -766,6 +736,6 @@ function formatAgentState(
   state: ReturnType<typeof getAgentState>,
 ) {
   if (state === "CONNECTED") return "Connected";
-  if (state === "NOT_INSTALLED") return "Chưa cài";
+  if (state === "NOT_INSTALLED") return "Not installed";
   return "Offline";
 }

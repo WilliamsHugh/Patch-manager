@@ -155,7 +155,7 @@ export default function SoftwarePage() {
       setError(
         getErrorMessage(
           err,
-          "Không tải được danh mục phần mềm.",
+          "Could not load the software catalog.",
         ),
       );
     } finally {
@@ -181,7 +181,7 @@ export default function SoftwarePage() {
       notify(
         getErrorMessage(
           err,
-          "Không tải được chi tiết phần mềm.",
+          "Could not load software details.",
         ),
       );
     }
@@ -209,14 +209,14 @@ export default function SoftwarePage() {
 
     if (!name) {
       setFormError(
-        "Tên phần mềm không được để trống.",
+        "Software name is required.",
       );
       return;
     }
 
     if (!vendor) {
       setFormError(
-        "Nhà cung cấp không được để trống.",
+        "Vendor is required.",
       );
       return;
     }
@@ -245,7 +245,7 @@ export default function SoftwarePage() {
         );
 
         notify(
-          "Đã cập nhật phần mềm.",
+          "Software updated.",
         );
       } else {
         await apiClient<Software>(
@@ -257,7 +257,7 @@ export default function SoftwarePage() {
         );
 
         notify(
-          "Đã tạo phần mềm.",
+          "Software created.",
         );
       }
 
@@ -268,7 +268,7 @@ export default function SoftwarePage() {
       setFormError(
         getErrorMessage(
           err,
-          "Không lưu được phần mềm.",
+          "Could not save the software.",
         ),
       );
     } finally {
@@ -322,7 +322,7 @@ export default function SoftwarePage() {
 
     const ok =
       window.confirm(
-        `Bạn có chắc muốn xóa phần mềm "${item.vendor} ${item.name}" không?`,
+        `Delete "${item.vendor} ${item.name}"? This action cannot be undone.`,
       );
 
     if (!ok) {
@@ -340,7 +340,7 @@ export default function SoftwarePage() {
       );
 
       notify(
-        "Đã xóa phần mềm.",
+        "Software deleted.",
       );
 
       if (
@@ -360,7 +360,7 @@ export default function SoftwarePage() {
       notify(
         getErrorMessage(
           err,
-          "Không xóa được phần mềm.",
+          "Could not delete the software.",
         ),
       );
     }
@@ -407,26 +407,14 @@ export default function SoftwarePage() {
         <div className="dataHead">
           <div>
             <h2>
-              Danh mục phần mềm
+              Software catalog
             </h2>
 
             <p>
-              Quản lý tên phần mềm,
-              nhà cung cấp và phiên
-              bản hiện tại.
+              Manage software names, vendors, and current versions.
             </p>
           </div>
 
-          <button
-            type="button"
-            className="primary"
-            onClick={() =>
-              void loadSoftware()
-            }
-            disabled={loading}
-          >
-            ↻ Làm mới
-          </button>
         </div>
 
         {/* ======================
@@ -441,7 +429,7 @@ export default function SoftwarePage() {
             onSubmit={submit}
           >
             <label>
-              Tên phần mềm
+              Software name
 
               <input
                 type="text"
@@ -456,12 +444,12 @@ export default function SoftwarePage() {
                 }
                 maxLength={120}
                 required
-                placeholder="Ví dụ: Mozilla Firefox"
+                placeholder="Example: Mozilla Firefox"
               />
             </label>
 
             <label>
-              Nhà cung cấp
+              Vendor
 
               <input
                 type="text"
@@ -478,12 +466,12 @@ export default function SoftwarePage() {
                 }
                 maxLength={120}
                 required
-                placeholder="Ví dụ: Mozilla"
+                placeholder="Example: Mozilla"
               />
             </label>
 
             <label>
-              Phiên bản
+              Version
 
               <input
                 type="text"
@@ -500,7 +488,7 @@ export default function SoftwarePage() {
                   })
                 }
                 maxLength={80}
-                placeholder="Tùy chọn"
+                placeholder="Optional"
               />
             </label>
 
@@ -529,10 +517,10 @@ export default function SoftwarePage() {
                 }}
               >
                 {saving
-                  ? "Đang lưu..."
+                  ? "Saving..."
                   : editingId
-                    ? "Lưu thay đổi"
-                    : "＋ Thêm phần mềm"}
+                    ? "Save changes"
+                    : "＋ Add software"}
               </button>
 
               {editingId && (
@@ -550,7 +538,7 @@ export default function SoftwarePage() {
                       "0 14px",
                   }}
                 >
-                  Hủy
+                  Cancel
                 </button>
               )}
             </div>
@@ -584,17 +572,19 @@ export default function SoftwarePage() {
                     .value,
                 )
               }
-              placeholder="Tìm theo tên, nhà cung cấp hoặc phiên bản"
+              placeholder="Search by name, vendor, or version"
             />
           </label>
 
           <button
             type="button"
-            onClick={() =>
-              setQuery("")
-            }
+            onClick={() => {
+              setQuery("");
+              void loadSoftware();
+            }}
+            disabled={loading}
           >
-            ⟳ Đặt lại
+            Reset
           </button>
         </div>
 
@@ -609,7 +599,7 @@ export default function SoftwarePage() {
             }
           >
             <b>
-              Lỗi tải dữ liệu
+              Could not load data
             </b>
 
             <p>{error}</p>
@@ -621,7 +611,7 @@ export default function SoftwarePage() {
                 void loadSoftware()
               }
             >
-              Thử lại
+              Try again
             </button>
           </div>
         )}
@@ -637,8 +627,7 @@ export default function SoftwarePage() {
                 styles.stateBox
               }
             >
-              Đang tải danh mục
-              phần mềm...
+              Loading software catalog...
             </div>
           )}
 
@@ -653,28 +642,28 @@ export default function SoftwarePage() {
                 <thead>
                   <tr>
                     <th>
-                      TÊN PHẦN MỀM
+                      SOFTWARE NAME
                     </th>
 
                     <th>
-                      NHÀ CUNG CẤP
+                      VENDOR
                     </th>
 
                     <th>
-                      PHIÊN BẢN
+                      VERSION
                     </th>
 
                     <th>
-                      BẢN VÁ
+                      PATCHES
                     </th>
 
                     <th>
-                      CÀI ĐẶT
+                      INSTALLATIONS
                     </th>
 
                     {isAdmin && (
                       <th>
-                        THAO TÁC
+                        ACTIONS
                       </th>
                     )}
                   </tr>
@@ -757,7 +746,8 @@ export default function SoftwarePage() {
                                   item,
                                 )
                               }
-                              title="Sửa phần mềm"
+                              title="Edit software"
+                              aria-label={`Edit ${item.name}`}
                             >
                               ✎
                             </button>
@@ -769,7 +759,8 @@ export default function SoftwarePage() {
                                   item,
                                 )
                               }
-                              title="Xóa phần mềm"
+                              title="Delete software"
+                              aria-label={`Delete ${item.name}`}
                             >
                               ⌫
                             </button>
@@ -784,8 +775,7 @@ export default function SoftwarePage() {
               {filtered.length ===
                 0 && (
                 <div className="empty">
-                  Chưa có phần mềm
-                  phù hợp.
+                  No matching software found.
                 </div>
               )}
             </div>
@@ -799,12 +789,12 @@ export default function SoftwarePage() {
           !error && (
             <div className="tableFoot">
               <span>
-                Hiển thị{" "}
+                Showing{" "}
                 {
                   filtered.length
                 }{" "}
                 / {items.length}{" "}
-                phần mềm
+                software items
               </span>
 
               <div>
@@ -848,7 +838,7 @@ export default function SoftwarePage() {
             <div className="drawerHead">
               <div>
                 <small>
-                  CHI TIẾT PHẦN MỀM
+                  SOFTWARE DETAILS
                 </small>
 
                 <h2>
@@ -874,7 +864,7 @@ export default function SoftwarePage() {
             <dl>
               <div>
                 <dt>
-                  Nhà cung cấp
+                  Vendor
                 </dt>
 
                 <dd>
@@ -886,7 +876,7 @@ export default function SoftwarePage() {
 
               <div>
                 <dt>
-                  Phiên bản hiện tại
+                  Current version
                 </dt>
 
                 <dd>
@@ -897,7 +887,7 @@ export default function SoftwarePage() {
 
               <div>
                 <dt>
-                  Số bản vá
+                  Patch count
                 </dt>
 
                 <dd>
@@ -913,7 +903,7 @@ export default function SoftwarePage() {
 
               <div>
                 <dt>
-                  Số lượt cài đặt
+                  Installations
                 </dt>
 
                 <dd>
@@ -926,14 +916,14 @@ export default function SoftwarePage() {
 
               <div>
                 <dt>
-                  Cập nhật cuối
+                  Last updated
                 </dt>
 
                 <dd>
                   {new Date(
                     selected.updatedAt,
                   ).toLocaleString(
-                    "vi-VN",
+                    "en-US",
                   )}
                 </dd>
               </div>
@@ -943,7 +933,7 @@ export default function SoftwarePage() {
               ?.length ? (
               <>
                 <h3>
-                  Bản vá liên quan
+                  Related patches
                 </h3>
 
                 <div
@@ -976,9 +966,7 @@ export default function SoftwarePage() {
               </>
             ) : (
               <div className="infoBox">
-                ⓘ Chưa có bản vá
-                liên quan trong hệ
-                thống.
+                ⓘ No related patches are available.
               </div>
             )}
 
@@ -992,8 +980,7 @@ export default function SoftwarePage() {
                   )
                 }
               >
-                ✎ Chỉnh sửa
-                phần mềm
+                ✎ Edit software
               </button>
             )}
           </aside>
