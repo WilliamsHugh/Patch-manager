@@ -1,0 +1,58 @@
+@startuml
+title Deployment Plan — Activity Diagram (Current API)
+skinparam shadowing false
+
+|IT Helpdesk|
+start
+:Enter plan name, devices and patches;
+|API / Service|
+:Validate selected device and patch IDs;
+if (All IDs exist?) then (yes)
+  :Create DRAFT plan, plan-device links and PENDING tasks;
+else (no)
+  :Return 404 with missing IDs;
+  stop
+endif
+
+|IT Helpdesk|
+:Edit draft if needed;
+note right
+  Submitting a draft for approval is not yet implemented.
+end note
+
+|Manager|
+:Call review API directly;
+if (Review decision?) then (changes requested)
+  |API / Service|
+  :Set CHANGES_REQUESTED and review metadata;
+  |IT Helpdesk|
+  :Edit plan in CHANGES_REQUESTED state;
+  |Manager|
+  :Call review API again;
+  note right
+    This diagram shows one revision cycle.
+    The cycle may be repeated.
+  end note
+endif
+
+if (Final decision?) then (approved)
+  |API / Service|
+  :Set APPROVED and review metadata;
+  |IT Helpdesk|
+  :Call deploy API;
+  |API / Service|
+  if (Plan is APPROVED?) then (yes)
+    :Set plan to DEPLOYING and tasks to PENDING;
+    note right
+      Automated task execution and final status
+      updates are not implemented yet.
+    end note
+  else (no)
+    :Return 400;
+  endif
+else (rejected)
+  |API / Service|
+  :Set REJECTED and review metadata;
+endif
+stop
+@enduml

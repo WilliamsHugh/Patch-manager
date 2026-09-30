@@ -1,0 +1,138 @@
+@startuml
+title Patch Management System — Domain Class Diagram
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+hide circle
+
+package "Identity" {
+  class User <<entity>> {
+    +id: UUID
+    +email: String
+    +name: String
+    +role: Role
+    +isActive: Boolean
+  }
+}
+
+package "Inventory" {
+  class Software <<entity>> {
+    +id: UUID
+    +name: String
+    +vendor: String
+    +currentVersion: String?
+  }
+  class Patch <<entity>> {
+    +id: UUID
+    +code: String
+    +title: String
+    +severity: PatchSeverity
+    +requiresRestart: Boolean
+  }
+  class Device <<entity>> {
+    +id: UUID
+    +hostname: String
+    +operatingSystem: String
+    +status: DeviceStatus
+  }
+  class InstalledSoftware <<entity>> {
+    +id: UUID
+    +version: String
+    +installedAt: DateTime?
+  }
+  class AgentStatus <<entity>> {
+    +id: UUID
+    +version: String
+    +isConnected: Boolean
+    +lastHeartbeatAt: DateTime?
+  }
+}
+
+package "Deployment" {
+  class DeploymentPlan <<entity>> {
+    +id: UUID
+    +name: String
+    +status: PlanStatus
+    +scheduledAt: DateTime?
+    +reviewNote: String?
+    +reviewedAt: DateTime?
+  }
+  class DeploymentPlanDevice <<entity>> {
+    +planId: UUID
+    +deviceId: UUID
+  }
+  class DeploymentTask <<entity>> {
+    +id: UUID
+    +status: TaskStatus
+    +errorCode: String?
+    +startedAt: DateTime?
+    +completedAt: DateTime?
+  }
+  class DeploymentPlansService <<control>> {
+    +create(dto, creatorId): DeploymentPlan
+    +update(id, dto): DeploymentPlan
+    +review(id, dto, reviewerId): DeploymentPlan
+    +deploy(id): DeploymentPlan
+  }
+}
+
+package "Support and Governance" {
+  class Ticket <<entity>> {
+    +id: UUID
+    +title: String
+    +priority: PatchSeverity
+    +status: TicketStatus
+  }
+  class TicketComment <<entity>> {
+    +id: UUID
+    +content: String
+    +createdAt: DateTime
+  }
+  class Notification <<entity>> {
+    +id: UUID
+    +title: String
+    +status: NotificationStatus
+  }
+  class AuditLog <<entity>> {
+    +id: UUID
+    +action: String
+    +entityType: String
+    +entityId: UUID?
+  }
+  class Policy <<entity>> {
+    +id: UUID
+    +name: String
+    +maxDeferralHours: Integer
+    +forceRestart: Boolean
+  }
+}
+
+User "0..1" -- "0..*" Device : owner
+Software "1" -- "0..*" Patch : has
+Device "1" -- "0..*" InstalledSoftware : contains
+Software "1" -- "0..*" InstalledSoftware : installed as
+Device "1" *-- "0..1" AgentStatus : agent
+
+User "1" -- "0..*" DeploymentPlan : creates
+User "0..1" -- "0..*" DeploymentPlan : reviews
+DeploymentPlan "1" *-- "0..*" DeploymentPlanDevice : targets
+Device "1" -- "0..*" DeploymentPlanDevice : selected for
+DeploymentPlan "1" *-- "0..*" DeploymentTask : contains
+Device "1" -- "0..*" DeploymentTask : executes on
+Patch "1" -- "0..*" DeploymentTask : installs
+DeploymentPlansService ..> DeploymentPlan : controls
+DeploymentPlansService ..> DeploymentTask : creates / updates
+
+User "1" -- "0..*" Ticket : creates
+User "0..1" -- "0..*" Ticket : assigned to
+Ticket "1" *-- "0..*" TicketComment : comments
+User "1" -- "0..*" TicketComment : authors
+User "1" -- "0..*" Notification : receives
+User "0..1" -- "0..*" AuditLog : actor
+User "1" -- "0..*" Policy : configures
+
+note bottom of User
+  Role is an enum field; there is no separate Role table.
+  Password and refresh-token hashes are intentionally omitted.
+end note
+@enduml

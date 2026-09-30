@@ -1,0 +1,47 @@
+@startuml
+title DeploymentPlan — State Machine
+hide empty description
+skinparam shadowing false
+
+[*] --> DRAFT : createPlan()
+DRAFT --> DRAFT : updatePlan()
+DRAFT -[#gray,dashed]-> PENDING_APPROVAL : submitForApproval() <<planned>>
+DRAFT --> APPROVED : review(APPROVED)
+DRAFT --> REJECTED : review(REJECTED)
+DRAFT --> CHANGES_REQUESTED : review(CHANGES_REQUESTED)
+
+PENDING_APPROVAL --> APPROVED : review(APPROVED)
+PENDING_APPROVAL --> REJECTED : review(REJECTED)
+PENDING_APPROVAL --> CHANGES_REQUESTED : review(CHANGES_REQUESTED)
+CHANGES_REQUESTED --> CHANGES_REQUESTED : updatePlan()
+CHANGES_REQUESTED -[#gray,dashed]-> PENDING_APPROVAL : resubmit() <<planned>>
+
+APPROVED --> DEPLOYING : deploy() [status == APPROVED]
+DEPLOYING -[#gray,dashed]-> COMPLETED : allTasksSucceeded() <<planned>>
+DEPLOYING -[#gray,dashed]-> FAILED : taskFailure() <<planned>>
+FAILED -[#gray,dashed]-> ROLLED_BACK : rollbackApproved() <<planned>>
+
+note right of PENDING_APPROVAL
+  The enum and seed use this state, but there is
+  no submit endpoint to reach it from a draft.
+end note
+note right of APPROVED
+  The current review API accepts review requests
+  without validating the plan's source state.
+end note
+note right of REJECTED
+  A rejected plan remains recorded. A revised plan
+  would be a new object, not a state transition here.
+end note
+note bottom of DEPLOYING
+  The current deploy API sets the plan to DEPLOYING
+  and its tasks to PENDING. An agent execution
+  loop and completion/rollback transitions are absent.
+end note
+
+legend bottom
+  Solid arrow = transition reachable through the current API.
+  Dashed gray arrow = intended transition not implemented.
+  DeploymentPlan records persist; no terminal node means no automatic deletion.
+endlegend
+@enduml

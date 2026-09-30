@@ -1,0 +1,64 @@
+@startuml
+title Create, Review and Deploy a Plan — Current API Sequence
+autonumber
+skinparam shadowing false
+
+actor "IT Helpdesk" as Helpdesk
+actor Manager
+boundary "API client" as Client
+control "DeploymentPlansController" as Controller
+control "DeploymentPlansService" as Service
+database "PostgreSQL / Prisma" as DB
+
+Helpdesk -> Client : Enter name, device IDs, patch IDs
+Client -> Controller : POST /deployment-plans
+Controller -> Service : create(dto, helpdeskId)
+Service -> DB : findMany(deviceIds), findMany(patchIds)
+DB --> Service : existing IDs
+alt all devices and patches exist
+  Service -> DB : transaction(create plan, plan devices, tasks)
+  DB --> Service : plan(status=DRAFT), tasks(status=PENDING)
+  Service --> Controller : created plan
+  Controller --> Client : 201 + plan
+  Client --> Helpdesk : Show draft
+else missing device or patch
+  Service --> Controller : NotFoundException
+  Controller --> Client : 404
+end
+
+note over Manager,Client
+  No submit-for-approval endpoint or Manager review form exists.
+  A Manager currently calls the review API directly.
+end note
+Manager -> Client : Review plan; choose APPROVED
+Client -> Controller : PATCH /deployment-plans/{id}/review
+Controller -> Service : review(id, APPROVED, managerId)
+Service -> DB : findUnique(planId)
+DB --> Service : plan
+Service -> DB : update(status, note, reviewer, reviewedAt)
+DB --> Service : reviewed plan
+Service --> Controller : reviewed plan
+Controller --> Client : 200 + plan
+Client --> Manager : Show approval result
+
+Helpdesk -> Client : Deploy approved plan
+Client -> Controller : POST /deployment-plans/{id}/deploy
+Controller -> Service : deploy(id)
+Service -> DB : findUnique(planId)
+DB --> Service : plan(status=APPROVED)
+alt approved
+  Service -> DB : transaction(plan=DEPLOYING, tasks=PENDING)
+  DB --> Service : updated plan
+  Service --> Controller : updated plan
+  Controller --> Client : 201 + plan
+  Client --> Helpdesk : Show DEPLOYING status
+else not approved
+  Service --> Controller : BadRequestException
+  Controller --> Client : 400
+end
+
+note over Service,DB
+  The current backend stops after marking tasks PENDING.
+  Agent download, installation and result callbacks are future work.
+end note
+@enduml

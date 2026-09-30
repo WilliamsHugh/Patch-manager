@@ -98,6 +98,10 @@ npm run build:web
 npm run build:api
 ```
 
+## UML diagrams
+
+Editable use case, state, sequence, activity, and class diagrams, with SVG and PNG exports for reports, are available in [docs/uml](docs/uml/README.md).
+
 ## API scaffold
 
 Every route except `/api/health`, `/api/auth/login`, and `/api/auth/refresh` requires `Authorization: Bearer <accessToken>`.

@@ -1,0 +1,66 @@
+@startuml
+title Patch Management System — Use Case Overview
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor Admin
+actor Manager
+actor "IT Helpdesk" as Helpdesk
+actor "Security Analyst" as Analyst
+actor "End user" as EndUser
+actor "Device agent" as Agent
+
+rectangle "Patch Management System" {
+  usecase "Manage accounts\nand roles" as Accounts
+  usecase "Manage software\nand policies" as Catalog
+  usecase "View audit logs" as Audit
+  usecase "View devices\nand patches" as Inventory
+  usecase "Create / edit\ndeployment plan" as Plan
+  usecase "Validate selected\ndevices and patches" as ValidateSelection
+  usecase "Review plan" as Review
+  usecase "Deploy approved plan" as Deploy
+  usecase "Check plan approval" as CheckApproval
+  usecase "View tasks\nand reports" as Reports
+  usecase "Create ticket" as TicketCreate
+  usecase "Update ticket status" as TicketStatus
+  usecase "View own devices, tickets\nand notifications" as Personal
+  usecase "Submit plan for approval" as Submit <<planned>>
+  usecase "Install patch and\nreport result" as Install <<planned>>
+  usecase "Request deferral /\nconfirm restart" as Deferral <<planned>>
+  usecase "Approve bulk rollback" as Rollback <<planned>>
+}
+
+Admin --> Accounts
+Admin --> Catalog
+Admin --> Audit
+Admin --> Inventory
+Admin --> Reports
+Admin --> TicketStatus
+Manager --> Review
+Manager --> Reports
+Manager --> TicketStatus
+Manager --> Rollback
+Helpdesk --> Plan
+Helpdesk --> Deploy
+Helpdesk --> Reports
+Helpdesk --> TicketCreate
+Helpdesk --> TicketStatus
+Helpdesk --> Submit
+Inventory <-- Analyst
+Reports <-- Analyst
+Audit <-- Analyst
+Personal <-- EndUser
+TicketCreate <-- EndUser
+Deferral <-- EndUser
+Install <-- Agent
+
+Plan ..> ValidateSelection : <<include>>
+Deploy ..> CheckApproval : <<include>>
+
+legend bottom
+  All human roles sign in before performing these use cases.
+  <<planned>> = target requirement with no working API yet.
+  Other use cases have at least a backend API; some frontend pages remain placeholders.
+endlegend
+@enduml
