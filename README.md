@@ -17,6 +17,10 @@ patch-management-system/
 
 The backend uses PostgreSQL through Prisma. The frontend calls the API through `NEXT_PUBLIC_API_URL`.
 
+## UI design contract
+
+All contributors and coding agents changing the frontend must follow the [UI Design Contract](docs/UI_DESIGN_CONTRACT.md). The root [AGENTS.md](AGENTS.md) makes this requirement explicit for agent-assisted work.
+
 ## Requirements
 
 - Node.js 20 or later

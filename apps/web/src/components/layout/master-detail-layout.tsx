@@ -31,77 +31,77 @@ const navigation = [
     label: "Dashboard",
     href: "/dashboard",
     description:
-      "Tổng quan tình trạng cập nhật và vận hành hệ thống.",
+      "Overview of update compliance and system operations.",
   },
   {
     icon: "♙",
     label: "Users",
     href: "/users",
     description:
-      "Quản lý tài khoản, vai trò và trạng thái truy cập.",
+      "Manage accounts, roles, and access status.",
   },
   {
     icon: "◫",
     label: "Software",
     href: "/software",
     description:
-      "Quản lý danh mục phần mềm và phiên bản hiện tại.",
+      "Manage the software catalog and current versions.",
   },
   {
     icon: "⇩",
     label: "Patches",
     href: "/patches",
     description:
-      "Theo dõi bản vá và mức độ nghiêm trọng.",
+      "Track patches and severity levels.",
   },
   {
     icon: "⚠",
     label: "Security Inventory",
     href: "/security-inventory",
     description:
-      "Phân tích rủi ro bản vá theo severity và CVE-lite.",
+      "Assess patch risk by severity and CVE reference.",
   },
   {
     icon: "▣",
     label: "Devices",
     href: "/devices",
     description:
-      "Tra cứu thiết bị, người sở hữu và trạng thái agent.",
+      "Find devices, owners, and agent status.",
   },
   {
     icon: "◷",
     label: "Deployment Plans",
     href: "/deployment-plans",
     description:
-      "Lập, xét duyệt và theo dõi kế hoạch triển khai.",
+      "Create, review, and monitor deployment plans.",
   },
   {
     icon: "◇",
     label: "Tickets",
     href: "/tickets",
     description:
-      "Tiếp nhận và xử lý yêu cầu hỗ trợ.",
+      "Receive and resolve support requests.",
   },
   {
     icon: "▤",
     label: "Reports",
     href: "/reports",
     description:
-      "Thống kê tình trạng và hiệu quả triển khai.",
+      "Analyze compliance and deployment performance.",
   },
   {
     icon: "⚙",
     label: "Policies",
     href: "/policies",
     description:
-      "Cấu hình chính sách cập nhật và khởi động lại.",
+      "Configure update and restart policies.",
   },
   {
     icon: "☷",
     label: "Audit Logs",
     href: "/audit-logs",
     description:
-      "Theo dõi lịch sử thao tác trong hệ thống.",
+      "Review system activity history.",
   },
 ];
 
@@ -219,7 +219,7 @@ export function MasterDetailLayout({
     useMemo(() => {
       return navigation.filter(
         (item) => {
-          // Chỉ ADMIN thấy Users
+          // Only administrators can see account management.
           if (
             item.href ===
             "/users"
@@ -231,7 +231,7 @@ export function MasterDetailLayout({
           }
 
           // SECURITY_ANALYST
-          // chỉ được thấy một số module
+          // Security analysts can see only their assigned modules.
           if (
             user?.role ===
             Role.SECURITY_ANALYST
@@ -259,10 +259,10 @@ export function MasterDetailLayout({
       ) {
         return {
           label:
-            "Hồ sơ cá nhân",
+            "Profile",
 
           description:
-            "Xem thông tin tài khoản, vai trò và các thiết bị được giao.",
+            "View account details, role, and assigned devices.",
         };
       }
 
@@ -329,8 +329,7 @@ export function MasterDetailLayout({
         </span>
 
         <p>
-          Đang kiểm tra
-          phiên đăng nhập...
+          Checking your session...
         </p>
       </div>
     );
@@ -352,7 +351,7 @@ export function MasterDetailLayout({
         <button
           type="button"
           className="waffle"
-          aria-label="Ứng dụng"
+          aria-label="Applications"
         >
           ⠿
         </button>
@@ -370,28 +369,28 @@ export function MasterDetailLayout({
           </span>
 
           <input
-            placeholder="Tìm kiếm tài nguyên, dịch vụ và tài liệu"
+            placeholder="Search resources, services, and documentation"
           />
         </label>
 
         <div className="portalTools">
           <button
             type="button"
-            aria-label="Lệnh"
+            aria-label="Commands"
           >
             ⌘
           </button>
 
           <button
             type="button"
-            aria-label="Thông tin"
+            aria-label="Information"
           >
             ?
           </button>
 
           <button
             type="button"
-            aria-label="Thông báo"
+            aria-label="Notifications"
           >
             ♢
             <i />
@@ -472,7 +471,7 @@ export function MasterDetailLayout({
                   )
                 }
               >
-                ♙ Hồ sơ cá nhân
+                ♙ Profile
               </Link>
 
               <button
@@ -487,8 +486,8 @@ export function MasterDetailLayout({
               >
                 ⇥{" "}
                 {loggingOut
-                  ? "Đang đăng xuất..."
-                  : "Đăng xuất"}
+                  ? "Signing out..."
+                  : "Sign out"}
               </button>
             </div>
           )}
@@ -510,7 +509,7 @@ export function MasterDetailLayout({
               ? "open"
               : ""
           }`}
-          aria-label="Điều hướng chính"
+          aria-label="Main navigation"
         >
           <div className="serviceTitle">
             <span className="serviceIcon">
@@ -529,6 +528,7 @@ export function MasterDetailLayout({
 
             <button
               type="button"
+              className="sidebarToggle"
               onClick={() =>
                 setCollapsed(
                   (value) =>
@@ -537,13 +537,24 @@ export function MasterDetailLayout({
               }
               aria-label={
                 collapsed
-                  ? "Mở rộng sidebar"
-                  : "Thu gọn sidebar"
+                  ? "Expand sidebar"
+                  : "Collapse sidebar"
               }
+              aria-pressed={collapsed}
             >
-              {collapsed
-                ? "〉"
-                : "〈"}
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d={collapsed ? "m9 5 7 7-7 7" : "m15 5-7 7 7 7"} />
+              </svg>
             </button>
           </div>
 
@@ -553,7 +564,7 @@ export function MasterDetailLayout({
             </span>
 
             <input
-              placeholder="Tìm kiếm trong menu"
+              placeholder="Search menu"
             />
           </label>
 
@@ -613,7 +624,7 @@ export function MasterDetailLayout({
           <button
             type="button"
             className="mobileBackdrop"
-            aria-label="Đóng menu"
+            aria-label="Close menu"
             onClick={() =>
               setMobileOpen(
                 false,
@@ -637,13 +648,13 @@ export function MasterDetailLayout({
                   true,
                 )
               }
-              aria-label="Mở menu"
+              aria-label="Open menu"
             >
               ☰
             </button>
 
             <Link href="/dashboard">
-              Trang chủ
+              Home
             </Link>
 
             <span>
@@ -651,7 +662,7 @@ export function MasterDetailLayout({
             </span>
 
             <span>
-              Dịch vụ quản lý
+              Management services
             </span>
 
             <span>
@@ -684,7 +695,7 @@ export function MasterDetailLayout({
                 <button
                   type="button"
                   className="star"
-                  aria-label="Đánh dấu yêu thích"
+                  aria-label="Add to favorites"
                 >
                   ☆
                 </button>

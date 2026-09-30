@@ -228,8 +228,8 @@ export default function DeploymentPlansPage() {
               ))}
             </select>
           </label>
-          <button type="button" onClick={loadData} disabled={loading}>
-            Refresh
+          <button type="button" onClick={() => { setQuery(""); setStatusFilter("ALL"); void loadData(); }} disabled={loading}>
+            Reset
           </button>
         </div>
 

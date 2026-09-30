@@ -68,7 +68,7 @@ export default function SecurityInventoryPage() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Không thể tải dữ liệu rủi ro.",
+          : "Could not load security risk data.",
       );
     } finally {
       setLoading(false);
@@ -91,79 +91,81 @@ export default function SecurityInventoryPage() {
   }
 
   return (
-    <main className={`${styles.page} page`}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>SECURITY INVENTORY</p>
-          <h1>Security Inventory</h1>
-          <p>Phân tích rủi ro bản vá theo severity và CVE-lite.</p>
+    <section className={styles.page} aria-label="Security risk inventory">
+      <div className="dataPanel">
+        <div className="dataHead">
+          <div>
+            <h2>Risk filters</h2>
+            <p>Find patches by CVE reference, software, or severity.</p>
+          </div>
         </div>
-        <button className={styles.refresh} onClick={() => void loadRisks()}>
-          Làm mới
-        </button>
-      </header>
-
-      <section className={styles.panel}>
-        <h2>Bộ lọc rủi ro</h2>
         <form className={styles.filters} onSubmit={submitFilters}>
           <input
+            aria-label="Search risk inventory"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Tìm mã CVE, tiêu đề hoặc phần mềm..."
+            placeholder="Search CVE, patch title, or software..."
           />
           <select
+            aria-label="Filter by severity"
             value={severity}
             onChange={(event) => setSeverity(event.target.value)}
           >
             {severityOptions.map((value) => (
               <option key={value || "all"} value={value}>
-                {value || "Tất cả mức độ"}
+                {value || "All severities"}
               </option>
             ))}
           </select>
-          <button className={styles.primary} type="submit">
-            Áp dụng
+          <button className="primary" type="submit">
+            Apply
           </button>
-          <button type="button" onClick={resetFilters}>
-            Đặt lại
+          <button className={styles.secondary} type="button" onClick={resetFilters}>
+            Reset
           </button>
         </form>
-      </section>
+      </div>
 
-      {loading && <div className={styles.state}>Đang tải dữ liệu...</div>}
+      {loading && <div className={styles.state}>Loading security risks...</div>}
 
       {!loading && error && (
-        <div className={styles.error}>
-          <b>Tải dữ liệu thất bại</b>
+        <div className={styles.error} role="alert">
+          <b>Could not load security risks</b>
           <p>{error}</p>
-          <button onClick={() => void loadRisks()}>Thử lại</button>
+          <button type="button" onClick={() => void loadRisks()}>Try again</button>
         </div>
       )}
 
       {!loading && !error && data && (
         <>
-          <section className={styles.summary} aria-label="Tổng quan rủi ro">
-            <article><span>Tổng bản vá</span><strong>{data.summary.total}</strong></article>
+          <section className={styles.summary} aria-label="Risk overview">
+            <article><span>Total patches</span><strong>{data.summary.total}</strong></article>
             <article className={styles.summaryCritical}><span>Critical</span><strong>{data.summary.critical}</strong></article>
             <article className={styles.summaryHigh}><span>High</span><strong>{data.summary.high}</strong></article>
             <article className={styles.summaryMedium}><span>Medium</span><strong>{data.summary.medium}</strong></article>
-            <article className={styles.summaryDevices}><span>Thiết bị ảnh hưởng</span><strong>{data.summary.affectedDevices}</strong></article>
+            <article className={styles.summaryDevices}><span>Affected devices</span><strong>{data.summary.affectedDevices}</strong></article>
           </section>
 
           {data.items.length === 0 ? (
-            <div className={styles.state}>Không có dữ liệu rủi ro phù hợp.</div>
+            <div className={styles.state}>No matching security risks found.</div>
           ) : (
-            <section className={styles.panel}>
+            <section className="dataPanel">
+              <div className="dataHead">
+                <div>
+                  <h2>Patch risk inventory</h2>
+                  <p>Review affected software and devices.</p>
+                </div>
+              </div>
               <div className={styles.tableWrap}>
                 <table>
                   <thead>
                     <tr>
-                      <th>MÃ CVE / BẢN VÁ</th>
-                      <th>TIÊU ĐỀ</th>
-                      <th>PHẦN MỀM</th>
-                      <th>MỨC ĐỘ</th>
-                      <th>PHIÊN BẢN ĐÍCH</th>
-                      <th>THIẾT BỊ ẢNH HƯỞNG</th>
+                      <th>CVE / PATCH CODE</th>
+                      <th>TITLE</th>
+                      <th>SOFTWARE</th>
+                      <th>SEVERITY</th>
+                      <th>TARGET VERSION</th>
+                      <th>AFFECTED DEVICES</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -173,7 +175,7 @@ export default function SecurityInventoryPage() {
                         <td>{item.title}</td>
                         <td>{item.software.name}<small>{item.software.vendor}</small></td>
                         <td><span className={`${styles.severity} ${styles[item.severity.toLowerCase()]}`}>{item.severity}</span></td>
-                        <td>{item.targetVersion ?? "Chưa xác định"}</td>
+                        <td>{item.targetVersion ?? "Unknown"}</td>
                         <td>
                           <b>{item.affectedDeviceCount}</b>
                           {item.affectedDevices.length > 0 && (
@@ -189,6 +191,6 @@ export default function SecurityInventoryPage() {
           )}
         </>
       )}
-    </main>
+    </section>
   );
 }
