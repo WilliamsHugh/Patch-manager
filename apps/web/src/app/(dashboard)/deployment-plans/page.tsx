@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PlanStatus, Role, type Patch, type User } from "@patch-management/shared";
 import { apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import styles from "./deployment-plans.module.css";
 
 type Device = {
@@ -228,9 +229,9 @@ export default function DeploymentPlansPage() {
               ))}
             </select>
           </label>
-          <button type="button" onClick={() => { setQuery(""); setStatusFilter("ALL"); void loadData(); }} disabled={loading}>
+          <DashboardActionButton onClick={() => { setQuery(""); setStatusFilter("ALL"); void loadData(); }} disabled={loading}>
             Reset
-          </button>
+          </DashboardActionButton>
         </div>
 
         {error && <div className={styles.error}>{error}</div>}

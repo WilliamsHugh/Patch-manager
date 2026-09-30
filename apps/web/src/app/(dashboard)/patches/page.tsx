@@ -8,6 +8,7 @@ import {
 
 import { apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 
 import {
   PatchItem,
@@ -538,14 +539,9 @@ export default function Page() {
             )}
           </select>
 
-          <button
-            type="button"
-            onClick={
-              resetFilters
-            }
-          >
+          <DashboardActionButton onClick={resetFilters}>
             Reset
-          </button>
+          </DashboardActionButton>
         </div>
 
         {/* LOADING */}

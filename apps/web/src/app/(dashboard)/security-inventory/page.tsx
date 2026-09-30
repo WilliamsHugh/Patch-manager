@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { PatchSeverity } from "@patch-management/shared";
 import { apiClient, ApiError } from "@/lib/api";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import styles from "./security-inventory.module.css";
 
 type RiskDevice = {
@@ -120,9 +121,9 @@ export default function SecurityInventoryPage() {
           <button className="primary" type="submit">
             Apply
           </button>
-          <button className={styles.secondary} type="button" onClick={resetFilters}>
+          <DashboardActionButton onClick={resetFilters}>
             Reset
-          </button>
+          </DashboardActionButton>
         </form>
       </div>
 

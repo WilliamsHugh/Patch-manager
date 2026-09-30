@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Role } from "@patch-management/shared";
 import { ApiError, apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 
 type InstalledSoftware = {
   id: string;
@@ -334,8 +335,7 @@ export default function DevicesPage() {
             Search
           </button>
 
-          <button
-            type="button"
+          <DashboardActionButton
             onClick={() => {
               setQuery("");
               setSelected(null);
@@ -345,7 +345,7 @@ export default function DevicesPage() {
             }}
           >
             Reset
-          </button>
+          </DashboardActionButton>
         </form>
 
         {error && (

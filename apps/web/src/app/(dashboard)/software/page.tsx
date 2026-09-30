@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 
 import { getCurrentUser } from "@/lib/auth";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 
 import styles from "./software.module.css";
 
@@ -576,8 +577,7 @@ export default function SoftwarePage() {
             />
           </label>
 
-          <button
-            type="button"
+          <DashboardActionButton
             onClick={() => {
               setQuery("");
               void loadSoftware();
@@ -585,7 +585,7 @@ export default function SoftwarePage() {
             disabled={loading}
           >
             Reset
-          </button>
+          </DashboardActionButton>
         </div>
 
         {/* ======================

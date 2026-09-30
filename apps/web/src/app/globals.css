@@ -21,3 +21,12 @@
 .sidebarCollapsed .persistentSidebar .serviceTitle .sidebarToggle{display:grid;position:absolute;left:38px;top:18px;width:22px;height:28px;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;z-index:2}
 .sidebarCollapsed .persistentSidebar .serviceTitle .sidebarToggle:hover{background:transparent;color:var(--azure)}
 @media(max-width:800px){.sidebarCollapsed .persistentSidebar .serviceTitle .sidebarToggle{position:static;width:28px;height:28px;margin-left:auto}}
+
+/* Shared command style follows the Dashboard refresh control. */
+button.dashboardActionButton.dashboardActionButton{display:inline-flex;align-items:center;justify-content:center;min-height:32px;height:32px;border:1px solid var(--azure);border-radius:0;background:var(--azure);color:#fff;padding:0 16px;font-size:12px;font-weight:600;line-height:1.2;white-space:nowrap}
+button.dashboardActionButton.dashboardActionButton:hover:not(:disabled){border-color:var(--azure-hover);background:var(--azure-hover);color:#fff}
+button.dashboardActionButton.dashboardActionButton:focus-visible{outline:2px solid var(--azure);outline-offset:2px}
+button.dashboardActionButton.dashboardActionButton:disabled{opacity:.55;cursor:not-allowed}
+.panelMessage{margin:0;padding:20px 17px;color:var(--muted);font-size:12px;line-height:1.5}
+.panelMessage[role="alert"]{color:var(--red)}
+.summaryCard .cardMessage{margin:0;padding:18px 17px;color:var(--muted);font-size:12px;line-height:1.5}
