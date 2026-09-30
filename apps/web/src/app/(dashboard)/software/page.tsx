@@ -14,7 +14,7 @@ import {
   apiClient,
 } from "@/lib/api";
 
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 
 import styles from "./software.module.css";
 
@@ -91,7 +91,7 @@ export default function SoftwarePage() {
   // ==========================
 
   useEffect(() => {
-    const user = getStoredUser();
+    const user = getCurrentUser();
 
     setIsAdmin(
       user?.role === Role.ADMIN,

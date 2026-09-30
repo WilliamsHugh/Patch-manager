@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PlanStatus, Role, type Patch, type User } from "@patch-management/shared";
 import { apiClient } from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import styles from "./deployment-plans.module.css";
 
 type Device = {
@@ -69,7 +69,7 @@ export default function DeploymentPlansPage() {
   const selectedPlan = plans.find((plan) => plan.id === selectedId) ?? plans[0] ?? null;
 
   useEffect(() => {
-    setUser(getStoredUser());
+    setUser(getCurrentUser());
     void loadData();
   }, []);
 

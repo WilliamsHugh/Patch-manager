@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Role, type User } from "@patch-management/shared";
 import { apiClient } from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import styles from "./users.module.css";
 
 type ManagedUser = User & { isActive: boolean; _count?: { devices: number } };
@@ -18,7 +18,7 @@ const roleLabels: Record<Role, string> = {
 };
 
 export default function UsersPage() {
-  const actor = getStoredUser();
+  const actor = getCurrentUser();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);

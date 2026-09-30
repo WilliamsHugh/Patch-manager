@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { Device, User } from "@patch-management/shared";
 import { apiClient } from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
 
 type Profile = User & { devices?: Device[] };
 
@@ -16,7 +15,7 @@ const roleLabels: Record<User["role"], string> = {
 };
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<Profile | null>(() => getStoredUser());
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

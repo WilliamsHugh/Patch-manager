@@ -7,7 +7,7 @@ import {
 } from "@patch-management/shared";
 
 import { apiClient } from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 
 import {
   PatchItem,
@@ -139,7 +139,7 @@ export default function Page() {
   // ==========================
 
   useEffect(() => {
-    const user = getStoredUser();
+    const user = getCurrentUser();
 
     setIsAdmin(
       user?.role === Role.ADMIN,

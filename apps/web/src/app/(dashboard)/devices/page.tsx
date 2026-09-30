@@ -4,7 +4,7 @@ import styles from "./devices.module.css";
 import { FormEvent, useEffect, useState } from "react";
 import { Role } from "@patch-management/shared";
 import { ApiError, apiClient } from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 
 type InstalledSoftware = {
   id: string;
@@ -105,7 +105,7 @@ export default function DevicesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    setIsAdmin(getStoredUser()?.role === Role.ADMIN);
+    setIsAdmin(getCurrentUser()?.role === Role.ADMIN);
     void loadDevices();
 
     const timer = window.setInterval(() => {
@@ -119,7 +119,7 @@ export default function DevicesPage() {
     setError("");
 
     try {
-      const currentUser = getStoredUser();
+      const currentUser = getCurrentUser();
       const isNormalUser = currentUser?.role === Role.USER;
 
       const path = isNormalUser
@@ -172,7 +172,7 @@ export default function DevicesPage() {
     setCompliance(null);
     setComplianceError("");
 
-    const currentUser = getStoredUser();
+    const currentUser = getCurrentUser();
 
     if (currentUser?.role === Role.USER) {
       return;

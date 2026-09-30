@@ -18,12 +18,7 @@ import {
   type User,
 } from "@patch-management/shared";
 
-import {
-  getAccessToken,
-  getStoredUser,
-} from "@/lib/auth-storage";
-
-import { logout } from "@/lib/auth";
+import { loadCurrentUser, logout } from "@/lib/auth";
 
 const navigation = [
   {
@@ -185,30 +180,23 @@ export function MasterDetailLayout({
   // ==========================
 
   useEffect(() => {
-    const sessionUser =
-      getStoredUser();
+    let active = true;
+    loadCurrentUser()
+      .then((sessionUser) => {
+        if (!active) return;
+        setUser(sessionUser);
+        setCheckingSession(false);
+      })
+      .catch(() => {
+        if (active) router.replace("/login");
+      });
+    return () => { active = false; };
+  }, [router]);
 
-    const token =
-      getAccessToken();
-
-    if (
-      !sessionUser ||
-      !token
-    ) {
-      router.replace(
-        "/login",
-      );
-
-      return;
-    }
-
-    setUser(
-      sessionUser,
-    );
-
-    setCheckingSession(
-      false,
-    );
+  useEffect(() => {
+    const expired = () => router.replace("/login");
+    window.addEventListener("patch:session-expired", expired);
+    return () => window.removeEventListener("patch:session-expired", expired);
   }, [router]);
 
   // ==========================
@@ -228,6 +216,14 @@ export function MasterDetailLayout({
               user?.role ===
               Role.ADMIN
             );
+          }
+
+          if (user?.role === Role.USER) {
+            return ["/dashboard", "/software", "/patches", "/devices", "/tickets"].includes(item.href);
+          }
+
+          if (item.href === "/audit-logs") {
+            return user?.role === Role.ADMIN || user?.role === Role.SECURITY_ANALYST;
           }
 
           // SECURITY_ANALYST
