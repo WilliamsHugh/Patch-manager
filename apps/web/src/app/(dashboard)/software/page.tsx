@@ -14,7 +14,10 @@ import {
   apiClient,
 } from "@/lib/api";
 
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleTableLoading } from "@/components/ui/module-table-loading";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 
 import styles from "./software.module.css";
 
@@ -91,7 +94,7 @@ export default function SoftwarePage() {
   // ==========================
 
   useEffect(() => {
-    const user = getStoredUser();
+    const user = getCurrentUser();
 
     setIsAdmin(
       user?.role === Role.ADMIN,
@@ -560,24 +563,14 @@ export default function SoftwarePage() {
         ====================== */}
 
         <div className="tableTools">
-          <label>
-            <span>⌕</span>
+          <ModuleSearchField
+            ariaLabel="Search software"
+            placeholder="Search by name, vendor, or version"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
 
-            <input
-              type="text"
-              value={query}
-              onChange={(event) =>
-                setQuery(
-                  event.target
-                    .value,
-                )
-              }
-              placeholder="Search by name, vendor, or version"
-            />
-          </label>
-
-          <button
-            type="button"
+          <DashboardActionButton
             onClick={() => {
               setQuery("");
               void loadSoftware();
@@ -585,7 +578,7 @@ export default function SoftwarePage() {
             disabled={loading}
           >
             Reset
-          </button>
+          </DashboardActionButton>
         </div>
 
         {/* ======================
@@ -622,13 +615,7 @@ export default function SoftwarePage() {
 
         {loading &&
           !error && (
-            <div
-              className={
-                styles.stateBox
-              }
-            >
-              Loading software catalog...
-            </div>
+            <ModuleTableLoading module="software" />
           )}
 
         {/* ======================

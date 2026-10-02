@@ -1,10 +1,9 @@
-.page { display: grid; gap: 16px; padding-bottom: 20px; }
+.page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; padding-bottom: 20px; }
 .filters { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
-.filters input, .deviceForm input, .deviceForm select { min-height: 32px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 3px; background: #fff; color: var(--text); font: inherit; }
-.filters input { flex: 1; min-width: 0; }
+.deviceForm input, .deviceForm select { min-height: 32px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 3px; background: #fff; color: var(--text); font: inherit; }
 .filters button { min-height: 32px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 3px; background: #fff; color: var(--text); cursor: pointer; }
 .filters button:global(.primary) { border-color: var(--azure); background: var(--azure); color: #fff; }
-.filters input:focus-visible, .filters button:focus-visible, .deviceForm input:focus-visible, .deviceForm select:focus-visible, .actionButton:focus-visible, .dangerButton:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
+.filters button:focus-visible, .deviceForm input:focus-visible, .deviceForm select:focus-visible, .actionButton:focus-visible, .dangerButton:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
 .selectableRow { cursor: pointer; }
 .selectableRow:focus-visible { outline: 2px solid var(--azure); outline-offset: -2px; }
 .page td small { color: var(--muted); }

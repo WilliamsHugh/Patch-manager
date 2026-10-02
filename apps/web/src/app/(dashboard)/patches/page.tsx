@@ -7,7 +7,10 @@ import {
 } from "@patch-management/shared";
 
 import { apiClient } from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleTableLoading } from "@/components/ui/module-table-loading";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 
 import {
   PatchItem,
@@ -139,7 +142,7 @@ export default function Page() {
   // ==========================
 
   useEffect(() => {
-    const user = getStoredUser();
+    const user = getCurrentUser();
 
     setIsAdmin(
       user?.role === Role.ADMIN,
@@ -452,20 +455,12 @@ export default function Page() {
         {/* FILTER */}
 
         <div className="tableTools">
-          <label>
-            <span>⌕</span>
-
-            <input
-              type="text"
-              placeholder="Search code, title, or software..."
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value,
-                )
-              }
-            />
-          </label>
+          <ModuleSearchField
+            ariaLabel="Search patches"
+            placeholder="Search code, title, or software..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
 
           <select
             value={severity}
@@ -538,22 +533,15 @@ export default function Page() {
             )}
           </select>
 
-          <button
-            type="button"
-            onClick={
-              resetFilters
-            }
-          >
+          <DashboardActionButton onClick={resetFilters}>
             Reset
-          </button>
+          </DashboardActionButton>
         </div>
 
         {/* LOADING */}
 
         {loading && (
-          <div className="empty">
-            Loading patches...
-          </div>
+          <ModuleTableLoading module="patches" />
         )}
 
         {/* ERROR */}

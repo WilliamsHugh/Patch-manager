@@ -4,7 +4,10 @@ import styles from "./devices.module.css";
 import { FormEvent, useEffect, useState } from "react";
 import { Role } from "@patch-management/shared";
 import { ApiError, apiClient } from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleTableLoading } from "@/components/ui/module-table-loading";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 
 type InstalledSoftware = {
   id: string;
@@ -105,7 +108,7 @@ export default function DevicesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    setIsAdmin(getStoredUser()?.role === Role.ADMIN);
+    setIsAdmin(getCurrentUser()?.role === Role.ADMIN);
     void loadDevices();
 
     const timer = window.setInterval(() => {
@@ -119,7 +122,7 @@ export default function DevicesPage() {
     setError("");
 
     try {
-      const currentUser = getStoredUser();
+      const currentUser = getCurrentUser();
       const isNormalUser = currentUser?.role === Role.USER;
 
       const path = isNormalUser
@@ -172,7 +175,7 @@ export default function DevicesPage() {
     setCompliance(null);
     setComplianceError("");
 
-    const currentUser = getStoredUser();
+    const currentUser = getCurrentUser();
 
     if (currentUser?.role === Role.USER) {
       return;
@@ -323,8 +326,8 @@ export default function DevicesPage() {
             void loadDevices();
           }}
         >
-          <input
-            aria-label="Search devices"
+          <ModuleSearchField
+            ariaLabel="Search devices"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search hostname, owner, department, or IP..."
@@ -334,8 +337,7 @@ export default function DevicesPage() {
             Search
           </button>
 
-          <button
-            type="button"
+          <DashboardActionButton
             onClick={() => {
               setQuery("");
               setSelected(null);
@@ -345,7 +347,7 @@ export default function DevicesPage() {
             }}
           >
             Reset
-          </button>
+          </DashboardActionButton>
         </form>
 
         {error && (
@@ -355,7 +357,7 @@ export default function DevicesPage() {
           </div>
         )}
 
-        {loading && <div className="empty">Loading devices...</div>}
+        {loading && <ModuleTableLoading module="devices" />}
 
         {!loading && !error && devices.length === 0 && (
           <div className="empty">No devices found.</div>

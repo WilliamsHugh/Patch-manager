@@ -2,7 +2,7 @@
 
 Record the tester, date, `main` commit, browser, and result for each item (`PASS`, `FAIL` with a screenshot/log, or `N/A`). Use only the Supabase **test** database. Create dedicated temporary data for create/delete/deactivate operations; never deactivate demo accounts or delete software that has real patches.
 
-Frontend: `http://localhost:3000`. API: `http://localhost:4000/api`. The five demo accounts and password are listed in the README. For items marked “API-only,” use Postman/curl and an access token for the correct role; the corresponding frontend pages are not yet connected to the API.
+Frontend: `http://localhost:3000`. API: `http://localhost:4000/api`. The five seeded accounts and password are listed in the README. Browser requests use the same-origin `/api` proxy and HttpOnly cookies; for items marked “API-only,” use Postman/curl and a Bearer token for the correct role.
 
 ## 1. Environment and connectivity
 
@@ -20,7 +20,7 @@ Frontend: `http://localhost:3000`. API: `http://localhost:4000/api`. The five de
 - [x] Moving between modules keeps the left sidebar mounted, updates the selected item, and changes content without a full page reload.
 - [x] Collapsing/expanding the sidebar, opening the mobile menu, and opening `/profile` from the account menu all work.
 - [x] Signing out clears the browser session and returns to `/login`; revisiting a protected page does not sign the user in again.
-- [ ] When the access token expires, the API request refreshes once and continues; logged-out or expired refresh tokens cannot be reused. Postman may be used instead of waiting 15 minutes. **API 2026-09-21:** refresh and logout work, and refresh after logout returns `401`, but the old refresh token can still be replayed after rotation (`200`) — FAIL; automatic refresh in the web app after access-token expiry has not been tested.
+- [ ] When the access token expires, the browser request refreshes once and continues. **2026-10-01:** rotation replay and refresh after logout return `401`; browser auto-refresh after access-token expiry still needs a timed/manual test. The earlier replay failure is preserved in the historical result below.
 - [x] `ADMIN` sees the Users menu; other roles do not. `SECURITY_ANALYST` sees only appropriate read-only menus. If another role sees an unauthorized menu, record a UX issue; the API must still return `403`.
 
 ## 3. Admin — accounts and software (frontend + API)
@@ -66,11 +66,12 @@ Frontend: `http://localhost:3000`. API: `http://localhost:4000/api`. The five de
 - [x] Audit logs contain no passwords, hashes, access/refresh tokens, or request bodies; User, Helpdesk, and Manager receive `403` from the audit-log API.
 - [x] `GET /patches`, `GET /agent/status`, and `GET /deployment-tasks` return valid data or an empty array and do not fail with `500` because of missing relations.
 
-## 7. UI currently using demo or placeholder content — not counted as completed CRUD
+## 7. Live data UI — read-only pages are not completed CRUD
 
-- [ ] Dashboard displays **hard-coded demo** data, supports machine search/filter, opens the detail drawer, and changes routes; do not compare these metrics with Supabase.
-- [ ] `/devices`, `/patches`, `/tickets`, `/reports`, `/policies`, and `/audit-logs` render without crashing, but are currently placeholders and their “Create new” buttons are not connected.
-- [ ] Plan review/deployment, ticket CRUD, policies, audit logs, and reports currently require API testing; track missing frontend work separately instead of marking the working API as failed.
+- [ ] Dashboard totals, device list, patch counts, and upcoming plans agree with the Supabase test database; verify search, filters, detail drawer, and empty/error states for each role.
+- [ ] `/tickets`, `/reports`, `/policies`, and `/audit-logs` load real API data and show truthful empty/error states. These are currently read-only views, not completed CRUD.
+- [ ] Plan review/deployment, ticket creation/status changes, and policy editing still require API testing until their frontend actions are implemented.
+- [ ] In a fresh browser profile, `localStorage` stays empty after sign-in; both `patch_access` and `patch_refresh` cookies are HttpOnly. Reload and sign out, then confirm protected routes require a new session.
 
 ## 8. End of test cycle
 
@@ -85,3 +86,13 @@ Frontend: `http://localhost:3000`. API: `http://localhost:4000/api`. The five de
 - PASS: health/401; all five role logins and safe `/users/me` data; Users RBAC/CRUD; Software RBAC/CRUD; device scope; plan create/read/review/deploy/tasks; ticket ownership/status; notification isolation; Security Analyst read-only behavior; policy validation/RBAC; report and operational endpoints; audit ACL and secret hygiene.
 - FAIL `POST /auth/refresh`: an old token remains usable after rotation. Reproduction: login → refresh with token A (`200`, receive B) → refresh again with A; expected `401`, actual `200`. Logout with access token B returns `204`, and B is rejected after logout (`401`).
 - Likely cause confirmed against the code: the long refresh JWT is stored with bcrypt. Bcrypt compares only the first 72 bytes, while JWTs for the same user share a long prefix, so tokens A and B can match the same hash. Store a SHA-256/HMAC hash of the complete token or store and validate its `jti` instead of applying bcrypt directly to the JWT.
+
+## 10. Cookie auth and Supabase migration check — 2026-10-01
+
+- [x] Applied the additive agent-scan and plan-review migrations; `prisma migrate status` reports all four migrations applied.
+- [x] Fresh browser login with zero `localStorage` entries reaches Dashboard; `localStorage` remains empty after login and reload. Access and refresh cookies are HttpOnly.
+- [x] Login response contains no tokens; `/users/me` loads through the web API proxy. Invalid credentials return `401`.
+- [x] Refresh-token rotation rejects the previous token (`401`); refresh after logout returns `401`.
+- [x] Supabase-backed `/devices`, `/patches`, `/deployment-plans`, `/tickets`, `/policies`, and `/security-inventory` return live data through the proxy. `/reports/overview` passed three repeat checks after one transient `500` during the migration test.
+- [x] Dashboard renders without the old fixed demo totals; route navigation retains one sidebar and one page heading, with no horizontal overflow at desktop or 375px width.
+- [ ] Manually verify all five roles, automatic refresh after expiry, and create/edit flows in the browser before merging.

@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { Role } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { PrismaService } from "../../prisma/prisma.service";
 import { LoginDto } from "./dto/login.dto";
 
@@ -28,7 +28,7 @@ export class AuthService {
     if (payload.type !== "refresh") this.rejectCredentials();
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
     const expiredInStore = !user?.refreshTokenExpiresAt || user.refreshTokenExpiresAt <= new Date();
-    if (!user || !user.isActive || !user.refreshTokenHash || expiredInStore || !(await bcrypt.compare(refreshToken, user.refreshTokenHash))) this.rejectCredentials();
+    if (!user || !user.isActive || !user.refreshTokenHash || expiredInStore || !this.matchesRefreshToken(refreshToken, user.refreshTokenHash)) this.rejectCredentials();
     const tokens = await this.issueTokenPair(user);
     return { ...tokens, user: this.toSafeUser(user) };
   }
@@ -46,12 +46,21 @@ export class AuthService {
       this.jwt.signAsync({ ...basePayload, type: "refresh", jti: randomUUID() }, { secret: this.config.getOrThrow<string>("JWT_REFRESH_SECRET"), expiresIn: refreshExpiresIn as never }),
     ]);
     const decoded = this.jwt.decode(refreshToken) as { exp?: number };
-    await this.prisma.user.update({ where: { id: user.id }, data: { refreshTokenHash: await bcrypt.hash(refreshToken, 10), refreshTokenExpiresAt: decoded.exp ? new Date(decoded.exp * 1000) : null } });
+    await this.prisma.user.update({ where: { id: user.id }, data: { refreshTokenHash: this.hashRefreshToken(refreshToken), refreshTokenExpiresAt: decoded.exp ? new Date(decoded.exp * 1000) : null } });
     return { accessToken, refreshToken };
   }
 
   private toSafeUser(user: { id: string; email: string; name: string; role: Role; isActive: boolean; createdAt: Date; updatedAt: Date }) {
     return { id: user.id, email: user.email, name: user.name, role: user.role, isActive: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt };
+  }
+
+  private hashRefreshToken(token: string) {
+    return createHash("sha256").update(token).digest("hex");
+  }
+
+  private matchesRefreshToken(token: string, storedHash: string) {
+    if (!/^[a-f0-9]{64}$/.test(storedHash)) return false;
+    return timingSafeEqual(Buffer.from(this.hashRefreshToken(token), "hex"), Buffer.from(storedHash, "hex"));
   }
 
   private rejectCredentials(): never {

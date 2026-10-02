@@ -3,7 +3,9 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PlanStatus, Role, type Patch, type User } from "@patch-management/shared";
 import { apiClient } from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 import styles from "./deployment-plans.module.css";
 
 type Device = {
@@ -69,7 +71,7 @@ export default function DeploymentPlansPage() {
   const selectedPlan = plans.find((plan) => plan.id === selectedId) ?? plans[0] ?? null;
 
   useEffect(() => {
-    setUser(getStoredUser());
+    setUser(getCurrentUser());
     void loadData();
   }, []);
 
@@ -214,10 +216,7 @@ export default function DeploymentPlansPage() {
 
       <section className={styles.panel}>
         <div className={styles.toolbar}>
-          <label>
-            <span>Search</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Plan name or creator" />
-          </label>
+          <ModuleSearchField ariaLabel="Search deployment plans" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Plan name or creator" />
           <label>
             <span>Status</span>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}>
@@ -228,9 +227,9 @@ export default function DeploymentPlansPage() {
               ))}
             </select>
           </label>
-          <button type="button" onClick={() => { setQuery(""); setStatusFilter("ALL"); void loadData(); }} disabled={loading}>
+          <DashboardActionButton onClick={() => { setQuery(""); setStatusFilter("ALL"); void loadData(); }} disabled={loading}>
             Reset
-          </button>
+          </DashboardActionButton>
         </div>
 
         {error && <div className={styles.error}>{error}</div>}

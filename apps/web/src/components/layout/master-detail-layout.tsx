@@ -7,6 +7,7 @@ import {
 } from "next/navigation";
 
 import {
+  type MouseEvent,
   type ReactNode,
   useEffect,
   useMemo,
@@ -18,12 +19,8 @@ import {
   type User,
 } from "@patch-management/shared";
 
-import {
-  getAccessToken,
-  getStoredUser,
-} from "@/lib/auth-storage";
-
-import { logout } from "@/lib/auth";
+import { loadCurrentUser, logout } from "@/lib/auth";
+import { RouteContentPreview } from "@/components/layout/route-content-preview";
 
 const navigation = [
   {
@@ -129,9 +126,12 @@ export function MasterDetailLayout({
     useRouter();
 
   const [
-    selectedPath,
-    setSelectedPath,
-  ] = useState(pathname);
+    requestedPath,
+    setRequestedPath,
+  ] = useState<string | null>(null);
+
+  const selectedPath = requestedPath ?? pathname;
+  const routeIsPending = requestedPath !== null && requestedPath !== pathname;
 
   const [
     mobileOpen,
@@ -171,10 +171,9 @@ export function MasterDetailLayout({
   // ==========================
 
   useEffect(() => {
-    setSelectedPath(
-      pathname,
-    );
-
+    // An older navigation can finish after a newer click. Keep the latest
+    // requested page selected until that page itself becomes current.
+    setRequestedPath((current) => current === pathname ? null : current);
     setMobileOpen(
       false,
     );
@@ -185,30 +184,23 @@ export function MasterDetailLayout({
   // ==========================
 
   useEffect(() => {
-    const sessionUser =
-      getStoredUser();
+    let active = true;
+    loadCurrentUser()
+      .then((sessionUser) => {
+        if (!active) return;
+        setUser(sessionUser);
+        setCheckingSession(false);
+      })
+      .catch(() => {
+        if (active) router.replace("/login");
+      });
+    return () => { active = false; };
+  }, [router]);
 
-    const token =
-      getAccessToken();
-
-    if (
-      !sessionUser ||
-      !token
-    ) {
-      router.replace(
-        "/login",
-      );
-
-      return;
-    }
-
-    setUser(
-      sessionUser,
-    );
-
-    setCheckingSession(
-      false,
-    );
+  useEffect(() => {
+    const expired = () => router.replace("/login");
+    window.addEventListener("patch:session-expired", expired);
+    return () => window.removeEventListener("patch:session-expired", expired);
   }, [router]);
 
   // ==========================
@@ -228,6 +220,14 @@ export function MasterDetailLayout({
               user?.role ===
               Role.ADMIN
             );
+          }
+
+          if (user?.role === Role.USER) {
+            return ["/dashboard", "/software", "/patches", "/devices", "/tickets"].includes(item.href);
+          }
+
+          if (item.href === "/audit-logs") {
+            return user?.role === Role.ADMIN || user?.role === Role.SECURITY_ANALYST;
           }
 
           // SECURITY_ANALYST
@@ -315,6 +315,12 @@ export function MasterDetailLayout({
     router.refresh();
   }
 
+  function selectRoute(event: MouseEvent<HTMLAnchorElement>, path: string) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    setRequestedPath(path === pathname ? null : path);
+    setMobileOpen(false);
+  }
+
   // ==========================
   // SESSION LOADING
   // ==========================
@@ -359,6 +365,7 @@ export function MasterDetailLayout({
         <Link
           className="azureBrand"
           href="/dashboard"
+          onClick={(event) => selectRoute(event, "/dashboard")}
         >
           PatchFlow
         </Link>
@@ -465,11 +472,12 @@ export function MasterDetailLayout({
               <Link
                 href="/profile"
                 role="menuitem"
-                onClick={() =>
+                onClick={(event) => {
+                  selectRoute(event, "/profile");
                   setAccountOpen(
                     false,
-                  )
-                }
+                  );
+                }}
               >
                 ♙ Profile
               </Link>
@@ -579,11 +587,7 @@ export function MasterDetailLayout({
                     item.href
                   }
                   prefetch
-                  onClick={() =>
-                    setSelectedPath(
-                      item.href,
-                    )
-                  }
+                  onClick={(event) => selectRoute(event, item.href)}
                   className={
                     selectedPath.startsWith(
                       item.href,
@@ -653,7 +657,7 @@ export function MasterDetailLayout({
               ☰
             </button>
 
-            <Link href="/dashboard">
+            <Link href="/dashboard" onClick={(event) => selectRoute(event, "/dashboard")}>
               Home
             </Link>
 
@@ -713,9 +717,9 @@ export function MasterDetailLayout({
 
           <div
             className="detailContent"
-            key={pathname}
+            key={selectedPath}
           >
-            {children}
+            {routeIsPending ? <RouteContentPreview path={requestedPath} /> : children}
           </div>
         </main>
       </div>

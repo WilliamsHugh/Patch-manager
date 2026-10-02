@@ -15,7 +15,7 @@ patch-management-system/
 └── README.md
 ```
 
-The backend uses PostgreSQL through Prisma. The frontend calls the API through `NEXT_PUBLIC_API_URL`.
+The backend uses PostgreSQL through Prisma. The Next.js server proxies `/api/*` requests to NestJS using the server-only `API_URL`. Browser JavaScript never receives access or refresh tokens; they are held in HttpOnly, SameSite cookies on the web origin. Data-backed screens read from the API and Supabase rather than embedded demo arrays.
 
 ## UI design contract
 
@@ -38,6 +38,10 @@ cp apps/web/.env.example apps/web/.env.local
 ```
 
 Set `DATABASE_URL`, `DIRECT_URL`, `JWT_ACCESS_SECRET`, and `JWT_REFRESH_SECRET` in `apps/api/.env`. Never commit real environment files. For local PostgreSQL, both database URLs may be identical. With Supabase, use the transaction pooler on port `6543` for `DATABASE_URL` and a direct/session connection on port `5432` for Prisma Migrate through `DIRECT_URL`.
+
+Set `API_URL=http://localhost:4000/api` in `apps/web/.env.local` (or `apps/web/.env`). Existing `NEXT_PUBLIC_API_URL` configurations remain a temporary server-side fallback, but new setups should use `API_URL`. The web app no longer uses `localStorage` for authentication. Previously stored browser tokens are ignored; clear site data once when validating the migration.
+
+Refresh tokens are now stored as full-token SHA-256 hashes instead of bcrypt hashes; existing sessions must sign in again after this change. This fixes replay of the previous token after rotation.
 
 ## Database setup
 
@@ -91,6 +95,7 @@ npm run dev:api
 - Frontend: `http://localhost:3000`
 - Login: `http://localhost:3000/login`
 - Backend API: `http://localhost:4000/api`
+- Browser API proxy: `http://localhost:3000/api` (forwards to NestJS)
 - Health check: `GET http://localhost:4000/api/health`
 
 ## Code checks
@@ -143,20 +148,25 @@ curl -X POST http://localhost:4000/api/auth/login \
   -d '{"email":"helpdesk@example.com","password":"password123"}'
 ```
 
-## Suggested work split for three team members
+## Team task and branch rules
 
 1. **Platform and administration:** `auth`, `users`, `roles`, `policies`, `audit-logs`, migrations, and security.
-2. **Assets, patches, and security analysis:** `software`, `patches`, `devices`, `agent`, risk reports, and `SECURITY_ANALYST` permissions.
-3. **Operations and frontend:** `tickets`, `notifications`, `reports`, API integration, and completion of the Next.js pages.
+2. **Assets, patches, and security data:** `software`, `patches`, `devices`, Windows agent collection/scan results, and `security-inventory`.
+3. **Operations and support:** `deployment-plans`, `deployment-tasks` simulation, `tickets`, `notifications`, `reports`, and dashboard.
 
 Review schema changes as a team. Put shared contracts in `packages/shared` and avoid redeclaring business enums in individual applications.
+
+Use the [current task/branch plan](docs/TEAM_TASK_PLAN.md) for task IDs, dependencies, allowed files and acceptance checklists, and the [2026-10-03 codebase audit](docs/CODEBASE_AUDIT_2026-10-03.md) for completed versus pending-branch work. The plan supersedes the older Downloads copy; future feature branch names are proposals until their prerequisites merge.
+
+All contributors and AI agents must follow [AGENTS.md](AGENTS.md), the [Task Execution Contract](docs/TASK_EXECUTION_CONTRACT.md), and applicable [UI](docs/UI_DESIGN_CONTRACT.md) and [Windows Agent](docs/AGENT_DESIGN_CONTRACT.md) contracts. The Windows agent performs real update discovery/reporting to the Linux API; installation and restart are excluded and deployment tasks remain simulated. The baseline merge is on hold until the team releases BASE-01; do not recreate existing pending frontend/auth work.
 
 ## Deployment
 
 ### Vercel — frontend
 
 - Import the repository and select `apps/web` as the Root Directory.
-- Set `NEXT_PUBLIC_API_URL=https://<render-service>/api`.
+- Set server-only `API_URL=https://<render-service>/api`.
+- Do not expose JWT tokens or database credentials through `NEXT_PUBLIC_*` variables. The browser uses same-origin HttpOnly cookies; the Next.js route handler sends Bearer tokens only on its server-to-server request to Render.
 - Use the default Next.js build command.
 
 ### Render — backend

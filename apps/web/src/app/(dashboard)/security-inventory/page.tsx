@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { PatchSeverity } from "@patch-management/shared";
 import { apiClient, ApiError } from "@/lib/api";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 import styles from "./security-inventory.module.css";
 
 type RiskDevice = {
@@ -100,8 +102,8 @@ export default function SecurityInventoryPage() {
           </div>
         </div>
         <form className={styles.filters} onSubmit={submitFilters}>
-          <input
-            aria-label="Search risk inventory"
+          <ModuleSearchField
+            ariaLabel="Search risk inventory"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search CVE, patch title, or software..."
@@ -120,13 +122,11 @@ export default function SecurityInventoryPage() {
           <button className="primary" type="submit">
             Apply
           </button>
-          <button className={styles.secondary} type="button" onClick={resetFilters}>
+          <DashboardActionButton onClick={resetFilters}>
             Reset
-          </button>
+          </DashboardActionButton>
         </form>
       </div>
-
-      {loading && <div className={styles.state}>Loading security risks...</div>}
 
       {!loading && error && (
         <div className={styles.error} role="alert">
@@ -136,61 +136,55 @@ export default function SecurityInventoryPage() {
         </div>
       )}
 
-      {!loading && !error && data && (
-        <>
-          <section className={styles.summary} aria-label="Risk overview">
-            <article><span>Total patches</span><strong>{data.summary.total}</strong></article>
-            <article className={styles.summaryCritical}><span>Critical</span><strong>{data.summary.critical}</strong></article>
-            <article className={styles.summaryHigh}><span>High</span><strong>{data.summary.high}</strong></article>
-            <article className={styles.summaryMedium}><span>Medium</span><strong>{data.summary.medium}</strong></article>
-            <article className={styles.summaryDevices}><span>Affected devices</span><strong>{data.summary.affectedDevices}</strong></article>
-          </section>
+      <section className={styles.summary} aria-label="Risk overview" aria-busy={loading}>
+        <article><span>Total patches</span><strong>{data?.summary.total ?? "—"}</strong></article>
+        <article className={styles.summaryCritical}><span>Critical</span><strong>{data?.summary.critical ?? "—"}</strong></article>
+        <article className={styles.summaryHigh}><span>High</span><strong>{data?.summary.high ?? "—"}</strong></article>
+        <article className={styles.summaryMedium}><span>Medium</span><strong>{data?.summary.medium ?? "—"}</strong></article>
+        <article className={styles.summaryDevices}><span>Affected devices</span><strong>{data?.summary.affectedDevices ?? "—"}</strong></article>
+      </section>
 
-          {data.items.length === 0 ? (
-            <div className={styles.state}>No matching security risks found.</div>
-          ) : (
-            <section className="dataPanel">
-              <div className="dataHead">
-                <div>
-                  <h2>Patch risk inventory</h2>
-                  <p>Review affected software and devices.</p>
-                </div>
-              </div>
-              <div className={styles.tableWrap}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>CVE / PATCH CODE</th>
-                      <th>TITLE</th>
-                      <th>SOFTWARE</th>
-                      <th>SEVERITY</th>
-                      <th>TARGET VERSION</th>
-                      <th>AFFECTED DEVICES</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.items.map((item) => (
-                      <tr key={item.id}>
-                        <td><b>{item.code}</b></td>
-                        <td>{item.title}</td>
-                        <td>{item.software.name}<small>{item.software.vendor}</small></td>
-                        <td><span className={`${styles.severity} ${styles[item.severity.toLowerCase()]}`}>{item.severity}</span></td>
-                        <td>{item.targetVersion ?? "Unknown"}</td>
-                        <td>
-                          <b>{item.affectedDeviceCount}</b>
-                          {item.affectedDevices.length > 0 && (
-                            <small>{item.affectedDevices.map((device) => device.hostname).join(", ")}</small>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
-        </>
-      )}
+      <section className="dataPanel" aria-busy={loading}>
+        <div className="dataHead">
+          <div>
+            <h2>Patch risk inventory</h2>
+            <p>Review affected software and devices.</p>
+          </div>
+        </div>
+        <div className={styles.tableWrap}>
+          <table>
+            <thead>
+              <tr>
+                <th>CVE / PATCH CODE</th>
+                <th>TITLE</th>
+                <th>SOFTWARE</th>
+                <th>SEVERITY</th>
+                <th>TARGET VERSION</th>
+                <th>AFFECTED DEVICES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data?.items.map((item) => (
+                <tr key={item.id}>
+                  <td><b>{item.code}</b></td>
+                  <td>{item.title}</td>
+                  <td>{item.software.name}<small>{item.software.vendor}</small></td>
+                  <td><span className={`${styles.severity} ${styles[item.severity.toLowerCase()]}`}>{item.severity}</span></td>
+                  <td>{item.targetVersion ?? "Unknown"}</td>
+                  <td>
+                    <b>{item.affectedDeviceCount}</b>
+                    {item.affectedDevices.length > 0 && (
+                      <small>{item.affectedDevices.map((device) => device.hostname).join(", ")}</small>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {loading && !data && <p className="panelMessage" role="status">Loading security risks...</p>}
+          {!loading && !error && data?.items.length === 0 && <p className="panelMessage">No matching security risks found.</p>}
+        </div>
+      </section>
     </section>
   );
 }
