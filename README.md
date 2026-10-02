@@ -139,13 +139,17 @@ curl -X POST http://localhost:4000/api/auth/login \
   -d '{"email":"helpdesk@example.com","password":"password123"}'
 ```
 
-## Suggested work split for three team members
+## Team task and branch rules
 
 1. **Platform and administration:** `auth`, `users`, `roles`, `policies`, `audit-logs`, migrations, and security.
-2. **Assets, patches, and security analysis:** `software`, `patches`, `devices`, `agent`, risk reports, and `SECURITY_ANALYST` permissions.
-3. **Operations and frontend:** `tickets`, `notifications`, `reports`, API integration, and completion of the Next.js pages.
+2. **Assets, patches, and security data:** `software`, `patches`, `devices`, Windows agent collection/scan results, and `security-inventory`.
+3. **Operations and support:** `deployment-plans`, `deployment-tasks` simulation, `tickets`, `notifications`, `reports`, and dashboard.
 
 Review schema changes as a team. Put shared contracts in `packages/shared` and avoid redeclaring business enums in individual applications.
+
+Use the [current task/branch plan](docs/TEAM_TASK_PLAN.md) for task IDs, dependencies, allowed files and acceptance checklists, and the [2026-10-03 codebase audit](docs/CODEBASE_AUDIT_2026-10-03.md) for completed versus pending-branch work. The plan supersedes the older Downloads copy; future feature branch names are proposals until their prerequisites merge.
+
+All contributors and AI agents must follow [AGENTS.md](AGENTS.md), the [Task Execution Contract](docs/TASK_EXECUTION_CONTRACT.md), and applicable [UI](docs/UI_DESIGN_CONTRACT.md) and [Windows Agent](docs/AGENT_DESIGN_CONTRACT.md) contracts. The Windows agent performs real update discovery/reporting to the Linux API; installation and restart are excluded and deployment tasks remain simulated. The baseline merge is on hold until the team releases BASE-01; do not recreate existing pending frontend/auth work.
 
 ## Deployment
 

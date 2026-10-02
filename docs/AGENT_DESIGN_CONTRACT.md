@@ -2,6 +2,8 @@
 
 Status: **Required** for work on `apps/agent`, `apps/api/src/modules/agent`, and any agent-related API, database, shared type, or UI contract. This document fixes the course-project target; changing it requires an explicit team scope decision.
 
+Work must also follow `docs/TASK_EXECUTION_CONTRACT.md` and the assigned task in `docs/TEAM_TASK_PLAN.md`: M1-02 defines device identity and shared scan contracts, M2-02 implements the Windows adapter, M2-03 persists/exposes observations, and M2-04/M1-04 verify integration. This document describes the target, not completion of those tasks.
+
 ## 1. Platform and component boundaries
 
 - The managed endpoint is a **Windows user workstation**. The web application is the management and user interface; the NestJS API and PostgreSQL database run on Linux-hosted infrastructure. A developer's Linux workstation may host the API during development, but it is not the target of the Windows scan.
@@ -14,6 +16,7 @@ Status: **Required** for work on `apps/agent`, `apps/api/src/modules/agent`, and
 - The required agent action is a **read-only check for available Windows updates**, with structured results sent to the server. Use a fixed, reviewed Windows Update Agent search operation (for example, `IUpdateSearcher`) or an equivalent documented read-only Windows mechanism. Do not accept command text, PowerShell scripts, or executable paths from the server or the browser.
 - If a subprocess is used to invoke the fixed scan, pass fixed arguments without a shell, enforce a timeout and output-size limit, and report exit/error states. Treat update titles and descriptions as untrusted data. A scan must not download, install, uninstall, hide, approve, or roll back updates, restart the machine, or alter Windows Update policy.
 - Distinguish **available/missing updates** from **installed update history**. `Get-HotFix` alone is not a missing-update scan and must not be used to label a workstation compliant.
+- Windows Update findings cover the configured Windows update source, not every third-party application. Do not map Windows update GUIDs/KBs to catalog CVEs or infer installed software versions without an explicit, tested mapping. A failed or stale scan is unknown, not proof of compliance.
 - The report and UI must label this capability accurately: the system detects and reports available updates; deployment task progress, if demonstrated, is a simulation. Never label a simulated task as an OS update actually installed.
 
 ## 3. Scan contract and security
