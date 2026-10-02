@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { DashboardActionButton } from "./dashboard-action-button";
+import { ModuleTableLoading, type LoadingModule } from "./module-table-loading";
+import { ModuleSearchField } from "./module-search-field";
 
 type Column<T> = { label: string; value: (row: T) => string };
 
 export function LiveModuleTable<T extends { id: string }>({
-  title, description, endpoint, columns,
-}: { title: string; description: string; endpoint: string; columns: Column<T>[] }) {
+  title, description, endpoint, columns, loadingModule,
+}: { title: string; description: string; endpoint: string; columns: Column<T>[]; loadingModule: LoadingModule }) {
   const [rows, setRows] = useState<T[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -29,9 +31,8 @@ export function LiveModuleTable<T extends { id: string }>({
 
   return <section className="dataPanel modulePanel">
     <div className="dataHead"><div><h2>{title}</h2><p>{description}</p></div><DashboardActionButton onClick={() => void load()} disabled={loading}>Refresh data</DashboardActionButton></div>
-    <div className="tableTools"><label><span>⌕</span><input aria-label={`Search ${title.toLowerCase()}`} placeholder={`Search ${title.toLowerCase()}...`} value={query} onChange={event => setQuery(event.target.value)} /></label><DashboardActionButton onClick={() => setQuery("")}>Reset</DashboardActionButton></div>
+    <div className="tableTools"><ModuleSearchField ariaLabel={`Search ${title.toLowerCase()}`} placeholder={`Search ${title.toLowerCase()}...`} value={query} onChange={event => setQuery(event.target.value)} /><DashboardActionButton onClick={() => setQuery("")}>Reset</DashboardActionButton></div>
     {error && <p className="panelMessage" role="alert">{error}</p>}
-    {loading && !rows.length && <p className="panelMessage" role="status">Loading {title.toLowerCase()}...</p>}
-    {!error && <><div className="tableWrap"><table><thead><tr>{columns.map(column => <th key={column.label}>{column.label}</th>)}</tr></thead><tbody>{filtered.map(row => <tr key={row.id}>{columns.map(column => <td key={column.label}>{column.value(row) || "—"}</td>)}</tr>)}</tbody></table>{!loading && filtered.length === 0 && <div className="empty">{rows.length ? "No results match the current search." : `No ${title.toLowerCase()} exist in the database.`}</div>}</div><div className="tableFoot"><span>Showing {filtered.length} of {rows.length}</span></div></>}
+    {loading && !rows.length ? <ModuleTableLoading module={loadingModule} /> : !error && <><div className="tableWrap"><table><thead><tr>{columns.map(column => <th key={column.label}>{column.label}</th>)}</tr></thead><tbody>{filtered.map(row => <tr key={row.id}>{columns.map(column => <td key={column.label}>{column.value(row) || "—"}</td>)}</tr>)}</tbody></table>{!loading && filtered.length === 0 && <div className="empty">{rows.length ? "No results match the current search." : `No ${title.toLowerCase()} exist in the database.`}</div>}</div><div className="tableFoot"><span>Showing {filtered.length} of {rows.length}</span></div></>}
   </section>;
 }

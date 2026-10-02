@@ -11,5 +11,5 @@ const columns = [
 ];
 
 export default function AuditLogsPage() {
-  return <LiveModuleTable<AuditLog> title="Audit Logs" description="Recent system activity from the connected database." endpoint="/audit-logs" columns={columns} />;
+  return <LiveModuleTable<AuditLog> title="Audit Logs" description="Recent system activity from the connected database." endpoint="/audit-logs" columns={columns} loadingModule="audit-logs" />;
 }

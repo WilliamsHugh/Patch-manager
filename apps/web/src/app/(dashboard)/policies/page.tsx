@@ -12,5 +12,5 @@ const columns = [
 ];
 
 export default function PoliciesPage() {
-  return <LiveModuleTable<Policy> title="Policies" description="Update policies from the connected database." endpoint="/policies" columns={columns} />;
+  return <LiveModuleTable<Policy> title="Policies" description="Update policies from the connected database." endpoint="/policies" columns={columns} loadingModule="policies" />;
 }

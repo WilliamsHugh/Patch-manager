@@ -6,6 +6,7 @@ import { Role } from "@patch-management/shared";
 import { apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 
 type Device = {
   id: string;
@@ -116,7 +117,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="dataPanel" aria-busy={pending.devices}><div className="dataHead"><div><h2>Devices</h2><p>Live device inventory and agent assessment status.</p></div></div>
-        <div className="tableTools"><label><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search by device name, department, or operating system" /></label><select value={status} onChange={event => setStatus(event.target.value)}><option value="ALL">All statuses</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><DashboardActionButton onClick={() => { setQuery(""); setStatus("ALL"); setDepartment("ALL"); }}>Reset</DashboardActionButton></div>
+        <div className="tableTools"><ModuleSearchField ariaLabel="Search dashboard devices" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search by device name, department, or operating system" /><select value={status} onChange={event => setStatus(event.target.value)}><option value="ALL">All statuses</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><DashboardActionButton onClick={() => { setQuery(""); setStatus("ALL"); setDepartment("ALL"); }}>Reset</DashboardActionButton></div>
         <div className="tableWrap"><table><thead><tr><th>DEVICE NAME</th><th>DEPARTMENT</th><th>OPERATING SYSTEM</th><th>OWNER</th><th>STATUS</th><th>INSTALLED SOFTWARE</th><th>LAST SCAN</th></tr></thead><tbody>{filtered.map(device => <tr key={device.id} onClick={() => setSelected(device)}><td><button className="machineName" type="button">▣ {device.hostname}</button></td><td>{device.department ?? "—"}</td><td>{device.operatingSystem}</td><td>{device.owner?.name ?? "—"}</td><td><span className={`compliance ${device.status === "ONLINE" ? "ok" : device.status === "NEEDS_ATTENTION" ? "miss" : "na"}`}><i />{statusLabels[device.status]}</span></td><td>{device.installedSoftware?.length ?? 0}</td><td>{device.agentStatus?.lastScanAt ? new Date(device.agentStatus.lastScanAt).toLocaleString() : "Not assessed"}</td></tr>)}</tbody></table>{!ready.devices ? <div className="empty" role="status">{pending.devices ? "Loading devices..." : "Devices are unavailable."}</div> : filtered.length === 0 && <div className="empty">{devices.length ? "No devices match the current filters." : "No devices exist in the database."}</div>}</div>
         <div className="tableFoot"><span>Showing {ready.devices ? filtered.length : "—"} of {ready.devices ? devices.length : "—"} devices</span></div>
       </section>

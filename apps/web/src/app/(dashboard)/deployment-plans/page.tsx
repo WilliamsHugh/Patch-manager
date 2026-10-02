@@ -5,6 +5,7 @@ import { PlanStatus, Role, type Patch, type User } from "@patch-management/share
 import { apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 import styles from "./deployment-plans.module.css";
 
 type Device = {
@@ -215,10 +216,7 @@ export default function DeploymentPlansPage() {
 
       <section className={styles.panel}>
         <div className={styles.toolbar}>
-          <label>
-            <span>Search</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Plan name or creator" />
-          </label>
+          <ModuleSearchField ariaLabel="Search deployment plans" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Plan name or creator" />
           <label>
             <span>Status</span>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}>

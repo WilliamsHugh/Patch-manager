@@ -12,5 +12,5 @@ const columns = [
 ];
 
 export default function TicketsPage() {
-  return <LiveModuleTable<Ticket> title="Tickets" description="Support requests from the connected database." endpoint="/tickets" columns={columns} />;
+  return <LiveModuleTable<Ticket> title="Tickets" description="Support requests from the connected database." endpoint="/tickets" columns={columns} loadingModule="tickets" />;
 }

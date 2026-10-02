@@ -6,6 +6,8 @@ import { Role } from "@patch-management/shared";
 import { ApiError, apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleTableLoading } from "@/components/ui/module-table-loading";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 
 type InstalledSoftware = {
   id: string;
@@ -324,8 +326,8 @@ export default function DevicesPage() {
             void loadDevices();
           }}
         >
-          <input
-            aria-label="Search devices"
+          <ModuleSearchField
+            ariaLabel="Search devices"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search hostname, owner, department, or IP..."
@@ -355,7 +357,7 @@ export default function DevicesPage() {
           </div>
         )}
 
-        {loading && <div className="empty">Loading devices...</div>}
+        {loading && <ModuleTableLoading module="devices" />}
 
         {!loading && !error && devices.length === 0 && (
           <div className="empty">No devices found.</div>

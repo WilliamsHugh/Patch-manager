@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { PatchSeverity } from "@patch-management/shared";
 import { apiClient, ApiError } from "@/lib/api";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { ModuleSearchField } from "@/components/ui/module-search-field";
 import styles from "./security-inventory.module.css";
 
 type RiskDevice = {
@@ -101,8 +102,8 @@ export default function SecurityInventoryPage() {
           </div>
         </div>
         <form className={styles.filters} onSubmit={submitFilters}>
-          <input
-            aria-label="Search risk inventory"
+          <ModuleSearchField
+            ariaLabel="Search risk inventory"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search CVE, patch title, or software..."
