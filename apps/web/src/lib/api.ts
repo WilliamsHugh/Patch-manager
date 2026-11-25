@@ -12,6 +12,7 @@ let refreshRequest: Promise<boolean> | null = null;
 
 function cacheDuration(path: string) {
   if (path === "/notifications") return 15_000;
+  if (path === "/users") return 30_000;
   if (path === "/software" || path === "/patches" || path.startsWith("/patches?") || /^\/patches\/[^/?]+$/.test(path)) return 60_000;
   return 0;
 }

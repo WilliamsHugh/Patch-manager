@@ -25,6 +25,36 @@ test("notification reads are shared within a user and isolated across users", as
   setApiCacheScope(null);
 });
 
+test("user account reads are cached briefly and cleared after an account write", async () => {
+  let reads = 0;
+  const realNow = Date.now;
+  let now = 100_000;
+  Date.now = () => now;
+  globalThis.fetch = async (_input, init) => {
+    if (init?.method === "PATCH") return Response.json({ id: "account-1" });
+    reads += 1;
+    return Response.json([{ id: `account-${reads}` }]);
+  };
+  try {
+    setApiCacheScope({ id: "admin", role: "ADMIN" });
+    await apiClient("/users");
+    await apiClient("/users");
+    assert.equal(reads, 1);
+    now += 30_001;
+    await apiClient("/users");
+    assert.equal(reads, 2);
+    await apiClient("/users/account-1", { method: "PATCH", body: "{}" });
+    assert.equal(getCachedApiData("/users"), undefined);
+    await apiClient("/users");
+    assert.equal(reads, 3);
+    setApiCacheScope({ id: "another-admin", role: "ADMIN" });
+    assert.equal(getCachedApiData("/users"), undefined);
+  } finally {
+    Date.now = realNow;
+    setApiCacheScope(null);
+  }
+});
+
 test("refresh and successful writes invalidate cached lists", async () => {
   let reads = 0;
   globalThis.fetch = async (_input, init) => {
