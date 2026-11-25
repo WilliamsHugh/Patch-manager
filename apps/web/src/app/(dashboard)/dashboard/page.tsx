@@ -20,6 +20,7 @@ type Device = {
 };
 type Patch = { id: string; severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" };
 type Plan = { id: string; name: string; scheduledAt?: string | null; status: string };
+type Overview = { totalAgentsConnected: number; agentsWithMissingPatches: number; agentsNeverScanned: number };
 
 const statusLabels: Record<Device["status"], string> = {
   ONLINE: "Online", OFFLINE: "Offline", NEEDS_ATTENTION: "Needs attention",
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [patches, setPatches] = useState<Patch[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [overview, setOverview] = useState<Overview | null>(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
   const [department, setDepartment] = useState("ALL");
@@ -63,6 +65,7 @@ export default function DashboardPage() {
         })
         .catch(cause => fail("Patches", cause))
         .finally(() => setPending(current => ({ ...current, patches: false }))),
+      isUser ? Promise.resolve() : apiClient<Overview>("/reports/overview").then(setOverview).catch(cause => fail("Agent summary", cause)),
       isUser ? Promise.resolve() : apiClient<Plan[]>("/deployment-plans")
         .then(data => {
           setPlans(data);
@@ -115,6 +118,8 @@ export default function DashboardPage() {
 
         <article className="summaryCard"><div className="cardHead"><h2>Upcoming maintenance</h2></div>{isUser ? <p className="cardMessage">Deployment plans are available to operations staff.</p> : !ready.plans ? <p className="cardMessage" role="status">{pending.plans ? "Loading plans..." : "Plans are unavailable."}</p> : upcoming.length ? upcoming.map(plan => <div className="schedule" key={plan.id}><div className="dateTile"><b>{new Date(plan.scheduledAt!).getDate()}</b><span>{new Date(plan.scheduledAt!).toLocaleString("en", { month: "short" }).toUpperCase()}</span></div><div><b>{plan.name}</b><p>{new Date(plan.scheduledAt!).toLocaleString()}</p><span className="planned">{plan.status.replaceAll("_", " ")}</span></div></div>) : <p className="cardMessage">No upcoming plans in the database.</p>}{!isUser && <button className="cardLink" onClick={() => router.push("/deployment-plans")}>View deployment plans →</button>}</article>
       </section>
+
+      {!isUser && <section className="dataPanel"><div className="dataHead"><div><h2>Agent scan status</h2><p>Recent agent connections and reported Windows Update findings.</p></div></div><div className="tableWrap"><table><thead><tr><th>CONNECTED AGENTS</th><th>AGENTS WITH AVAILABLE UPDATES</th><th>DEVICES NEVER SCANNED</th></tr></thead><tbody><tr><td>{overview?.totalAgentsConnected ?? "—"}</td><td>{overview?.agentsWithMissingPatches ?? "—"}</td><td>{overview?.agentsNeverScanned ?? "—"}</td></tr></tbody></table></div></section>}
 
       <section className="dataPanel" aria-busy={pending.devices}><div className="dataHead"><div><h2>Devices</h2><p>Live device inventory and agent assessment status.</p></div></div>
         <div className="tableTools"><ModuleSearchField ariaLabel="Search dashboard devices" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search by device name, department, or operating system" /><select value={status} onChange={event => setStatus(event.target.value)}><option value="ALL">All statuses</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><DashboardActionButton onClick={() => { setQuery(""); setStatus("ALL"); setDepartment("ALL"); }}>Reset</DashboardActionButton></div>
