@@ -67,6 +67,7 @@ export default function Page() {
   // Only administrators may create, edit, or delete patches.
   const [isAdmin, setIsAdmin] =
     useState(false);
+  const [reviewRole, setReviewRole] = useState<Role | null>(null);
 
   // ==========================
   // LOAD SOFTWARE
@@ -147,6 +148,7 @@ export default function Page() {
     setIsAdmin(
       user?.role === Role.ADMIN,
     );
+    setReviewRole(user?.role ?? null);
 
     void loadSoftware();
   }, []);
@@ -220,6 +222,24 @@ export default function Page() {
 
   function closeDetail() {
     setSelectedPatch(null);
+  }
+
+  async function saveSecurityReview(note: string, decision: "DEPLOY" | "SKIP") {
+    if (!selectedPatch || reviewRole !== Role.SECURITY_ANALYST) return;
+    const patch = await apiClient<PatchItem>(`/patches/${selectedPatch.id}/security-review`, {
+      method: "POST", body: JSON.stringify({ securityNote: note, securityDecision: decision }),
+    });
+    setSelectedPatch(patch);
+    setPatches((current) => current.map((item) => item.id === patch.id ? patch : item));
+  }
+
+  async function saveManagerDecision(decision: "APPROVED" | "REJECTED") {
+    if (!selectedPatch || reviewRole !== Role.MANAGER) return;
+    const patch = await apiClient<PatchItem>(`/patches/${selectedPatch.id}/manager-decision`, {
+      method: "POST", body: JSON.stringify({ managerDecision: decision }),
+    });
+    setSelectedPatch(patch);
+    setPatches((current) => current.map((item) => item.id === patch.id ? patch : item));
   }
 
   // ==========================
@@ -678,6 +698,9 @@ export default function Page() {
           onEdit={
             openEditForm
           }
+          reviewRole={reviewRole}
+          onSecurityReview={saveSecurityReview}
+          onManagerDecision={saveManagerDecision}
         />
       )}
     </>

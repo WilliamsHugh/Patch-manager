@@ -89,6 +89,8 @@
     notifications Notification[]
     auditLogs AuditLog[]
     configuredPolicies Policy[]
+    securityReviewedPatches Patch[] @relation("PatchSecurityReviewer")
+    managerReviewedPatches Patch[] @relation("PatchManagerReviewer")
   }
 
   model Software {
@@ -116,6 +118,16 @@
     software Software @relation(fields: [softwareId], references: [id], onDelete: Cascade)
     tasks DeploymentTask[]
     createdAt DateTime @default(now())
+    securityNote String?
+    securityDecision String?
+    securityReviewedAt DateTime?
+    securityReviewedById String?
+    securityReviewedBy User? @relation("PatchSecurityReviewer", fields: [securityReviewedById], references: [id], onDelete: SetNull)
+    managerDecision String?
+    managerReviewedAt DateTime?
+    managerReviewedById String?
+    managerReviewedBy User? @relation("PatchManagerReviewer", fields: [managerReviewedById], references: [id], onDelete: SetNull)
+    patchStatus String @default("PENDING_REVIEW")
   }
 
   model Device {
