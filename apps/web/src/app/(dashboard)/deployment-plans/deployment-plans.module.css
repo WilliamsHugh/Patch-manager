@@ -262,6 +262,17 @@
 .reviewPanel { display: grid; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
 .reviewPanel label { display: grid; gap: 6px; }
 .reviewPanel textarea { width: 100%; min-height: 72px; box-sizing: border-box; }
+.taskPanel { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+.taskPanel h3 { margin: 0; font-size: 14px; }
+.taskPanel > p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.taskList { display: grid; gap: 8px; }
+.taskRow { display: grid; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+.taskRow > div:first-child { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
+.taskRow > div:first-child span { color: var(--muted); }
+.taskRow > .status { justify-self: start; }
+.taskError { font-size: 12px; }
+.taskError summary { cursor: pointer; color: var(--azure); }
+.taskError p { white-space: normal; overflow-wrap: anywhere; }
 
 .primary:disabled,
 .toolbar button:disabled,

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { PlanStatus, Role, type Patch, type User } from "@patch-management/shared";
+import { PlanStatus, Role, TaskStatus, type Patch, type User } from "@patch-management/shared";
 import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
@@ -21,6 +21,10 @@ type DeploymentTask = {
   patchId: string;
   deviceId: string;
   patch: Patch & { software?: { name: string; vendor: string } };
+  device: Device;
+  status: TaskStatus;
+  errorCode?: string | null;
+  errorLog?: string | null;
 };
 
 type DeploymentPlan = {
@@ -74,6 +78,7 @@ export default function DeploymentPlansPage() {
   const [reviewNote, setReviewNote] = useState("");
 
   const canManage = user?.role === Role.IT_HELPDESK;
+  const canDeploy = user?.role === Role.IT_HELPDESK || user?.role === Role.ADMIN;
   const canReview = user?.role === Role.MANAGER;
   const selectedPlan = plans.find((plan) => plan.id === selectedId) ?? plans[0] ?? null;
 
@@ -81,6 +86,22 @@ export default function DeploymentPlansPage() {
     setUser(getCurrentUser());
     void loadData();
   }, []);
+
+  useEffect(() => {
+    if (!selectedPlan || selectedPlan.status !== PlanStatus.DEPLOYING) return;
+    let active = true;
+    async function refreshTasks() {
+      try {
+        const snapshot = await apiClient<{ status: PlanStatus; tasks: DeploymentTask[] }>(`/deployment-plans/${selectedPlan!.id}/tasks`);
+        if (active) setPlans((current) => current.map((plan) => plan.id === selectedPlan!.id ? { ...plan, status: snapshot.status, tasks: snapshot.tasks } : plan));
+      } catch (err) {
+        if (active) setError(err instanceof Error ? err.message : "Unable to refresh simulated task progress");
+      }
+    }
+    void refreshTasks();
+    const timer = window.setInterval(() => void refreshTasks(), 3_000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [selectedPlan?.id, selectedPlan?.status]);
 
   async function loadData() {
     setLoading(true);
@@ -237,6 +258,20 @@ export default function DeploymentPlansPage() {
     }
   }
 
+  async function startSimulation(plan: DeploymentPlan) {
+    if (!canDeploy || plan.status !== PlanStatus.APPROVED) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const started = await apiClient<{ status: PlanStatus }>(`/deployment-plans/${plan.id}/deploy`, { method: "POST" });
+      setPlans((current) => current.map((item) => item.id === plan.id ? { ...item, status: started.status, tasks: item.tasks.map((task) => ({ ...task, status: TaskStatus.PENDING, errorCode: null, errorLog: null })) } : item));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to start the simulation");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function toggleSelection(field: "deviceIds" | "patchIds", id: string) {
     setForm((current) => ({
       ...current,
@@ -359,6 +394,28 @@ export default function DeploymentPlansPage() {
                   {selectedPlan.reviewNote && <div><dt>Review note</dt><dd>{selectedPlan.reviewNote}</dd></div>}
                 </dl>
                 <p className={styles.observationNote}>This plan is a proposal. It does not install Windows updates or confirm a catalog-to-KB mapping.</p>
+                {canDeploy && selectedPlan.status === PlanStatus.APPROVED && (
+                  <button type="button" className={styles.primary} onClick={() => void startSimulation(selectedPlan)} disabled={saving}>
+                    {saving ? "Starting simulation..." : "Start deployment simulation"}
+                  </button>
+                )}
+                <section className={styles.taskPanel} aria-label="Simulated deployment tasks">
+                  <h3>Task progress [SIMULATION]</h3>
+                  <p>Progress here is simulated. No update is installed on a device.</p>
+                  {!selectedPlan.tasks.length ? <p>No tasks in this plan.</p> : (
+                    <div className={styles.taskList}>
+                      {selectedPlan.tasks.map((task) => (
+                        <div key={task.id} className={styles.taskRow}>
+                          <div><b>{task.device?.hostname ?? task.deviceId}</b><span>{task.patch?.code ?? task.patchId}</span></div>
+                          <span className={styles.status}>{task.status}</span>
+                          {task.status === TaskStatus.FAILED && task.errorCode && (
+                            <details className={styles.taskError}><summary>Failure details</summary><p>{task.errorCode}: {task.errorLog ?? "No further details"}</p></details>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
                 {canReview && selectedPlan.status === PlanStatus.PENDING_APPROVAL && (
                   <div className={styles.reviewPanel}>
                     <label>
