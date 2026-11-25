@@ -15,6 +15,7 @@ const headings: Record<string, { title: string; description?: string }> = {
   "/devices": { title: "Device inventory", description: "Review devices, owners, agent status, and patch compliance." },
   "/deployment-plans": { title: "Deployment plans" },
   "/tickets": { title: "Tickets", description: "Support requests from the connected database." },
+  "/notifications": { title: "Notifications", description: "Updates and requests for your account." },
   "/reports": { title: "Reports overview", description: "Current operational totals from the connected database." },
   "/policies": { title: "Policies", description: "Update policies from the connected database." },
   "/audit-logs": { title: "Audit Logs", description: "Recent system activity from the connected database." },

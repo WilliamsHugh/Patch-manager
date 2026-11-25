@@ -21,6 +21,8 @@ import {
 
 import { loadCurrentUser, logout } from "@/lib/auth";
 import { RouteContentPreview } from "@/components/layout/route-content-preview";
+import { apiClient } from "@/lib/api";
+import notificationStyles from "@/app/(dashboard)/notifications/notifications.module.css";
 
 const navigation = [
   {
@@ -78,6 +80,12 @@ const navigation = [
     href: "/tickets",
     description:
       "Receive and resolve support requests.",
+  },
+  {
+    icon: "♢",
+    label: "Notifications",
+    href: "/notifications",
+    description: "Updates and requests for your account.",
   },
   {
     icon: "▤",
@@ -161,6 +169,8 @@ export function MasterDetailLayout({
     setCheckingSession,
   ] = useState(true);
 
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
   const [
     loggingOut,
     setLoggingOut,
@@ -203,6 +213,20 @@ export function MasterDetailLayout({
     return () => window.removeEventListener("patch:session-expired", expired);
   }, [router]);
 
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    const refreshCount = () => {
+      void apiClient<{ status: string }[]>("/notifications")
+        .then((items) => { if (active) setUnreadNotifications(items.filter((item) => item.status === "UNREAD").length); })
+        .catch(() => { if (active) setUnreadNotifications(0); });
+    };
+    const updated = (event: Event) => setUnreadNotifications((event as CustomEvent<number>).detail);
+    refreshCount();
+    window.addEventListener("patch:notifications-updated", updated);
+    return () => { active = false; window.removeEventListener("patch:notifications-updated", updated); };
+  }, [user]);
+
   // ==========================
   // NAVIGATION BY ROLE
   // ==========================
@@ -223,7 +247,7 @@ export function MasterDetailLayout({
           }
 
           if (user?.role === Role.USER) {
-            return ["/dashboard", "/software", "/patches", "/devices", "/tickets"].includes(item.href);
+            return ["/dashboard", "/software", "/patches", "/devices", "/tickets", "/notifications"].includes(item.href);
           }
 
           if (item.href === "/audit-logs") {
@@ -236,7 +260,7 @@ export function MasterDetailLayout({
             user?.role ===
             Role.SECURITY_ANALYST
           ) {
-            return securityAnalystPaths.has(
+            return item.href === "/notifications" || securityAnalystPaths.has(
               item.href,
             );
           }
@@ -398,9 +422,10 @@ export function MasterDetailLayout({
           <button
             type="button"
             aria-label="Notifications"
+            onClick={() => { setRequestedPath("/notifications"); router.push("/notifications"); }}
           >
             ♢
-            <i />
+            {unreadNotifications > 0 && <i />}
           </button>
 
           <button
@@ -614,6 +639,7 @@ export function MasterDetailLayout({
                       item.label
                     }
                   </b>
+                  {item.href === "/notifications" && unreadNotifications > 0 && <span className={notificationStyles.navCount} aria-label={`${unreadNotifications} unread notifications`}>{unreadNotifications}</span>}
                 </Link>
               ),
             )}
