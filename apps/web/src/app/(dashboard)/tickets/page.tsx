@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PatchSeverity, Role, TicketStatus, type User } from "@patch-management/shared";
-import { apiClient } from "@/lib/api";
+import { apiClient, getCachedApiData } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
@@ -64,13 +64,16 @@ const emptyCreateForm = {
 
 export default function TicketsPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [tickets, setTickets] = useState<TicketItem[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedDetail, setSelectedDetail] = useState<TicketItem | null>(null);
+  const [tickets, setTickets] = useState<TicketItem[]>(() => getCachedApiData<TicketItem[]>("/tickets") ?? []);
+  const [selectedId, setSelectedId] = useState<string | null>(() => getCachedApiData<TicketItem[]>("/tickets")?.[0]?.id ?? null);
+  const [selectedDetail, setSelectedDetail] = useState<TicketItem | null>(() => {
+    const firstId = getCachedApiData<TicketItem[]>("/tickets")?.[0]?.id;
+    return firstId ? getCachedApiData<TicketItem>(`/tickets/${firstId}`) ?? null : null;
+  });
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>("ALL");
   const [query, setQuery] = useState("");
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => getCachedApiData("/tickets") === undefined);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,11 +90,11 @@ export default function TicketsPage() {
   const canChangeStatus =
     user?.role === Role.IT_HELPDESK || user?.role === Role.MANAGER || user?.role === Role.ADMIN;
 
-  const fetchTicketDetail = useCallback(async (ticketId: string) => {
+  const fetchTicketDetail = useCallback(async (ticketId: string, force = false) => {
     activeTicketIdRef.current = ticketId;
-    setDetailLoading(true);
+    setDetailLoading(force || getCachedApiData(`/tickets/${ticketId}`) === undefined);
     try {
-      const detail = await apiClient<TicketItem>(`/tickets/${ticketId}`);
+      const detail = await apiClient<TicketItem>(`/tickets/${ticketId}`, force ? { cache: "reload" } : {});
       if (activeTicketIdRef.current !== ticketId) return;
       setSelectedDetail(detail);
       setTickets((current) => current.map((item) => (item.id === detail.id ? detail : item)));
@@ -106,11 +109,11 @@ export default function TicketsPage() {
     }
   }, []);
 
-  const loadTickets = useCallback(async (preferredId?: string | null) => {
-    setLoading(true);
+  const loadTickets = useCallback(async (preferredId?: string | null, force = false) => {
+    setLoading(force || getCachedApiData("/tickets") === undefined);
     setError(null);
     try {
-      const data = await apiClient<TicketItem[]>("/tickets");
+      const data = await apiClient<TicketItem[]>("/tickets", force ? { cache: "reload" } : {});
       setTickets(data);
       const nextId =
         preferredId && data.some((ticket) => ticket.id === preferredId)
@@ -118,7 +121,7 @@ export default function TicketsPage() {
           : data[0]?.id ?? null;
       setSelectedId(nextId);
       if (nextId) {
-        await fetchTicketDetail(nextId);
+        await fetchTicketDetail(nextId, force);
       } else {
         activeTicketIdRef.current = null;
         setDetailLoading(false);
@@ -176,7 +179,7 @@ export default function TicketsPage() {
     setQuery("");
     setStatusFilter("ALL");
     setNotice(null);
-    void loadTickets(selectedId);
+    void loadTickets(selectedId, true);
   }
 
   async function handleCreateTicket(event: FormEvent<HTMLFormElement>) {

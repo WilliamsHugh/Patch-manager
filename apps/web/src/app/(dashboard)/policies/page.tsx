@@ -2,23 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { Role } from "@patch-management/shared";
-import { apiClient } from "@/lib/api";
+import { apiClient, getCachedApiData } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 
 type Policy = { id: string; name: string; description?: string | null; maxDeferralHours: number; autoApproveSeverity?: string | null; forceRestart: boolean; isActive: boolean; configuredBy?: { name: string } };
 
 export default function PoliciesPage() {
-  const [items, setItems] = useState<Policy[]>([]);
+  const [items, setItems] = useState<Policy[]>(() => getCachedApiData<Policy[]>("/policies") ?? []);
   const [selected, setSelected] = useState<Policy | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => getCachedApiData("/policies") === undefined);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const isAdmin = getCurrentUser()?.role === Role.ADMIN;
 
-  async function load() {
-    setLoading(true); setError("");
-    try { setItems(await apiClient<Policy[]>("/policies")); }
+  async function load(force = false) {
+    setLoading(force || getCachedApiData("/policies") === undefined); setError("");
+    try { setItems(await apiClient<Policy[]>("/policies", force ? { cache: "reload" } : {})); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to load policies."); }
     finally { setLoading(false); }
   }
@@ -35,7 +35,7 @@ export default function PoliciesPage() {
   }
 
   return <section className="dataPanel modulePanel">
-    <div className="dataHead"><div><h2>Policies</h2><p>Configured update rules from the database.</p></div><DashboardActionButton onClick={() => void load()} disabled={loading}>Refresh data</DashboardActionButton></div>
+    <div className="dataHead"><div><h2>Policies</h2><p>Configured update rules from the database.</p></div><DashboardActionButton onClick={() => void load(true)} disabled={loading}>Refresh data</DashboardActionButton></div>
     {error && <p className="panelMessage" role="alert">{error}</p>}
     {loading && !items.length && <p className="panelMessage" role="status">Loading policies...</p>}
     {!loading && !items.length && <p className="panelMessage">No policies found.</p>}

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Role } from "@patch-management/shared";
-import { apiClient } from "@/lib/api";
+import { apiClient, getCachedApiData } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
@@ -28,29 +28,30 @@ const statusLabels: Record<Device["status"], string> = {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [patches, setPatches] = useState<Patch[]>([]);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [overview, setOverview] = useState<Overview | null>(null);
+  const isUser = getCurrentUser()?.role === Role.USER;
+  const devicePath = isUser ? "/devices/me" : "/devices";
+  const [devices, setDevices] = useState<Device[]>(() => getCachedApiData<Device[]>(devicePath) ?? []);
+  const [patches, setPatches] = useState<Patch[]>(() => getCachedApiData<Patch[]>("/patches") ?? []);
+  const [plans, setPlans] = useState<Plan[]>(() => getCachedApiData<Plan[]>("/deployment-plans") ?? []);
+  const [overview, setOverview] = useState<Overview | null>(() => getCachedApiData<Overview>("/reports/overview") ?? null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
   const [department, setDepartment] = useState("ALL");
   const [selected, setSelected] = useState<Device | null>(null);
-  const [pending, setPending] = useState({ devices: true, patches: true, plans: true });
-  const [ready, setReady] = useState({ devices: false, patches: false, plans: false });
+  const [pending, setPending] = useState(() => ({ devices: getCachedApiData(devicePath) === undefined, patches: getCachedApiData("/patches") === undefined, plans: !isUser && getCachedApiData("/deployment-plans") === undefined }));
+  const [ready, setReady] = useState(() => ({ devices: getCachedApiData(devicePath) !== undefined, patches: getCachedApiData("/patches") !== undefined, plans: !isUser && getCachedApiData("/deployment-plans") !== undefined }));
   const [error, setError] = useState("");
-  const isUser = getCurrentUser()?.role === Role.USER;
   const refreshing = pending.devices || pending.patches || pending.plans;
 
-  async function loadData() {
-    setPending({ devices: true, patches: true, plans: !isUser });
+  async function loadData(force = false) {
+    setPending({ devices: force || getCachedApiData(devicePath) === undefined, patches: force || getCachedApiData("/patches") === undefined, plans: !isUser && (force || getCachedApiData("/deployment-plans") === undefined) });
     setError("");
     const fail = (section: string, cause: unknown) => {
       const message = cause instanceof Error ? cause.message : "Request failed";
       setError(current => `${current ? `${current} ` : ""}${section}: ${message}.`);
     };
     await Promise.all([
-      apiClient<Device[]>(isUser ? "/devices/me" : "/devices")
+      apiClient<Device[]>(devicePath, force ? { cache: "reload" } : {})
         .then(data => {
           setDevices(data);
           setSelected(current => data.find(device => device.id === current?.id) ?? null);
@@ -58,15 +59,15 @@ export default function DashboardPage() {
         })
         .catch(cause => fail("Devices", cause))
         .finally(() => setPending(current => ({ ...current, devices: false }))),
-      apiClient<Patch[]>("/patches")
+      apiClient<Patch[]>("/patches", force ? { cache: "reload" } : {})
         .then(data => {
           setPatches(data);
           setReady(current => ({ ...current, patches: true }));
         })
         .catch(cause => fail("Patches", cause))
         .finally(() => setPending(current => ({ ...current, patches: false }))),
-      isUser ? Promise.resolve() : apiClient<Overview>("/reports/overview").then(setOverview).catch(cause => fail("Agent summary", cause)),
-      isUser ? Promise.resolve() : apiClient<Plan[]>("/deployment-plans")
+      isUser ? Promise.resolve() : apiClient<Overview>("/reports/overview", force ? { cache: "reload" } : {}).then(setOverview).catch(cause => fail("Agent summary", cause)),
+      isUser ? Promise.resolve() : apiClient<Plan[]>("/deployment-plans", force ? { cache: "reload" } : {})
         .then(data => {
           setPlans(data);
           setReady(current => ({ ...current, plans: true }));
@@ -101,11 +102,11 @@ export default function DashboardPage() {
       <div className="scopeTitle"><span>ⓘ</span><p><b>Live assessment scope</b><small>Data from the connected database. Use the filters below to narrow the device list.</small></p></div>
       <div className="scopeFilters">
         <label>Department<select value={department} onChange={event => setDepartment(event.target.value)}><option value="ALL">All departments</option>{departments.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
-        <DashboardActionButton onClick={() => void loadData()} disabled={refreshing}>Refresh data</DashboardActionButton>
+        <DashboardActionButton onClick={() => void loadData(true)} disabled={refreshing}>Refresh data</DashboardActionButton>
       </div>
     </section>
 
-    {error && <section className="dataPanel"><div className="panelMessage" role="alert">{error} <DashboardActionButton onClick={() => void loadData()} disabled={refreshing}>Retry</DashboardActionButton></div></section>}
+    {error && <section className="dataPanel"><div className="panelMessage" role="alert">{error} <DashboardActionButton onClick={() => void loadData(true)} disabled={refreshing}>Retry</DashboardActionButton></div></section>}
 
       <section className="summaryGrid" aria-busy={refreshing}>
         <article className="summaryCard"><div className="cardHead"><h2>Device status</h2></div><div className="machineSummary"><div className="ring" style={{ background: `conic-gradient(var(--green) 0 ${onlineShare}%, var(--orange) ${onlineShare}% ${assessedShare}%, #a19f9d ${assessedShare}% 100%)` }}><div><b>{ready.devices ? devices.length : "—"}</b><small>Total devices</small></div></div><ul>

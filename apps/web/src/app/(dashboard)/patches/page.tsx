@@ -32,7 +32,7 @@ export default function Page() {
     useState<PatchItem[]>(() => getCachedApiData<PatchItem[]>("/patches") ?? []);
 
   const [software, setSoftware] =
-    useState<SoftwareOption[]>([]);
+    useState<SoftwareOption[]>(() => getCachedApiData<SoftwareOption[]>("/software") ?? []);
 
   const [loading, setLoading] =
     useState(() => getCachedApiData<PatchItem[]>("/patches") === undefined);

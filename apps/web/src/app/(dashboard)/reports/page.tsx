@@ -1,25 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api";
+import { apiClient, getCachedApiData } from "@/lib/api";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 
 type Overview = { devices: number; needsAttention: number; pendingPlans: number; failedTasks: number; openTickets: number; totalAgentsConnected: number; agentsWithMissingPatches: number; agentsNeverScanned: number };
 type DeploymentSummary = { planId: string; name: string; status: string; total: number; success: number; failed: number; pending: number; simulation: true };
 
 export default function ReportsPage() {
-  const [overview, setOverview] = useState<Overview | null>(null);
-  const [plans, setPlans] = useState<DeploymentSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [overview, setOverview] = useState<Overview | null>(() => getCachedApiData<Overview>("/reports/overview") ?? null);
+  const [plans, setPlans] = useState<DeploymentSummary[]>(() => getCachedApiData<DeploymentSummary[]>("/reports/deployment-summary") ?? []);
+  const [loading, setLoading] = useState(() => getCachedApiData("/reports/overview") === undefined || getCachedApiData("/reports/deployment-summary") === undefined);
   const [error, setError] = useState("");
 
-  async function load() {
-    setLoading(true);
+  async function load(force = false) {
+    setLoading(force || getCachedApiData("/reports/overview") === undefined || getCachedApiData("/reports/deployment-summary") === undefined);
     setError("");
     try {
       const [currentOverview, currentPlans] = await Promise.all([
-        apiClient<Overview>("/reports/overview"),
-        apiClient<DeploymentSummary[]>("/reports/deployment-summary"),
+        apiClient<Overview>("/reports/overview", force ? { cache: "reload" } : {}),
+        apiClient<DeploymentSummary[]>("/reports/deployment-summary", force ? { cache: "reload" } : {}),
       ]);
       setOverview(currentOverview);
       setPlans(currentPlans);
@@ -30,7 +30,7 @@ export default function ReportsPage() {
 
   useEffect(() => { void load(); }, []);
 
-  return <section className="dataPanel modulePanel"><div className="dataHead"><div><h2>Reports overview</h2><p>Current operational totals from the connected database.</p></div><DashboardActionButton onClick={() => void load()} disabled={loading}>Refresh data</DashboardActionButton></div>
+  return <section className="dataPanel modulePanel"><div className="dataHead"><div><h2>Reports overview</h2><p>Current operational totals from the connected database.</p></div><DashboardActionButton onClick={() => void load(true)} disabled={loading}>Refresh data</DashboardActionButton></div>
     {loading && !overview && <p className="panelMessage" role="status">Loading reports...</p>}{error && <p className="panelMessage" role="alert">{error}</p>}
     {!error && <div className="tableWrap"><table><thead><tr><th>METRIC</th><th>CURRENT VALUE</th></tr></thead><tbody>
       <tr><td>Total devices</td><td>{overview?.devices ?? "—"}</td></tr>

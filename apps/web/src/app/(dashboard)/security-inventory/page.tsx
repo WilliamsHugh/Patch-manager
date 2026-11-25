@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { PatchSeverity } from "@patch-management/shared";
-import { apiClient, ApiError } from "@/lib/api";
+import { apiClient, ApiError, getCachedApiData } from "@/lib/api";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
 import styles from "./security-inventory.module.css";
@@ -49,21 +49,22 @@ const severityOptions = ["", ...Object.values(PatchSeverity)] as const;
 export default function SecurityInventoryPage() {
   const [query, setQuery] = useState("");
   const [severity, setSeverity] = useState("");
-  const [data, setData] = useState<RiskResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<RiskResponse | null>(() => getCachedApiData<RiskResponse>("/security-inventory") ?? null);
+  const [loading, setLoading] = useState(() => getCachedApiData("/security-inventory") === undefined);
   const [error, setError] = useState("");
 
-  async function loadRisks(nextQuery = query, nextSeverity = severity) {
-    setLoading(true);
+  async function loadRisks(nextQuery = query, nextSeverity = severity, force = false) {
     setError("");
 
     const params = new URLSearchParams();
     if (nextQuery.trim()) params.set("q", nextQuery.trim());
     if (nextSeverity) params.set("severity", nextSeverity);
 
+    const path = `/security-inventory${params.toString() ? `?${params}` : ""}`;
+    setLoading(force || getCachedApiData(path) === undefined);
     try {
       const result = await apiClient<RiskResponse>(
-        `/security-inventory${params.toString() ? `?${params}` : ""}`,
+        path, force ? { cache: "reload" } : {},
       );
       setData(result);
     } catch (err) {
@@ -89,7 +90,7 @@ export default function SecurityInventoryPage() {
   function resetFilters() {
     setQuery("");
     setSeverity("");
-    void loadRisks("", "");
+    void loadRisks("", "", true);
   }
 
   return (

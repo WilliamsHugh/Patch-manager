@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Device, User } from "@patch-management/shared";
-import { apiClient } from "@/lib/api";
+import { apiClient, getCachedApiData } from "@/lib/api";
 
 type Profile = User & { devices?: Device[] };
 
@@ -15,8 +15,8 @@ const roleLabels: Record<User["role"], string> = {
 };
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<Profile | null>(() => getCachedApiData<Profile>("/users/me") ?? null);
+  const [loading, setLoading] = useState(() => getCachedApiData("/users/me") === undefined);
   const [error, setError] = useState("");
 
   useEffect(() => {

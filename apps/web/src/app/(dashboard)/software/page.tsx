@@ -12,6 +12,7 @@ import { Role } from "@patch-management/shared";
 import {
   ApiError,
   apiClient,
+  getCachedApiData,
 } from "@/lib/api";
 
 import { getCurrentUser } from "@/lib/auth";
@@ -57,7 +58,7 @@ const emptyForm: SoftwareForm = {
 
 export default function SoftwarePage() {
   const [items, setItems] =
-    useState<Software[]>([]);
+    useState<Software[]>(() => getCachedApiData<Software[]>("/software") ?? []);
 
   const [selected, setSelected] =
     useState<Software | null>(null);
@@ -72,7 +73,7 @@ export default function SoftwarePage() {
     useState<string | null>(null);
 
   const [loading, setLoading] =
-    useState(true);
+    useState(() => getCachedApiData("/software") === undefined);
 
   const [saving, setSaving] =
     useState(false);
@@ -130,14 +131,15 @@ export default function SoftwarePage() {
   // LOAD SOFTWARE
   // ==========================
 
-  async function loadSoftware() {
-    setLoading(true);
+  async function loadSoftware(force = false) {
+    setLoading(force || getCachedApiData("/software") === undefined);
     setError("");
 
     try {
       const data =
         await apiClient<Software[]>(
           "/software",
+          force ? { cache: "reload" } : {},
         );
 
       setItems(data);
@@ -573,7 +575,7 @@ export default function SoftwarePage() {
           <DashboardActionButton
             onClick={() => {
               setQuery("");
-              void loadSoftware();
+              void loadSoftware(true);
             }}
             disabled={loading}
           >

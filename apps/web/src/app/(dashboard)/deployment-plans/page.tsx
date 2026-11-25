@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PlanStatus, Role, TaskStatus, type Patch, type User } from "@patch-management/shared";
 import { useSearchParams } from "next/navigation";
-import { apiClient } from "@/lib/api";
+import { apiClient, getCachedApiData } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
@@ -63,16 +63,16 @@ const emptyForm = {
 export default function DeploymentPlansPage() {
   const searchParams = useSearchParams();
   const requestedDeviceId = searchParams.get("deviceId");
-  const [plans, setPlans] = useState<DeploymentPlan[]>([]);
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [patches, setPatches] = useState<(Patch & { software?: { name: string; vendor: string } })[]>([]);
+  const [plans, setPlans] = useState<DeploymentPlan[]>(() => getCachedApiData<DeploymentPlan[]>("/deployment-plans") ?? []);
+  const [devices, setDevices] = useState<Device[]>(() => getCachedApiData<Device[]>("/devices") ?? []);
+  const [patches, setPatches] = useState<(Patch & { software?: { name: string; vendor: string } })[]>(() => getCachedApiData<(Patch & { software?: { name: string; vendor: string } })[]>("/patches") ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>("ALL");
   const [query, setQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => ["/deployment-plans", "/devices", "/patches"].some((path) => getCachedApiData(path) === undefined));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState("");
@@ -103,14 +103,14 @@ export default function DeploymentPlansPage() {
     return () => { active = false; window.clearInterval(timer); };
   }, [selectedPlan?.id, selectedPlan?.status]);
 
-  async function loadData() {
-    setLoading(true);
+  async function loadData(force = false) {
+    setLoading(force || ["/deployment-plans", "/devices", "/patches"].some((path) => getCachedApiData(path) === undefined));
     setError(null);
     try {
       const [planData, deviceData, patchData] = await Promise.all([
-        apiClient<DeploymentPlan[]>("/deployment-plans"),
-        apiClient<Device[]>("/devices"),
-        apiClient<(Patch & { software?: { name: string; vendor: string } })[]>("/patches"),
+        apiClient<DeploymentPlan[]>("/deployment-plans", force ? { cache: "reload" } : {}),
+        apiClient<Device[]>("/devices", force ? { cache: "reload" } : {}),
+        apiClient<(Patch & { software?: { name: string; vendor: string } })[]>("/patches", force ? { cache: "reload" } : {}),
       ]);
       setPlans(planData);
       setDevices(deviceData);
@@ -309,7 +309,7 @@ export default function DeploymentPlansPage() {
               ))}
             </select>
           </label>
-          <DashboardActionButton onClick={() => { setQuery(""); setStatusFilter("ALL"); void loadData(); }} disabled={loading}>
+          <DashboardActionButton onClick={() => { setQuery(""); setStatusFilter("ALL"); void loadData(true); }} disabled={loading}>
             Reset
           </DashboardActionButton>
         </div>

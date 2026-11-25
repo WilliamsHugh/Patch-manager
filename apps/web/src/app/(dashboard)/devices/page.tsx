@@ -4,7 +4,7 @@ import styles from "./devices.module.css";
 import { FormEvent, useEffect, useState } from "react";
 import { AgentScanOutcome, Role, type AgentScanResult } from "@patch-management/shared";
 import { useRouter } from "next/navigation";
-import { ApiError, apiClient } from "@/lib/api";
+import { ApiError, apiClient, getCachedApiData } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import { ModuleTableLoading } from "@/components/ui/module-table-loading";
@@ -93,7 +93,7 @@ const emptyForm: DeviceForm = {
 
 export default function DevicesPage() {
   const router = useRouter();
-  const [devices, setDevices] = useState<Device[]>([]);
+  const [devices, setDevices] = useState<Device[]>(() => getCachedApiData<Device[]>(getCurrentUser()?.role === Role.USER ? "/devices/me" : "/devices") ?? []);
   const [selected, setSelected] = useState<Device | null>(null);
 
   const [compliance, setCompliance] =
@@ -105,7 +105,7 @@ export default function DevicesPage() {
   const [form, setForm] = useState<DeviceForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => getCachedApiData(getCurrentUser()?.role === Role.USER ? "/devices/me" : "/devices") === undefined);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
@@ -122,13 +122,12 @@ export default function DevicesPage() {
     void loadDevices();
 
     const timer = window.setInterval(() => {
-      void loadDevices();
+      void loadDevices(undefined, true);
     }, 60_000);
 
     return () => window.clearInterval(timer);
   }, []);
-  async function loadDevices(search = query) {
-    setLoading(true);
+  async function loadDevices(search = query, force = false) {
     setError("");
 
     try {
@@ -141,7 +140,9 @@ export default function DevicesPage() {
           ? `/devices?q=${encodeURIComponent(search.trim())}`
           : "/devices";
 
-      const data = await apiClient<Device[]>(path);
+      setLoading(force || getCachedApiData(path) === undefined);
+
+      const data = await apiClient<Device[]>(path, force ? { cache: "reload" } : {});
 
       if (isNormalUser && search.trim()) {
         const keyword = search.trim().toLowerCase();
@@ -371,7 +372,7 @@ export default function DevicesPage() {
               setSelected(null);
               setCompliance(null);
               setComplianceError("");
-              void loadDevices("");
+              void loadDevices("", true);
             }}
           >
             Reset
