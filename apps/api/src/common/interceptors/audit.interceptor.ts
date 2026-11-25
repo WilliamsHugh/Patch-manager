@@ -6,7 +6,7 @@ import { AuditLogsService } from "../../modules/audit-logs/audit-logs.service";
 
 type AuditedRequest = {
   user?: { id: string };
-  params?: { id?: string };
+  params?: { id?: string; deviceId?: string };
   method: string;
   route?: { path?: string };
 };
@@ -27,7 +27,7 @@ export class AuditInterceptor implements NestInterceptor {
       try {
         await this.logs.record({
           ...action,
-          entityId: request.params?.id ?? result?.id ?? (action.action === "USER_LOGGED_OUT" ? request.user.id : null),
+          entityId: request.params?.id ?? request.params?.deviceId ?? result?.id ?? (action.action === "USER_LOGGED_OUT" ? request.user.id : null),
           userId: request.user.id,
           // Never persist request/response bodies: they may contain passwords or tokens.
           metadata: { method: request.method, route: request.route?.path ?? null },

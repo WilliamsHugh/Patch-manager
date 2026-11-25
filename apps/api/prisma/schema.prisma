@@ -131,6 +131,7 @@
     planDevices DeploymentPlanDevice[]
     deploymentTasks DeploymentTask[]
     agentStatus AgentStatus?
+    agentCredentials AgentCredential[]
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
   }
@@ -269,4 +270,15 @@
   deviceId String @unique
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
+}
+
+model AgentCredential {
+  id String @id @default(uuid())
+  tokenHash String @unique
+  tokenHint String
+  deviceId String
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+  @@index([deviceId, revokedAt])
 }

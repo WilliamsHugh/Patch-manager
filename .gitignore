@@ -9,3 +9,4 @@ dist
 !.env.example
 !**/.env.example
 .worktrees/
+docs/report_unzip/

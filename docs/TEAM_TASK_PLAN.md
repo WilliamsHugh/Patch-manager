@@ -74,6 +74,22 @@ P0 closes access-control gaps; P1 completes the demonstration; P2 hardens remain
 | M3-04 Notifications/read state | 3 | P1 | `feat/m3-notification-workflow` | M3-03 | OPEN |
 | M3-05 Operational and scan reporting | 3 | P1 | `feat/m3-live-scan-reports` | M2-03, M3-02, M3-04 | OPEN |
 
+### ACCEPT-01 — user device scan and patch proposal flow
+
+Owner: member 1 as integration owner. Branch: `feat/user-agent-patch-proposal-flow`. Status: `IN_PROGRESS` by direct project-owner instruction on 2026-11-25. This is the acceptance-first vertical slice that joins the prerequisites of M1-02, M2-02, M2-03, and the proposal/review portion of M3-01. It does not mark those broader tasks DONE and does not include simulated installation, task execution, ticketing, or reports.
+
+Allowed paths: `apps/agent`, `apps/api/src/modules/agent`, `apps/api/src/modules/devices`, `apps/api/src/modules/deployment-plans`, their DTOs/tests, the minimal reserved Prisma/shared contract files, `apps/web/src/app/(dashboard)/devices`, `apps/web/src/app/(dashboard)/deployment-plans`, required scoped documentation, and this task record. Schema reservation: ACCEPT-01; reviewer: member 2 for Windows scan/data handling and member 3 for plan workflow.
+
+- [ ] Admin creates or rotates one credential bound to one device; the plaintext credential is returned once only. A revoked or mismatched credential cannot heartbeat or submit a scan for another device.
+- [ ] A Windows agent runs a fixed, read-only Windows Update search with timeout/output bounds and sends a versioned `SUCCESS`, `NO_UPDATES`, or `ERROR` payload. It never accepts a command from API/web or installs, downloads, restarts, uninstalls, hides, or approves updates.
+- [ ] API validates, stores and exposes a scan result with scan ID and timestamp; duplicate delivery is harmless and an older result cannot overwrite a newer one. A Linux fixture may test adapter/transport behavior but cannot count as Windows evidence.
+- [ ] Device detail distinguishes connection, scan freshness, no updates, available updates and scan error. A User can view only their own device; Helpdesk can use a scanned device as the target for a proposal.
+- [ ] Helpdesk creates a proposal for the selected device and catalog patches, submits `DRAFT` or `CHANGES_REQUESTED` plans, and can edit only their own editable plans. Manager can approve, reject, or request changes only while the plan is pending; reject/request-changes requires a reason.
+- [ ] The UI explicitly states that Windows findings are observations and a deployment plan is a proposal. Catalog patch selection is not an asserted KB/CVE mapping, and no action updates real endpoint inventory.
+- [ ] Tests cover credential binding/revocation, malformed/stale/duplicate scans, creator/reviewer role and state transitions. Lint/build/UI contract checks pass; Windows machine/VM evidence is recorded separately if available.
+
+Current evidence on `feat/user-agent-patch-proposal-flow` (base `24dc575`): API unit coverage for credential issuance/binding/revocation, stored/duplicate/stale/malformed scan handling, and proposal ownership/review transitions; agent parser tests; API and web builds plus agent/web lint. A shared test database, browser walkthrough, and Windows machine/VM have not been run, so the acceptance items above remain unchecked.
+
 First parallel assignments after BASE-01: **M1-01, M2-01, M3-01**. Member 1 then supplies M1-02 while member 3 continues the plan workflow. Member 2 may prepare Windows VM access and fixtures while waiting for M1-02, without implementing a competing wire/schema contract. Branch counts are not equal effort: Windows integration and release/security work are substantial; M3-04/M3-05 are smaller follow-ups. Rebalance via an explicit task-owner update before crossing boundaries.
 
 ## 5. Member 1 — platform, access, administration, release

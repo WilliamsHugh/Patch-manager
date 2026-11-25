@@ -2,7 +2,8 @@
 
 import styles from "./devices.module.css";
 import { FormEvent, useEffect, useState } from "react";
-import { Role } from "@patch-management/shared";
+import { AgentScanOutcome, Role, type AgentScanResult } from "@patch-management/shared";
+import { useRouter } from "next/navigation";
 import { ApiError, apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
@@ -48,6 +49,7 @@ type AgentStatus = {
   isConnected: boolean;
   lastHeartbeatAt: string | null;
   lastScanAt: string | null;
+  lastScanResult?: unknown | null;
 };
 
 type Device = {
@@ -90,6 +92,7 @@ const emptyForm: DeviceForm = {
 };
 
 export default function DevicesPage() {
+  const router = useRouter();
   const [devices, setDevices] = useState<Device[]>([]);
   const [selected, setSelected] = useState<Device | null>(null);
 
@@ -106,9 +109,15 @@ export default function DevicesPage() {
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canPropose, setCanPropose] = useState(false);
+  const [issuedToken, setIssuedToken] = useState("");
+  const [credentialError, setCredentialError] = useState("");
+  const [issuingCredential, setIssuingCredential] = useState(false);
 
   useEffect(() => {
-    setIsAdmin(getCurrentUser()?.role === Role.ADMIN);
+    const role = getCurrentUser()?.role;
+    setIsAdmin(role === Role.ADMIN);
+    setCanPropose(role === Role.IT_HELPDESK);
     void loadDevices();
 
     const timer = window.setInterval(() => {
@@ -172,6 +181,8 @@ export default function DevicesPage() {
 
   async function selectDevice(device: Device) {
     setSelected(device);
+    setIssuedToken("");
+    setCredentialError("");
     setCompliance(null);
     setComplianceError("");
 
@@ -289,6 +300,21 @@ export default function DevicesPage() {
       setError(
         err instanceof ApiError ? err.message : "Could not delete the device.",
       );
+    }
+  }
+
+  async function issueCredential() {
+    if (!selected || !isAdmin) return;
+    setIssuingCredential(true);
+    setCredentialError("");
+    setIssuedToken("");
+    try {
+      const result = await apiClient<{ token: string }>(`/agent/devices/${selected.id}/credentials`, { method: "POST" });
+      setIssuedToken(result.token);
+    } catch (err) {
+      setCredentialError(err instanceof ApiError ? err.message : "Could not issue an agent credential.");
+    } finally {
+      setIssuingCredential(false);
     }
   }
 
@@ -591,6 +617,33 @@ export default function DevicesPage() {
           </p>
 
           <div className={styles.detailSection}>
+            <h3>Windows Update scan</h3>
+            <p className={styles.observationNote}>
+              These findings are read-only observations from the Windows agent. They do not install updates or change device inventory.
+            </p>
+            <ScanResult status={selected.agentStatus} />
+            {isAdmin && (
+              <div className={styles.credentialArea}>
+                <button type="button" className="primary" onClick={() => void issueCredential()} disabled={issuingCredential}>
+                  {issuingCredential ? "Issuing credential..." : "Rotate agent credential"}
+                </button>
+                {credentialError && <p className={styles.credentialError} role="alert">{credentialError}</p>}
+                {issuedToken && (
+                  <div className={styles.tokenNotice} role="status">
+                    <b>Copy this credential now.</b> It is shown only once and replaces the previous credential.
+                    <code>{issuedToken}</code>
+                  </div>
+                )}
+              </div>
+            )}
+            {canPropose && (
+              <button type="button" className="primary" onClick={() => router.push(`/deployment-plans?deviceId=${encodeURIComponent(selected.id)}`)}>
+                Create proposal for this device
+              </button>
+            )}
+          </div>
+
+          <div className={styles.detailSection}>
             <h3>Installed software</h3>
 
             {!selected.installedSoftware?.length ? (
@@ -740,4 +793,38 @@ function formatAgentState(
   if (state === "CONNECTED") return "Connected";
   if (state === "NOT_INSTALLED") return "Not installed";
   return "Offline";
+}
+
+function ScanResult({ status }: { status: AgentStatus | null | undefined }) {
+  const result = parseScanResult(status?.lastScanResult);
+  if (!result) return <p>No Windows Update scan has been reported by this device.</p>;
+  if (result.outcome === AgentScanOutcome.ERROR) {
+    return <p className={styles.scanError}>Last scan failed: {result.error ?? "No diagnostic was provided."}</p>;
+  }
+  if (result.outcome === AgentScanOutcome.NO_UPDATES) {
+    return <p className={styles.successMessage}>No available Windows software updates were reported at {formatScanDate(result.completedAt)}.</p>;
+  }
+  return (
+    <>
+      <p>{result.updates.length} available Windows software update{result.updates.length === 1 ? "" : "s"} reported at {formatScanDate(result.completedAt)}.</p>
+      <div className="tableWrap">
+        <table>
+          <thead><tr><th>TITLE</th><th>KB ARTICLES</th><th>RESTART</th></tr></thead>
+          <tbody>{result.updates.map((update) => <tr key={update.updateId}><td>{update.title}</td><td>{update.kbArticleIds.join(", ") || "—"}</td><td>{update.rebootRequired ? "Required" : "Not required"}</td></tr>)}</tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function formatScanDate(value: string) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? "an unknown time" : parsed.toLocaleString("en-US");
+}
+
+function parseScanResult(value: unknown): AgentScanResult | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Partial<AgentScanResult>;
+  if (!Object.values(AgentScanOutcome).includes(candidate.outcome as AgentScanOutcome) || typeof candidate.completedAt !== "string" || !Array.isArray(candidate.updates)) return null;
+  return candidate as AgentScanResult;
 }

@@ -4,9 +4,12 @@ export enum PlanStatus { DRAFT = "DRAFT", PENDING_APPROVAL = "PENDING_APPROVAL",
 export enum TaskStatus { PENDING = "PENDING", DOWNLOADING = "DOWNLOADING", INSTALLING = "INSTALLING", WAITING_RESTART = "WAITING_RESTART", SUCCESS = "SUCCESS", FAILED = "FAILED", ROLLBACKED = "ROLLBACKED" }
 export enum TicketStatus { OPEN = "OPEN", IN_PROGRESS = "IN_PROGRESS", WAITING_USER = "WAITING_USER", RESOLVED = "RESOLVED", CLOSED = "CLOSED" }
 export enum DeviceStatus { ONLINE = "ONLINE", OFFLINE = "OFFLINE", NEEDS_ATTENTION = "NEEDS_ATTENTION" }
+export enum AgentScanOutcome { SUCCESS = "SUCCESS", NO_UPDATES = "NO_UPDATES", ERROR = "ERROR" }
 
 export interface User { id: string; email: string; name: string; role: Role }
 export interface Device { id: string; hostname: string; operatingSystem: string; status: DeviceStatus; owner?: User }
 export interface Patch { id: string; code: string; title: string; severity: PatchSeverity; releasedAt: string }
 export interface DeploymentPlan { id: string; name: string; status: PlanStatus; scheduledAt?: string; createdBy: User }
 export interface Ticket { id: string; title: string; description: string; status: TicketStatus; createdBy: User }
+export interface WindowsUpdateFinding { updateId: string; title: string; kbArticleIds: string[]; categories: string[]; rebootRequired: boolean }
+export interface AgentScanResult { protocolVersion: 1; scanId: string; agentVersion: string; os: { name: string; version: string; architecture: string }; startedAt: string; completedAt: string; outcome: AgentScanOutcome; updates: WindowsUpdateFinding[]; error?: string }
