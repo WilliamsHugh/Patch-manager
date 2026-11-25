@@ -73,8 +73,9 @@ export default function DeploymentPlansPage() {
   const [error, setError] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState("");
 
-  const canManage = user?.role === Role.IT_HELPDESK;
+  const canManage = user?.role === Role.ADMIN;
   const canReview = user?.role === Role.MANAGER;
+  const canDeploy = user?.role === Role.ADMIN || user?.role === Role.IT_HELPDESK;
   const selectedPlan = plans.find((plan) => plan.id === selectedId) ?? plans[0] ?? null;
 
   useEffect(() => {
@@ -237,6 +238,25 @@ export default function DeploymentPlansPage() {
     }
   }
 
+  async function deployPlan(plan: DeploymentPlan) {
+    if (!canDeploy || plan.status !== PlanStatus.APPROVED) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const saved = await apiClient<Partial<DeploymentPlan>>(`/deployment-plans/${plan.id}/deploy`, {
+        method: "POST",
+      });
+      setPlans((current) =>
+        current.map((item) => (item.id === plan.id ? { ...item, ...saved } : item)),
+      );
+      setSelectedId(plan.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to deploy the deployment plan");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function toggleSelection(field: "deviceIds" | "patchIds", id: string) {
     setForm((current) => ({
       ...current,
@@ -325,17 +345,31 @@ export default function DeploymentPlansPage() {
                     <span>Details</span>
                     <h2>{selectedPlan.name}</h2>
                   </div>
-                  {canManage && isOwnEditablePlan(selectedPlan, user) && (
+                  {((canManage && isOwnEditablePlan(selectedPlan, user)) || (canDeploy && selectedPlan.status === PlanStatus.APPROVED)) && (
                     <div className={styles.actions}>
-                      <button type="button" onClick={() => startEdit(selectedPlan)}>
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => deletePlan(selectedPlan)} disabled={saving}>
-                        Delete
-                      </button>
-                      <button type="button" className={styles.primaryAction} onClick={() => void submitForReview(selectedPlan)} disabled={saving}>
-                        Submit for approval
-                      </button>
+                      {canManage && isOwnEditablePlan(selectedPlan, user) && (
+                        <>
+                          <button type="button" onClick={() => startEdit(selectedPlan)}>
+                            Edit
+                          </button>
+                          <button type="button" onClick={() => deletePlan(selectedPlan)} disabled={saving}>
+                            Delete
+                          </button>
+                          <button type="button" className={styles.primaryAction} onClick={() => void submitForReview(selectedPlan)} disabled={saving}>
+                            Submit for approval
+                          </button>
+                        </>
+                      )}
+                      {canDeploy && selectedPlan.status === PlanStatus.APPROVED && (
+                        <button
+                          type="button"
+                          className={styles.primaryAction}
+                          onClick={() => void deployPlan(selectedPlan)}
+                          disabled={saving}
+                        >
+                          [SIMULATION] Deploy
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
