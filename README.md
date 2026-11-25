@@ -98,6 +98,22 @@ npm run dev:api
 - Browser API proxy: `http://localhost:3000/api` (forwards to NestJS)
 - Health check: `GET http://localhost:4000/api/health`
 
+### Swagger API reference
+
+With the API running, open [http://localhost:4000/api/docs](http://localhost:4000/api/docs). The OpenAPI document is available at `GET /api/docs-json`.
+
+To test a protected human endpoint, call `POST /api/auth/login`, copy its `accessToken`, then select **Authorize** and paste it in the `access-token` bearer field. Agent heartbeat and scan endpoints instead require an Admin-issued, device-bound `x-agent-token`; do not paste that token into browser storage or commit it.
+
+### Windows endpoint agent (scan only)
+
+The endpoint agent is a separate process for a Windows user workstation. It performs a fixed, read-only Windows Update search and reports the available Windows software updates to the API. It never downloads or installs updates, restarts the computer, changes policy, or accepts a command from the API.
+
+1. Create a device as Admin and, in **Devices → Device details**, select **Rotate agent credential**. Copy the displayed credential immediately; it is not stored in the web browser and will not be shown again.
+2. On the registered Windows workstation, copy `apps/agent/.env.example` to `apps/agent/.env`, then set `AGENT_API_URL`, the matching `AGENT_DEVICE_ID`, and the one-time credential as `AGENT_API_TOKEN`.
+3. From the repository checkout on that workstation, run `npm run dev:agent`. The agent sends heartbeats and a scan on startup, then uses the configured intervals.
+
+Use a Windows machine or VM for the end-to-end scan demonstration. Linux can run the API and the parser tests, but it cannot demonstrate the Windows Update Agent integration.
+
 ## Code checks
 
 ```bash
@@ -137,6 +153,10 @@ Every route except `/api/health`, `/api/auth/login`, and `/api/auth/refresh` req
 - `GET /api/policies`
 - `PATCH /api/policies/:id`
 - `GET /api/agent/status`
+- `POST /api/agent/devices/:deviceId/credentials` (`ADMIN`; returns a per-device credential once)
+- `POST /api/agent/:deviceId/heartbeat` (agent credential)
+- `POST /api/agent/:deviceId/scan` (agent credential; read-only Windows Update observations)
+- `POST /api/deployment-plans/:id/submit` (`IT_HELPDESK`; proposal submission)
 
 Audit logs record account, software, deployment plan, ticket, policy, and logout changes. They store only the action, actor, entity ID, and route—never request bodies or tokens. Audit recording is best-effort at the scaffold stage: an audit failure produces a server warning but does not fail the original API operation. An outbox or shared transaction can be added later for stronger guarantees.
 
