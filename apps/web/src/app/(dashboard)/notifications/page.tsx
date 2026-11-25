@@ -27,12 +27,15 @@ export default function NotificationsPage() {
   const [error, setError] = useState("");
   const unreadCount = useMemo(() => items.filter((item) => item.status === "UNREAD").length, [items]);
 
+  useEffect(() => {
+    if (!loading && !error) broadcastCount(items);
+  }, [items, loading, error]);
+
   const refresh = useCallback(async (force = false) => {
     const cached = force ? undefined : getCachedApiData<Notification[]>("/notifications");
     if (cached) {
       setItems(cached);
       setLoading(false);
-      broadcastCount(cached);
       return;
     }
     setLoading(true);
@@ -40,7 +43,6 @@ export default function NotificationsPage() {
     try {
       const result = await apiClient<Notification[]>("/notifications", force ? { cache: "reload" } : {});
       setItems(result);
-      broadcastCount(result);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not load notifications.");
     } finally {
@@ -56,11 +58,7 @@ export default function NotificationsPage() {
     setError("");
     try {
       await apiClient(`/notifications/${item.id}/read`, { method: "PATCH" });
-      setItems((current) => {
-        const next = current.map((entry) => entry.id === item.id ? { ...entry, status: "READ" as const } : entry);
-        broadcastCount(next);
-        return next;
-      });
+      setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: "READ" as const } : entry));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not mark notification as read.");
     } finally {
@@ -74,11 +72,7 @@ export default function NotificationsPage() {
     setError("");
     try {
       await apiClient("/notifications/read-all", { method: "POST" });
-      setItems((current) => {
-        const next = current.map((item) => ({ ...item, status: "READ" as const }));
-        broadcastCount(next);
-        return next;
-      });
+      setItems((current) => current.map((item) => ({ ...item, status: "READ" as const })));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not mark notifications as read.");
     } finally {
