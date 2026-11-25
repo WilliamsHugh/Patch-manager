@@ -24,6 +24,12 @@ export class DeploymentPlansController {
     return this.service.findOne(id);
   }
 
+  @Roles(Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.SECURITY_ANALYST)
+  @Get(":id/tasks")
+  findTasks(@Param("id") id: string) {
+    return this.service.findTasks(id);
+  }
+
   @Roles(Role.ADMIN)
   @AuditAction("PLAN_CREATED", "DeploymentPlan")
   @Post()

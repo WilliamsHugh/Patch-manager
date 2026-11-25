@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PlanStatus, Prisma, TaskStatus } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import { CreateDeploymentPlanDto } from "./dto/create-deployment-plan.dto";
@@ -16,6 +16,7 @@ const editableStatuses: PlanStatus[] = [PlanStatus.DRAFT, PlanStatus.CHANGES_REQ
 
 @Injectable()
 export class DeploymentPlansService {
+  private readonly logger = new Logger(DeploymentPlansService.name);
   constructor(private prisma: PrismaService) {}
 
   findAll() {
@@ -174,36 +175,45 @@ export class DeploymentPlansService {
     });
     if (!plan) throw new NotFoundException("Deployment plan not found");
     if (plan.status !== PlanStatus.APPROVED) throw new BadRequestException("Only approved plans can be deployed");
-
-    const now = new Date();
-    const hasFailure = plan.tasks.some((task) => task.forceFailure);
-
-    return this.prisma.$transaction(async (tx) => {
-      for (const task of plan.tasks) {
-        await tx.deploymentTask.update({
-          where: { id: task.id },
-          data: task.forceFailure
-            ? {
-                status: TaskStatus.FAILED,
-                errorCode: "SIMULATED_FAILURE",
-                errorLog: "Task marked forceFailure=true for testing.",
-                startedAt: now,
-                completedAt: now,
-              }
-            : {
-                status: TaskStatus.SUCCESS,
-                startedAt: now,
-                completedAt: now,
-              },
-        });
+    if (!plan.tasks.length) throw new BadRequestException("A deployment plan needs at least one task");
+    const claimed = await this.prisma.deploymentPlan.updateMany({ where: { id, status: PlanStatus.APPROVED }, data: { status: PlanStatus.DEPLOYING } });
+    if (!claimed.count) throw new ConflictException("Deployment already started");
+    await this.prisma.deploymentTask.updateMany({ where: { planId: id }, data: { status: TaskStatus.PENDING, errorCode: null, errorLog: null, startedAt: null, completedAt: null } });
+    void this.simulateTasksAsync(id, plan.tasks).catch(async (error: unknown) => {
+      this.logger.error(`Simulation interrupted for plan ${id}`, error instanceof Error ? error.stack : String(error));
+      try {
+        await this.prisma.deploymentPlan.update({ where: { id }, data: { status: PlanStatus.FAILED } });
+      } catch (recordError) {
+        this.logger.error(`Could not record simulation failure for plan ${id}`, recordError instanceof Error ? recordError.stack : String(recordError));
       }
-
-      return tx.deploymentPlan.update({
-        where: { id },
-        data: { status: hasFailure ? PlanStatus.FAILED : PlanStatus.COMPLETED },
-        include: planInclude,
-      });
     });
+    return { planId: id, status: PlanStatus.DEPLOYING, simulation: true };
+  }
+
+  async findTasks(id: string) {
+    const plan = await this.prisma.deploymentPlan.findUnique({ where: { id }, select: { id: true, status: true } });
+    if (!plan) throw new NotFoundException("Deployment plan not found");
+    const tasks = await this.prisma.deploymentTask.findMany({ where: { planId: id }, include: { device: { select: { id: true, hostname: true } }, patch: { select: { id: true, code: true, title: true } } }, orderBy: { createdAt: "asc" } });
+    return { planId: id, status: plan.status, simulation: true, tasks };
+  }
+
+  private async simulateTasksAsync(planId: string, tasks: { id: string; forceFailure: boolean }[]) {
+    for (const task of tasks) {
+      await this.wait(2_000);
+      await this.prisma.deploymentTask.update({ where: { id: task.id }, data: { status: TaskStatus.DOWNLOADING, startedAt: new Date() } });
+      await this.wait(2_000);
+      await this.prisma.deploymentTask.update({ where: { id: task.id }, data: { status: TaskStatus.INSTALLING } });
+      await this.wait(2_000);
+      await this.prisma.deploymentTask.update({ where: { id: task.id }, data: task.forceFailure
+        ? { status: TaskStatus.FAILED, errorCode: "SIMULATED_FAILURE", errorLog: "This task was configured to fail in the simulation.", completedAt: new Date() }
+        : { status: TaskStatus.SUCCESS, completedAt: new Date() } });
+    }
+    const failed = await this.prisma.deploymentTask.count({ where: { planId, status: TaskStatus.FAILED } });
+    await this.prisma.deploymentPlan.update({ where: { id: planId }, data: { status: failed ? PlanStatus.FAILED : PlanStatus.COMPLETED } });
+  }
+
+  private wait(milliseconds: number) {
+    return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
   }
 
   private shouldForceFailure(failSet: Set<string>, deviceId: string, patchId: string) {
