@@ -1,7 +1,9 @@
 import planStyles from "@/app/(dashboard)/deployment-plans/deployment-plans.module.css";
+import notificationStyles from "@/app/(dashboard)/notifications/notifications.module.css";
 import securityStyles from "@/app/(dashboard)/security-inventory/security-inventory.module.css";
 import { ModuleTableLoading, type LoadingModule } from "@/components/ui/module-table-loading";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
+import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 
 const columns: Record<string, string[]> = {
   "/security-inventory": ["CVE / PATCH CODE", "TITLE", "SOFTWARE", "SEVERITY", "TARGET VERSION", "AFFECTED DEVICES"],
@@ -20,6 +22,16 @@ const headings: Record<string, { title: string; description?: string }> = {
   "/policies": { title: "Policies", description: "Update policies from the connected database." },
   "/audit-logs": { title: "Audit Logs", description: "Recent system activity from the connected database." },
   "/profile": { title: "Account details" },
+};
+
+const tableLoadingModules: Record<string, LoadingModule> = {
+  "/users": "users",
+  "/software": "software",
+  "/patches": "patches",
+  "/devices": "devices",
+  "/tickets": "tickets",
+  "/policies": "policies",
+  "/audit-logs": "audit-logs",
 };
 
 function DashboardPreview() {
@@ -80,16 +92,24 @@ export function RouteContentPreview({ path }: { path: string }) {
 
   const route = Object.keys(headings).find(key => path === key || path.startsWith(`${key}/`)) ?? "/reports";
   const { title, description } = headings[route];
+  if (route === "/reports") return <ReportsPreview />;
   if (route === "/profile") {
     return <section className="profilePage" data-route-preview={path} role="status" aria-label="Loading profile" aria-busy="true">
       <div className="profileHero"><span className="profileAvatar">—</span><div><h2>Account details</h2><p>Loading profile...</p></div></div>
       <div className="profileGrid"><article className="profileCard"><h3>Account information</h3><dl><div><dt>Full name</dt><dd>—</dd></div><div><dt>Email</dt><dd>—</dd></div><div><dt>Role</dt><dd>—</dd></div><div><dt>Account ID</dt><dd>—</dd></div></dl></article><article className="profileCard"><h3>Assigned devices</h3><p className="profileEmpty">Loading devices...</p></article></div>
     </section>;
   }
+  if (route === "/notifications") {
+    return <section className={`dataPanel ${notificationStyles.panel}`} data-route-preview={path} role="status" aria-label="Loading notifications" aria-busy="true">
+      <div className="dataHead"><div><h2>Notifications</h2><p>Updates and requests for your account.</p></div><div className={notificationStyles.actions}><DashboardActionButton disabled>Refresh</DashboardActionButton><button type="button" className={notificationStyles.markAll} disabled>Mark all as read</button></div></div>
+      <p className="panelMessage">Loading notifications...</p>
+    </section>;
+  }
 
+  const tableLoadingModule = tableLoadingModules[route];
   return <section className="dataPanel modulePanel" data-route-preview={path} role="status" aria-label={`Loading ${title}`} aria-busy="true">
     <div className="dataHead"><div><h2>{title}</h2>{description && <p>{description}</p>}</div></div>
-    {route !== "/reports" && <div className="tableTools"><ModuleSearchField ariaLabel={`Search ${title.toLowerCase()}`} disabled placeholder={`Search ${title.toLowerCase()}...`} /><button className="dashboardActionButton" disabled>Reset</button></div>}
-    <ModuleTableLoading module={route.slice(1) as LoadingModule} />
+    <div className="tableTools"><ModuleSearchField ariaLabel={`Search ${title.toLowerCase()}`} disabled placeholder={`Search ${title.toLowerCase()}...`} /><button className="dashboardActionButton" disabled>Reset</button></div>
+    {tableLoadingModule ? <ModuleTableLoading module={tableLoadingModule} /> : <p className="panelMessage">Loading {title.toLowerCase()}...</p>}
   </section>;
 }
