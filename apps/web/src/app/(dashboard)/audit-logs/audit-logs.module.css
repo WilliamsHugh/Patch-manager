@@ -1,0 +1,41 @@
+.filters {
+  height: auto;
+  min-height: 54px;
+  flex-wrap: wrap;
+}
+
+.filters .entityType {
+  flex: 1 1 180px;
+  min-width: 160px;
+  height: 32px;
+  padding: 0 9px;
+  border: 1px solid #8a8886;
+}
+
+.filters .dateField {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  border: 0;
+  white-space: nowrap;
+}
+
+.filters .dateField span {
+  padding: 0;
+}
+
+.filters .dateField input {
+  width: 170px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 7px;
+  border: 1px solid #8a8886;
+  background: #fff;
+}
+
+.filters input:focus-visible {
+  outline: 2px solid var(--azure);
+  outline-offset: 2px;
+}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import styles from "./audit-logs.module.css";
 
 type AuditLog = { id: string; createdAt: string; action: string; entityType: string; entityId?: string | null; user?: { name: string } | null };
 
@@ -31,7 +32,13 @@ export default function AuditLogsPage() {
   useEffect(() => { void load(); }, []);
 
   return <section className="dataPanel modulePanel"><div className="dataHead"><div><h2>Audit logs</h2><p>Account and workflow activity recorded by the API.</p></div><DashboardActionButton onClick={() => void load()} disabled={loading}>Refresh data</DashboardActionButton></div>
-    <form className="tableTools" onSubmit={event => { event.preventDefault(); void load(); }}><input aria-label="Filter entity type" placeholder="Entity type" value={entityType} onChange={event => setEntityType(event.target.value)} /><label>From<input type="date" value={from} onChange={event => setFrom(event.target.value)} /></label><label>To<input type="date" value={to} onChange={event => setTo(event.target.value)} /></label><button type="submit" disabled={loading}>Apply filters</button><DashboardActionButton onClick={() => { setEntityType(""); setFrom(""); setTo(""); void load(undefined, true); }} disabled={loading}>Reset</DashboardActionButton></form>
+    <form className={`tableTools ${styles.filters}`} onSubmit={event => { event.preventDefault(); void load(); }}>
+      <input className={styles.entityType} aria-label="Filter entity type" placeholder="Entity type" value={entityType} onChange={event => setEntityType(event.target.value)} />
+      <label className={styles.dateField}><span>From</span><input type="date" value={from} onChange={event => setFrom(event.target.value)} /></label>
+      <label className={styles.dateField}><span>To</span><input type="date" value={to} onChange={event => setTo(event.target.value)} /></label>
+      <button type="submit" disabled={loading}>Apply filters</button>
+      <DashboardActionButton onClick={() => { setEntityType(""); setFrom(""); setTo(""); void load(undefined, true); }} disabled={loading}>Reset</DashboardActionButton>
+    </form>
     {error && <p className="panelMessage" role="alert">{error}</p>}
     {loading && !items.length && <p className="panelMessage" role="status">Loading audit logs...</p>}
     {!loading && !items.length && !error && <p className="panelMessage">No audit entries match the filters.</p>}
