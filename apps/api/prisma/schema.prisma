@@ -184,6 +184,7 @@
   model DeploymentTask {
     id String @id @default(uuid())
     status TaskStatus @default(PENDING)
+    forceFailure Boolean @default(false)
     errorCode String?
     errorLog String?
     startedAt DateTime?

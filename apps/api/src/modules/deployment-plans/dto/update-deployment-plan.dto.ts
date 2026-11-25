@@ -25,4 +25,9 @@ export class UpdateDeploymentPlanDto {
   @ArrayMinSize(1)
   @IsUUID("4", { each: true })
   patchIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  forceFailureTaskIds?: string[];
 }
