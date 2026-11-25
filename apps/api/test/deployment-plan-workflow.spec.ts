@@ -127,7 +127,6 @@ test("create() marks forceFailure from deviceId:patchId, patchId, and deviceId s
     { deviceId: "dev-1", patchId: "patch-1", forceFailure: false },
   ]);
 });
-
 test("update() applies forceFailureTaskIds on task recreation and direct flag updates", async () => {
   const updatedPayloads: unknown[] = [];
   const taskUpdates: unknown[] = [];
