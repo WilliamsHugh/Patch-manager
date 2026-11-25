@@ -7,7 +7,7 @@ export function getCurrentUser() { return currentUser; }
 
 export async function loadCurrentUser() {
   try {
-    currentUser = await apiClient<User>("/users/me");
+    currentUser = await apiClient<User>("/users/me", { cache: "no-store" });
     setApiCacheScope(currentUser);
     return currentUser;
   } catch (error) {

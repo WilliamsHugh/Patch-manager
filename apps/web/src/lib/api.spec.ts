@@ -74,7 +74,7 @@ test("refresh and successful writes invalidate cached lists", async () => {
   setApiCacheScope(null);
 });
 
-test("notifications expire and uncached endpoints still read the API", async () => {
+test("short-lived notification and report reads expire", async () => {
   let requests = 0;
   const realNow = Date.now;
   let now = 100_000;
@@ -90,9 +90,47 @@ test("notifications expire and uncached endpoints still read the API", async () 
     assert.equal(requests, 2);
     await apiClient("/reports/overview");
     await apiClient("/reports/overview");
+    assert.equal(requests, 3);
+    now += 15_001;
+    await apiClient("/reports/overview");
     assert.equal(requests, 4);
   } finally {
     Date.now = realNow;
+    setApiCacheScope(null);
+  }
+});
+
+test("refreshing one list keeps other cached routes and account changes clear all", async () => {
+  const requests: string[] = [];
+  globalThis.fetch = async (input) => {
+    requests.push(String(input));
+    return Response.json([]);
+  };
+  setApiCacheScope({ id: "admin", role: "ADMIN" });
+  try {
+    await Promise.all([apiClient("/users"), apiClient("/patches")]);
+    await apiClient("/users", { cache: "reload" });
+    assert.deepEqual(getCachedApiData("/patches"), []);
+    assert.equal(requests.length, 3);
+    setApiCacheScope({ id: "user", role: "USER" });
+    assert.equal(getCachedApiData("/users"), undefined);
+    assert.equal(getCachedApiData("/patches"), undefined);
+  } finally {
+    setApiCacheScope(null);
+  }
+});
+
+test("a pending read cannot populate another account's cache", async () => {
+  let finishRequest!: (response: Response) => void;
+  globalThis.fetch = () => new Promise<Response>((resolve) => { finishRequest = resolve; });
+  setApiCacheScope({ id: "admin", role: "ADMIN" });
+  try {
+    const oldRead = apiClient("/users");
+    setApiCacheScope({ id: "another-admin", role: "ADMIN" });
+    finishRequest(Response.json([{ id: "old-account" }]));
+    await oldRead;
+    assert.equal(getCachedApiData("/users"), undefined);
+  } finally {
     setApiCacheScope(null);
   }
 });

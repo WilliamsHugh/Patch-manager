@@ -6,21 +6,40 @@ type CacheEntry = { value: unknown; expiresAt: number };
 
 const responses = new Map<string, CacheEntry>();
 const pendingReads = new Map<string, Promise<unknown>>();
+const refreshVersions = new Map<string, number>();
+const MAX_CACHE_ENTRIES = 80;
 let cacheScope: string | null = null;
 let cacheVersion = 0;
 let refreshRequest: Promise<boolean> | null = null;
 
 function cacheDuration(path: string) {
+  const pathname = path.split("?", 1)[0];
   if (path === "/notifications") return 15_000;
-  if (path === "/users") return 30_000;
-  if (path === "/software" || path === "/patches" || path.startsWith("/patches?") || /^\/patches\/[^/?]+$/.test(path)) return 60_000;
+  if (pathname === "/users/me") return 15_000;
+  if (pathname === "/users" || pathname === "/policies" || pathname === "/security-inventory") return 30_000;
+  if (pathname === "/software" || pathname === "/patches" || /^\/patches\/[^/]+$/.test(pathname)) return 60_000;
+  if (pathname === "/devices" || pathname === "/devices/me" || pathname === "/deployment-plans" || pathname === "/tickets" || /^\/tickets\/[^/]+$/.test(pathname) || pathname === "/reports/overview" || pathname === "/reports/deployment-summary" || pathname === "/audit-logs") return 15_000;
   return 0;
+}
+
+function storeResponse(key: string, value: unknown, ttl: number) {
+  responses.delete(key);
+  responses.set(key, { value, expiresAt: Date.now() + ttl });
+  for (const [entryKey, entry] of responses) {
+    if (entry.expiresAt <= Date.now()) responses.delete(entryKey);
+  }
+  while (responses.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = responses.keys().next().value;
+    if (oldestKey === undefined) break;
+    responses.delete(oldestKey);
+  }
 }
 
 export function clearApiCache() {
   cacheVersion += 1;
   responses.clear();
   pendingReads.clear();
+  refreshVersions.clear();
 }
 
 export function setApiCacheScope(user: { id: string; role: string } | null) {
@@ -76,7 +95,13 @@ export async function apiClient<T>(path: string, init: RequestInit = {}, retryOn
   const method = (init.method ?? "GET").toUpperCase();
   const ttl = cacheDuration(path);
   const forceRefresh = init.cache === "reload";
-  if (forceRefresh) clearApiCache();
+  const scopedKey = cacheScope ? `${cacheScope}:${path}` : null;
+  if (forceRefresh && cacheScope) {
+    const key = scopedKey!;
+    refreshVersions.set(key, (refreshVersions.get(key) ?? 0) + 1);
+    responses.delete(key);
+    pendingReads.delete(key);
+  }
 
   if (method === "GET" && ttl && cacheScope && !forceRefresh && init.cache !== "no-store") {
     const cached = getCachedApiData<T>(path);
@@ -86,9 +111,10 @@ export async function apiClient<T>(path: string, init: RequestInit = {}, retryOn
     if (pending) return pending as Promise<T>;
     const scope = cacheScope;
     const version = cacheVersion;
+    const refreshVersion = refreshVersions.get(key) ?? 0;
     const request = requestApi<T>(path, init, retryOnUnauthorized)
       .then((value) => {
-        if (cacheScope === scope && cacheVersion === version) responses.set(key, { value, expiresAt: Date.now() + ttl });
+        if (cacheScope === scope && cacheVersion === version && (refreshVersions.get(key) ?? 0) === refreshVersion) storeResponse(key, value, ttl);
         return value;
       })
       .finally(() => { if (pendingReads.get(key) === request) pendingReads.delete(key); });
@@ -96,10 +122,13 @@ export async function apiClient<T>(path: string, init: RequestInit = {}, retryOn
     return request;
   }
 
+  const scope = cacheScope;
+  const version = cacheVersion;
+  const refreshVersion = scopedKey ? refreshVersions.get(scopedKey) ?? 0 : 0;
   const value = await requestApi<T>(path, init, retryOnUnauthorized);
   if (method !== "GET" && method !== "HEAD") clearApiCache();
-  if (method === "GET" && ttl && cacheScope && forceRefresh) {
-    responses.set(`${cacheScope}:${path}`, { value, expiresAt: Date.now() + ttl });
+  if (method === "GET" && ttl && scope && scopedKey && forceRefresh && cacheScope === scope && cacheVersion === version && (refreshVersions.get(scopedKey) ?? 0) === refreshVersion) {
+    storeResponse(scopedKey, value, ttl);
   }
   return value;
 }
