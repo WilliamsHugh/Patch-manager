@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PlanStatus, Role, type Patch, type User } from "@patch-management/shared";
+import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
@@ -32,6 +33,8 @@ type DeploymentPlan = {
   createdBy: User;
   devices: { deviceId: string; device: Device }[];
   tasks: DeploymentTask[];
+  reviewNote?: string | null;
+  reviewedBy?: User | null;
 };
 
 type PlanPayload = {
@@ -54,6 +57,8 @@ const emptyForm = {
 };
 
 export default function DeploymentPlansPage() {
+  const searchParams = useSearchParams();
+  const requestedDeviceId = searchParams.get("deviceId");
   const [plans, setPlans] = useState<DeploymentPlan[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [patches, setPatches] = useState<(Patch & { software?: { name: string; vendor: string } })[]>([]);
@@ -66,8 +71,10 @@ export default function DeploymentPlansPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reviewNote, setReviewNote] = useState("");
 
   const canManage = user?.role === Role.IT_HELPDESK;
+  const canReview = user?.role === Role.MANAGER;
   const selectedPlan = plans.find((plan) => plan.id === selectedId) ?? plans[0] ?? null;
 
   useEffect(() => {
@@ -88,6 +95,9 @@ export default function DeploymentPlansPage() {
       setDevices(deviceData);
       setPatches(patchData);
       setSelectedId((current) => current ?? planData[0]?.id ?? null);
+      if (requestedDeviceId && deviceData.some((device) => device.id === requestedDeviceId)) {
+        setForm((current) => current.deviceIds.length ? current : { ...current, deviceIds: [requestedDeviceId] });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load deployment plans");
     } finally {
@@ -173,7 +183,7 @@ export default function DeploymentPlansPage() {
   }
 
   async function deletePlan(plan: DeploymentPlan) {
-    if (!canManage || !editableStatuses.has(plan.status)) return;
+    if (!canManage || !isOwnEditablePlan(plan, user)) return;
     if (!window.confirm(`Delete plan "${plan.name}"? This action cannot be undone.`)) return;
 
     setSaving(true);
@@ -185,6 +195,43 @@ export default function DeploymentPlansPage() {
       if (editingId === plan.id) resetForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to delete the deployment plan");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submitForReview(plan: DeploymentPlan) {
+    if (!canManage || !isOwnEditablePlan(plan, user)) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const saved = await apiClient<DeploymentPlan>(`/deployment-plans/${plan.id}/submit`, { method: "POST" });
+      setPlans((current) => current.map((item) => item.id === saved.id ? saved : item));
+      setSelectedId(saved.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to submit the deployment plan");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function reviewPlan(status: PlanStatus.APPROVED | PlanStatus.REJECTED | PlanStatus.CHANGES_REQUESTED) {
+    if (!selectedPlan || !canReview || selectedPlan.status !== PlanStatus.PENDING_APPROVAL) return;
+    if ((status === PlanStatus.REJECTED || status === PlanStatus.CHANGES_REQUESTED) && !reviewNote.trim()) {
+      setError("A review reason is required when rejecting or requesting changes.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const saved = await apiClient<DeploymentPlan>(`/deployment-plans/${selectedPlan.id}/review`, {
+        method: "PATCH",
+        body: JSON.stringify({ status, reviewNote: reviewNote.trim() || undefined }),
+      });
+      setPlans((current) => current.map((item) => item.id === saved.id ? { ...item, ...saved } : item));
+      setReviewNote("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to review the deployment plan");
     } finally {
       setSaving(false);
     }
@@ -278,13 +325,16 @@ export default function DeploymentPlansPage() {
                     <span>Details</span>
                     <h2>{selectedPlan.name}</h2>
                   </div>
-                  {canManage && editableStatuses.has(selectedPlan.status) && (
+                  {canManage && isOwnEditablePlan(selectedPlan, user) && (
                     <div className={styles.actions}>
                       <button type="button" onClick={() => startEdit(selectedPlan)}>
                         Edit
                       </button>
                       <button type="button" onClick={() => deletePlan(selectedPlan)} disabled={saving}>
                         Delete
+                      </button>
+                      <button type="button" className={styles.primaryAction} onClick={() => void submitForReview(selectedPlan)} disabled={saving}>
+                        Submit for approval
                       </button>
                     </div>
                   )}
@@ -306,7 +356,22 @@ export default function DeploymentPlansPage() {
                     <dt>Patches</dt>
                     <dd>{uniquePatchLabels(selectedPlan.tasks).join(", ")}</dd>
                   </div>
+                  {selectedPlan.reviewNote && <div><dt>Review note</dt><dd>{selectedPlan.reviewNote}</dd></div>}
                 </dl>
+                <p className={styles.observationNote}>This plan is a proposal. It does not install Windows updates or confirm a catalog-to-KB mapping.</p>
+                {canReview && selectedPlan.status === PlanStatus.PENDING_APPROVAL && (
+                  <div className={styles.reviewPanel}>
+                    <label>
+                      <span>Review note</span>
+                      <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} placeholder="Required for rejection or change requests" />
+                    </label>
+                    <div className={styles.actions}>
+                      <button type="button" className={styles.primaryAction} onClick={() => void reviewPlan(PlanStatus.APPROVED)} disabled={saving}>Approve</button>
+                      <button type="button" onClick={() => void reviewPlan(PlanStatus.CHANGES_REQUESTED)} disabled={saving}>Request changes</button>
+                      <button type="button" onClick={() => void reviewPlan(PlanStatus.REJECTED)} disabled={saving}>Reject</button>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className={styles.state}>Select a plan to view its details.</div>
@@ -388,4 +453,8 @@ function uniquePatchLabels(tasks: DeploymentTask[]) {
   const labels = new Map<string, string>();
   tasks.forEach((task) => labels.set(task.patchId, `${task.patch.code} - ${task.patch.title}`));
   return [...labels.values()];
+}
+
+function isOwnEditablePlan(plan: DeploymentPlan, user: User | null) {
+  return Boolean(user && plan.createdBy.id === user.id && editableStatuses.has(plan.status));
 }

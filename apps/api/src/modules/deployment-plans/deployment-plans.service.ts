@@ -62,7 +62,7 @@ export class DeploymentPlansService {
     );
   }
 
-  async update(id: string, dto: UpdateDeploymentPlanDto) {
+  async update(id: string, dto: UpdateDeploymentPlanDto, actorId: string) {
     const plan = await this.prisma.deploymentPlan.findUnique({
       where: { id },
       include: {
@@ -71,6 +71,7 @@ export class DeploymentPlansService {
       },
     });
     if (!plan) throw new NotFoundException("Deployment plan not found");
+    if (plan.createdById !== actorId) throw new BadRequestException("You can only edit plans you created");
     if (!editableStatuses.includes(plan.status)) {
       throw new BadRequestException("Only plans with DRAFT or CHANGES_REQUESTED status can be edited");
     }
@@ -110,9 +111,10 @@ export class DeploymentPlansService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, actorId: string) {
     const plan = await this.prisma.deploymentPlan.findUnique({ where: { id } });
     if (!plan) throw new NotFoundException("Deployment plan not found");
+    if (plan.createdById !== actorId) throw new BadRequestException("You can only delete plans you created");
     if (plan.status !== PlanStatus.DRAFT) {
       throw new BadRequestException("Only plans with DRAFT status can be deleted");
     }
@@ -121,13 +123,30 @@ export class DeploymentPlansService {
     return { deleted: true };
   }
 
+  async submit(id: string, actorId: string) {
+    const plan = await this.prisma.deploymentPlan.findUnique({ where: { id } });
+    if (!plan) throw new NotFoundException("Deployment plan not found");
+    if (plan.createdById !== actorId) throw new BadRequestException("You can only submit plans you created");
+    if (!editableStatuses.includes(plan.status)) throw new BadRequestException("Only draft or changed plans can be submitted");
+    return this.prisma.deploymentPlan.update({
+      where: { id },
+      data: { status: PlanStatus.PENDING_APPROVAL, reviewNote: null, reviewedAt: null, reviewedById: null },
+      include: planInclude,
+    });
+  }
+
   async review(id: string, dto: ReviewDeploymentPlanDto, reviewerId: string) {
     const plan = await this.prisma.deploymentPlan.findUnique({ where: { id } });
     if (!plan) throw new NotFoundException("Deployment plan not found");
+    if (plan.status !== PlanStatus.PENDING_APPROVAL) throw new BadRequestException("Only submitted plans can be reviewed");
+    if ((dto.status === PlanStatus.REJECTED || dto.status === PlanStatus.CHANGES_REQUESTED) && !dto.reviewNote?.trim()) {
+      throw new BadRequestException("A review reason is required when rejecting or requesting changes");
+    }
 
     return this.prisma.deploymentPlan.update({
       where: { id },
-      data: { status: dto.status, reviewNote: dto.reviewNote, reviewedAt: new Date(), reviewedById: reviewerId },
+      data: { status: dto.status, reviewNote: dto.reviewNote?.trim() || null, reviewedAt: new Date(), reviewedById: reviewerId },
+      include: planInclude,
     });
   }
 

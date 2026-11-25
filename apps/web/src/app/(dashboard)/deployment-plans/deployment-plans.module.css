@@ -145,6 +145,7 @@
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -250,6 +251,17 @@
   padding: 0 16px;
   font-weight: 600;
 }
+
+.actions .primaryAction {
+  border-color: var(--azure);
+  background: var(--azure);
+  color: #fff;
+}
+
+.observationNote { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.reviewPanel { display: grid; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.reviewPanel label { display: grid; gap: 6px; }
+.reviewPanel textarea { width: 100%; min-height: 72px; box-sizing: border-box; }
 
 .primary:disabled,
 .toolbar button:disabled,

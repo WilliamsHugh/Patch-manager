@@ -34,6 +34,7 @@ test("SECURITY_ANALYST can read operational data but cannot mutate it", () => {
   assert.equal(allowed(PoliciesController.prototype, "findAll", role), true);
   assert.equal(allowed(SoftwareController.prototype, "create", role), false);
   assert.equal(allowed(DeploymentPlansController.prototype, "create", role), false);
+  assert.equal(allowed(DeploymentPlansController.prototype, "submit", role), false);
   assert.equal(allowed(DeploymentPlansController.prototype, "review", role), false);
   assert.equal(allowed(DeploymentPlansController.prototype, "deploy", role), false);
   assert.equal(allowed(PoliciesController.prototype, "update", role), false);
@@ -52,8 +53,10 @@ test("USER sees personal devices and tickets, not global operations", () => {
 
 test("manager and helpdesk retain their distinct plan permissions", () => {
   assert.equal(allowed(DeploymentPlansController.prototype, "review", Role.MANAGER), true);
+  assert.equal(allowed(DeploymentPlansController.prototype, "submit", Role.MANAGER), false);
   assert.equal(allowed(DeploymentPlansController.prototype, "deploy", Role.MANAGER), false);
   assert.equal(allowed(DeploymentPlansController.prototype, "review", Role.IT_HELPDESK), false);
+  assert.equal(allowed(DeploymentPlansController.prototype, "submit", Role.IT_HELPDESK), true);
   assert.equal(allowed(DeploymentPlansController.prototype, "deploy", Role.IT_HELPDESK), true);
 });
 

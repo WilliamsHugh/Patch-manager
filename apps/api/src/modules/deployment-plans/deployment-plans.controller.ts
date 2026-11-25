@@ -34,15 +34,22 @@ export class DeploymentPlansController {
   @Roles(Role.IT_HELPDESK)
   @AuditAction("PLAN_UPDATED", "DeploymentPlan")
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateDeploymentPlanDto) {
-    return this.service.update(id, dto);
+  update(@Param("id") id: string, @Body() dto: UpdateDeploymentPlanDto, @CurrentUser() user: { id: string }) {
+    return this.service.update(id, dto, user.id);
   }
 
   @Roles(Role.IT_HELPDESK)
   @AuditAction("PLAN_DELETED", "DeploymentPlan")
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.service.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: { id: string }) {
+    return this.service.remove(id, user.id);
+  }
+
+  @Roles(Role.IT_HELPDESK)
+  @AuditAction("PLAN_SUBMITTED", "DeploymentPlan")
+  @Post(":id/submit")
+  submit(@Param("id") id: string, @CurrentUser() user: { id: string }) {
+    return this.service.submit(id, user.id);
   }
 
   @Roles(Role.MANAGER)
