@@ -1,9 +1,9 @@
 import "reflect-metadata";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { Role } from "@prisma/client";
+import { BadRequestException, ForbiddenException, NotFoundException, type ExecutionContext } from "@nestjs/common";
+import { Role, TicketStatus } from "@prisma/client";
 import { Reflector } from "@nestjs/core";
-import type { ExecutionContext } from "@nestjs/common";
 import { RolesGuard } from "../src/common/guards/roles.guard";
 import { DevicesController } from "../src/modules/devices/devices.controller";
 import { DeploymentPlansController } from "../src/modules/deployment-plans/deployment-plans.controller";
@@ -129,4 +129,220 @@ test("access token uses current role and rejects inactive users", async () => {
   assert.deepEqual(await strategy.validate(payload), { id: "u1", email: "u@example.com", role: Role.MANAGER });
   active = false;
   assert.equal(await strategy.validate(payload), null);
+});
+
+test("tickets controller enforces RBAC across all 5 roles for full lifecycle endpoints", () => {
+  const cases: Array<{
+    method: string;
+    expected: Record<Role, boolean>;
+  }> = [
+    {
+      method: "findAll",
+      expected: {
+        [Role.ADMIN]: true,
+        [Role.MANAGER]: true,
+        [Role.IT_HELPDESK]: true,
+        [Role.SECURITY_ANALYST]: false,
+        [Role.USER]: true,
+      },
+    },
+    {
+      method: "findOne",
+      expected: {
+        [Role.ADMIN]: true,
+        [Role.MANAGER]: true,
+        [Role.IT_HELPDESK]: true,
+        [Role.SECURITY_ANALYST]: false,
+        [Role.USER]: true,
+      },
+    },
+    {
+      method: "create",
+      expected: {
+        [Role.ADMIN]: false,
+        [Role.MANAGER]: false,
+        [Role.IT_HELPDESK]: true,
+        [Role.SECURITY_ANALYST]: false,
+        [Role.USER]: true,
+      },
+    },
+    {
+      method: "addComment",
+      expected: {
+        [Role.ADMIN]: false,
+        [Role.MANAGER]: false,
+        [Role.IT_HELPDESK]: true,
+        [Role.SECURITY_ANALYST]: false,
+        [Role.USER]: true,
+      },
+    },
+    {
+      method: "assign",
+      expected: {
+        [Role.ADMIN]: false,
+        [Role.MANAGER]: false,
+        [Role.IT_HELPDESK]: true,
+        [Role.SECURITY_ANALYST]: false,
+        [Role.USER]: false,
+      },
+    },
+    {
+      method: "update",
+      expected: {
+        [Role.ADMIN]: true,
+        [Role.MANAGER]: true,
+        [Role.IT_HELPDESK]: true,
+        [Role.SECURITY_ANALYST]: false,
+        [Role.USER]: false,
+      },
+    },
+    {
+      method: "close",
+      expected: {
+        [Role.ADMIN]: false,
+        [Role.MANAGER]: false,
+        [Role.IT_HELPDESK]: false,
+        [Role.SECURITY_ANALYST]: false,
+        [Role.USER]: true,
+      },
+    },
+  ];
+
+  for (const { method, expected } of cases) {
+    for (const role of Object.values(Role)) {
+      assert.equal(
+        allowed(TicketsController.prototype, method, role),
+        expected[role],
+        `Expected ${method} for ${role} to be ${expected[role]}`,
+      );
+    }
+  }
+});
+
+test("TicketsService.findOne enforces ownership for USER and uses safe user selects", async () => {
+  let capturedQuery: unknown;
+  const prisma = {
+    ticket: {
+      findUnique: async (query: unknown) => {
+        capturedQuery = query;
+        const id = (query as { where: { id: string } }).where.id;
+        if (id === "missing") return null;
+        return { id, createdById: "owner-1", status: TicketStatus.OPEN };
+      },
+    },
+  };
+  const service = new TicketsService(prisma as never);
+
+  await assert.rejects(() => service.findOne("missing", { id: "owner-1", role: Role.USER }), NotFoundException);
+  await assert.rejects(() => service.findOne("t1", { id: "other-user", role: Role.USER }), ForbiddenException);
+
+  const ownTicket = await service.findOne("t1", { id: "owner-1", role: Role.USER });
+  assert.equal(ownTicket.id, "t1");
+
+  const helpdeskTicket = await service.findOne("t1", { id: "hd-1", role: Role.IT_HELPDESK });
+  assert.equal(helpdeskTicket.id, "t1");
+
+  const include = (capturedQuery as {
+    include: {
+      createdBy: { select: Record<string, boolean> };
+      assignedTo: { select: Record<string, boolean> };
+      comments: { include: { author: { select: Record<string, boolean> } }; orderBy: Record<string, string> };
+    };
+  }).include;
+  assert.equal(include.createdBy.select.passwordHash, undefined);
+  assert.equal(include.createdBy.select.refreshTokenHash, undefined);
+  assert.equal(include.assignedTo.select.passwordHash, undefined);
+  assert.equal(include.comments.include.author.select.passwordHash, undefined);
+  assert.equal(include.comments.include.author.select.role, true);
+  assert.deepEqual(include.comments.orderBy, { createdAt: "asc" });
+});
+
+test("TicketsService.addComment validates non-empty content and USER ownership", async () => {
+  const createdComments: unknown[] = [];
+  const prisma = {
+    ticket: {
+      findUnique: async ({ where }: { where: { id: string } }) =>
+        where.id === "missing" ? null : { id: where.id, createdById: "owner-1" },
+    },
+    ticketComment: {
+      create: async (args: unknown) => {
+        createdComments.push(args);
+        return { id: "c1", ...(args as { data: Record<string, unknown> }).data };
+      },
+    },
+  };
+  const service = new TicketsService(prisma as never);
+
+  await assert.rejects(() => service.addComment("t1", "", { id: "owner-1", role: Role.USER }), BadRequestException);
+  await assert.rejects(() => service.addComment("t1", "   \n\t ", { id: "owner-1", role: Role.USER }), BadRequestException);
+  await assert.rejects(() => service.addComment("missing", "hello", { id: "owner-1", role: Role.USER }), NotFoundException);
+  await assert.rejects(() => service.addComment("t1", "hello", { id: "other-user", role: Role.USER }), ForbiddenException);
+
+  await service.addComment("t1", "  Need help with KB5034441  ", { id: "owner-1", role: Role.USER });
+  await service.addComment("t1", "Investigating now", { id: "hd-1", role: Role.IT_HELPDESK });
+
+  assert.equal(createdComments.length, 2);
+  assert.equal((createdComments[0] as { data: { content: string } }).data.content, "Need help with KB5034441");
+  assert.equal((createdComments[1] as { data: { authorId: string } }).data.authorId, "hd-1");
+});
+
+test("TicketsService.assign verifies ticket, active status, and IT_HELPDESK role", async () => {
+  const updates: unknown[] = [];
+  const users: Record<string, { id: string; role: Role; isActive: boolean }> = {
+    hdActive: { id: "hdActive", role: Role.IT_HELPDESK, isActive: true },
+    hdInactive: { id: "hdInactive", role: Role.IT_HELPDESK, isActive: false },
+    normalUser: { id: "normalUser", role: Role.USER, isActive: true },
+    adminUser: { id: "adminUser", role: Role.ADMIN, isActive: true },
+  };
+  const prisma = {
+    ticket: {
+      findUnique: async ({ where }: { where: { id: string } }) =>
+        where.id === "missing" ? null : { id: where.id, createdById: "owner-1" },
+      update: async (args: unknown) => {
+        updates.push(args);
+        return { id: "t1", assignedToId: (args as { data: { assignedToId: string } }).data.assignedToId };
+      },
+    },
+    user: {
+      findUnique: async ({ where }: { where: { id: string } }) => users[where.id] ?? null,
+    },
+  };
+  const service = new TicketsService(prisma as never);
+
+  await assert.rejects(() => service.assign("missing", "hdActive"), NotFoundException);
+  await assert.rejects(() => service.assign("t1", "missingUser"), NotFoundException);
+  await assert.rejects(() => service.assign("t1", "hdInactive"), BadRequestException);
+  await assert.rejects(() => service.assign("t1", "normalUser"), BadRequestException);
+  await assert.rejects(() => service.assign("t1", "adminUser"), BadRequestException);
+
+  const assigned = await service.assign("t1", "hdActive");
+  assert.equal(assigned.assignedToId, "hdActive");
+  assert.equal(updates.length, 1);
+});
+
+test("TicketsService.close and updateStatus enforce existence, creator ownership, and RESOLVED state", async () => {
+  let currentStatus: TicketStatus = TicketStatus.OPEN;
+  const prisma = {
+    ticket: {
+      findUnique: async ({ where }: { where: { id: string } }) =>
+        where.id === "missing" ? null : { id: where.id, createdById: "owner-1", status: currentStatus },
+      update: async ({ data }: { data: { status: TicketStatus } }) => {
+        currentStatus = data.status;
+        return { id: "t1", status: currentStatus };
+      },
+    },
+  };
+  const service = new TicketsService(prisma as never);
+
+  await assert.rejects(() => service.updateStatus("missing", { status: TicketStatus.IN_PROGRESS }), NotFoundException);
+  const inProgress = await service.updateStatus("t1", { status: TicketStatus.IN_PROGRESS });
+  assert.equal(inProgress.status, TicketStatus.IN_PROGRESS);
+
+  await assert.rejects(() => service.close("missing", "owner-1"), NotFoundException);
+  await assert.rejects(() => service.close("t1", "other-user"), ForbiddenException);
+  await assert.rejects(() => service.close("t1", "owner-1"), BadRequestException);
+
+  currentStatus = TicketStatus.RESOLVED;
+  const closed = await service.close("t1", "owner-1");
+  assert.equal(closed.status, TicketStatus.CLOSED);
 });
