@@ -56,8 +56,31 @@ test("manager and helpdesk retain their distinct plan permissions", () => {
   assert.equal(allowed(DeploymentPlansController.prototype, "submit", Role.MANAGER), false);
   assert.equal(allowed(DeploymentPlansController.prototype, "deploy", Role.MANAGER), false);
   assert.equal(allowed(DeploymentPlansController.prototype, "review", Role.IT_HELPDESK), false);
-  assert.equal(allowed(DeploymentPlansController.prototype, "submit", Role.IT_HELPDESK), true);
+  assert.equal(allowed(DeploymentPlansController.prototype, "submit", Role.IT_HELPDESK), false);
   assert.equal(allowed(DeploymentPlansController.prototype, "deploy", Role.IT_HELPDESK), true);
+});
+
+test("deployment plans enforce five-role RBAC across all endpoints", () => {
+  const expected: Record<string, Role[]> = {
+    findAll: [Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.SECURITY_ANALYST],
+    findOne: [Role.ADMIN, Role.MANAGER, Role.IT_HELPDESK, Role.SECURITY_ANALYST],
+    create: [Role.ADMIN],
+    update: [Role.ADMIN],
+    remove: [Role.ADMIN],
+    submit: [Role.ADMIN],
+    review: [Role.MANAGER],
+    deploy: [Role.ADMIN, Role.IT_HELPDESK],
+  };
+
+  for (const [method, allowedRoles] of Object.entries(expected)) {
+    for (const role of Object.values(Role)) {
+      assert.equal(
+        allowed(DeploymentPlansController.prototype, method, role),
+        allowedRoles.includes(role),
+        `Expected ${method} for ${role} to be ${allowedRoles.includes(role)}`,
+      );
+    }
+  }
 });
 
 test("user profile never selects password or refresh-session fields", async () => {

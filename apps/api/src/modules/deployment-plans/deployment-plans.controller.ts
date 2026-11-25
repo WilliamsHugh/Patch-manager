@@ -24,28 +24,28 @@ export class DeploymentPlansController {
     return this.service.findOne(id);
   }
 
-  @Roles(Role.IT_HELPDESK)
+  @Roles(Role.ADMIN)
   @AuditAction("PLAN_CREATED", "DeploymentPlan")
   @Post()
   create(@Body() dto: CreateDeploymentPlanDto, @CurrentUser() user: { id: string }) {
     return this.service.create(dto, user.id);
   }
 
-  @Roles(Role.IT_HELPDESK)
+  @Roles(Role.ADMIN)
   @AuditAction("PLAN_UPDATED", "DeploymentPlan")
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateDeploymentPlanDto, @CurrentUser() user: { id: string }) {
     return this.service.update(id, dto, user.id);
   }
 
-  @Roles(Role.IT_HELPDESK)
+  @Roles(Role.ADMIN)
   @AuditAction("PLAN_DELETED", "DeploymentPlan")
   @Delete(":id")
   remove(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     return this.service.remove(id, user.id);
   }
 
-  @Roles(Role.IT_HELPDESK)
+  @Roles(Role.ADMIN)
   @AuditAction("PLAN_SUBMITTED", "DeploymentPlan")
   @Post(":id/submit")
   submit(@Param("id") id: string, @CurrentUser() user: { id: string }) {
@@ -59,7 +59,7 @@ export class DeploymentPlansController {
     return this.service.review(id, dto, user.id);
   }
 
-  @Roles(Role.IT_HELPDESK)
+  @Roles(Role.ADMIN, Role.IT_HELPDESK)
   @AuditAction("PLAN_DEPLOYED", "DeploymentPlan")
   @Post(":id/deploy")
   deploy(@Param("id") id: string) {

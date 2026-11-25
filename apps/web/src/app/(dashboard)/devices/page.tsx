@@ -117,7 +117,7 @@ export default function DevicesPage() {
   useEffect(() => {
     const role = getCurrentUser()?.role;
     setIsAdmin(role === Role.ADMIN);
-    setCanPropose(role === Role.IT_HELPDESK);
+    setCanPropose(role === Role.ADMIN);
     void loadDevices();
 
     const timer = window.setInterval(() => {
