@@ -1,0 +1,11 @@
+.review { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; }
+.review h3 { margin: 0 0 12px; font-size: 15px; }
+.review p { line-height: 1.5; overflow-wrap: anywhere; }
+.review form { display: grid; gap: 8px; margin-top: 16px; }
+.review textarea, .review select { width: 100%; min-height: 36px; border: 1px solid #8a8886; background: #fff; color: var(--text); padding: 8px; font: inherit; }
+.review textarea { min-height: 96px; resize: vertical; }
+.review textarea:focus-visible, .review select:focus-visible, .review button:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
+.review button { cursor: pointer; }
+.review button:disabled { opacity: .55; cursor: not-allowed; }
+.actions { display: grid; gap: 8px; }
+.error { color: var(--red); }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -8,6 +9,8 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { CreatePatchDto } from "./dto/create-patch.dto";
 import { FilterPatchDto } from "./dto/filter-patch.dto";
 import { UpdatePatchDto } from "./dto/update-patch.dto";
+import { SecurityReviewDto } from "./dto/security-review.dto";
+import { ManagerDecisionDto } from "./dto/manager-decision.dto";
 
 @Injectable()
 export class PatchesService {
@@ -211,6 +214,14 @@ export class PatchesService {
         ...(data.softwareId !== undefined && {
           softwareId: data.softwareId,
         }),
+        patchStatus: "PENDING_REVIEW",
+        securityNote: null,
+        securityDecision: null,
+        securityReviewedAt: null,
+        securityReviewedById: null,
+        managerDecision: null,
+        managerReviewedAt: null,
+        managerReviewedById: null,
       },
 
       include: {
@@ -244,5 +255,42 @@ export class PatchesService {
       id,
       deleted: true,
     };
+  }
+
+  async securityReview(id: string, dto: SecurityReviewDto, reviewerId: string) {
+    const note = dto.securityNote.trim();
+    if (note.length < 10) throw new BadRequestException("Security report must contain at least 10 characters");
+    const result = await this.prisma.patch.updateMany({
+      where: { id, patchStatus: "PENDING_REVIEW" },
+      data: {
+        securityNote: note,
+        securityDecision: dto.securityDecision,
+        securityReviewedAt: new Date(),
+        securityReviewedById: reviewerId,
+        patchStatus: dto.securityDecision === "SKIP" ? "SKIPPED" : "UNDER_REVIEW",
+      },
+    });
+    if (!result.count) await this.assertReviewTransition(id, "Only pending patches can be reviewed by Security Analyst");
+    return this.findOne(id);
+  }
+
+  async managerDecision(id: string, dto: ManagerDecisionDto, reviewerId: string) {
+    const result = await this.prisma.patch.updateMany({
+      where: { id, patchStatus: "UNDER_REVIEW", securityDecision: "DEPLOY" },
+      data: {
+        managerDecision: dto.managerDecision,
+        managerReviewedAt: new Date(),
+        managerReviewedById: reviewerId,
+        patchStatus: dto.managerDecision,
+      },
+    });
+    if (!result.count) await this.assertReviewTransition(id, "Only patches recommended for deployment can be decided by Manager");
+    return this.findOne(id);
+  }
+
+  private async assertReviewTransition(id: string, message: string): Promise<never> {
+    const patch = await this.prisma.patch.findUnique({ where: { id }, select: { id: true } });
+    if (!patch) throw new NotFoundException("Patch not found");
+    throw new BadRequestException(message);
   }
 }

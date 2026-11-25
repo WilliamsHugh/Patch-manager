@@ -9,6 +9,10 @@ import {
   Query,
 } from "@nestjs/common";
 import { Role } from "@prisma/client";
+import { AuditAction } from "../../common/decorators/audit-action.decorator";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { SecurityReviewDto } from "./dto/security-review.dto";
+import { ManagerDecisionDto } from "./dto/manager-decision.dto";
 
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CreatePatchDto } from "./dto/create-patch.dto";
@@ -67,5 +71,19 @@ export class PatchesController {
     @Param("id") id: string,
   ) {
     return this.service.remove(id);
+  }
+
+  @Post(":id/security-review")
+  @Roles(Role.SECURITY_ANALYST)
+  @AuditAction("PATCH_SECURITY_REVIEWED", "Patch")
+  securityReview(@Param("id") id: string, @Body() dto: SecurityReviewDto, @CurrentUser() user: { id: string }) {
+    return this.service.securityReview(id, dto, user.id);
+  }
+
+  @Post(":id/manager-decision")
+  @Roles(Role.MANAGER)
+  @AuditAction("PATCH_MANAGER_DECISION", "Patch")
+  managerDecision(@Param("id") id: string, @Body() dto: ManagerDecisionDto, @CurrentUser() user: { id: string }) {
+    return this.service.managerDecision(id, dto, user.id);
   }
 }

@@ -21,6 +21,10 @@ export interface PatchItem {
   softwareId: string;
   createdAt: string;
   software: PatchSoftware;
+  patchStatus?: "PENDING_REVIEW" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "SKIPPED";
+  securityNote?: string | null;
+  securityDecision?: "DEPLOY" | "SKIP" | null;
+  managerDecision?: "APPROVED" | "REJECTED" | null;
 }
 
 interface PatchTableProps {
@@ -67,6 +71,7 @@ export function PatchTable({
               <th>TITLE</th>
               <th>SOFTWARE</th>
               <th>SEVERITY</th>
+              <th>REVIEW</th>
               <th>VERSION</th>
               <th>RELEASE DATE</th>
               <th>RESTART</th>
@@ -97,6 +102,7 @@ export function PatchTable({
                 </td>
 
                 <td>{severityLabel(patch.severity)}</td>
+                <td>{(patch.patchStatus ?? "PENDING_REVIEW").replaceAll("_", " ")}</td>
 
                 <td>{patch.version ?? "—"}</td>
 
