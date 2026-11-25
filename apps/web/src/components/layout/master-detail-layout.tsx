@@ -22,6 +22,7 @@ import {
 import { loadCurrentUser, logout } from "@/lib/auth";
 import { RouteContentPreview } from "@/components/layout/route-content-preview";
 import { apiClient } from "@/lib/api";
+import { prefetchRouteData } from "@/lib/route-prefetch";
 import notificationStyles from "@/app/(dashboard)/notifications/notifications.module.css";
 
 const navigation = [
@@ -270,6 +271,27 @@ export function MasterDetailLayout({
       );
     }, [user?.role]);
 
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        for (const route of [...visibleNavigation.map((item) => item.href), "/profile"]) {
+          if (!active) break;
+          await prefetchRouteData(route, user.role);
+          await new Promise((resolve) => window.setTimeout(resolve, 150));
+        }
+      })();
+    }, 800);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [user?.id, user?.role, visibleNavigation]);
+
+  function warmRoute(path: string) {
+    if (!user) return;
+    router.prefetch(path);
+    void prefetchRouteData(path, user.role);
+  }
+
   // ==========================
   // CURRENT PAGE INFO
   // ==========================
@@ -497,6 +519,8 @@ export function MasterDetailLayout({
               <Link
                 href="/profile"
                 role="menuitem"
+                onMouseEnter={() => warmRoute("/profile")}
+                onFocus={() => warmRoute("/profile")}
                 onClick={(event) => {
                   selectRoute(event, "/profile");
                   setAccountOpen(
@@ -612,6 +636,9 @@ export function MasterDetailLayout({
                     item.href
                   }
                   prefetch
+                  onMouseEnter={() => warmRoute(item.href)}
+                  onFocus={() => warmRoute(item.href)}
+                  onTouchStart={() => warmRoute(item.href)}
                   onClick={(event) => selectRoute(event, item.href)}
                   className={
                     selectedPath.startsWith(
