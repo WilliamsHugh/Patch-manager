@@ -13,7 +13,7 @@ export class ReportsService {
       this.prisma.deploymentPlan.count({ where: { status: PlanStatus.PENDING_APPROVAL } }),
       this.prisma.deploymentTask.count({ where: { status: TaskStatus.FAILED } }),
       this.prisma.ticket.count({ where: { status: { in: [TicketStatus.OPEN, TicketStatus.IN_PROGRESS] } } }),
-      this.prisma.agentStatus.findMany({ select: { lastHeartbeatAt: true, isConnected: true, lastScanResult: true } }),
+      this.prisma.agentStatus.findMany({ select: { lastHeartbeatAt: true, isConnected: true, lastScanAt: true, lastScanResult: true } }),
       this.prisma.device.count({ where: { agentStatus: null } }),
     ]);
     const cutoff = Date.now() - 5 * 60_000;
@@ -24,7 +24,7 @@ export class ReportsService {
         const result = agent.lastScanResult;
         return result && typeof result === "object" && !Array.isArray(result) && result.outcome === "SUCCESS" && Array.isArray(result.updates) && result.updates.length > 0;
       }).length,
-      agentsNeverScanned: neverScanned + agents.filter((agent) => !agent.lastScanResult).length,
+      agentsNeverScanned: neverScanned + agents.filter((agent) => !agent.lastScanAt).length,
     };
   }
 

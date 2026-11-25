@@ -8,9 +8,9 @@ test("overview counts fresh connected agents and successful scan findings", asyn
   const now = new Date();
   const old = new Date(now.getTime() - 10 * 60_000);
   const agents = [
-    { isConnected: true, lastHeartbeatAt: now, lastScanResult: { outcome: "SUCCESS", updates: [{ updateId: "u1" }] } },
-    { isConnected: true, lastHeartbeatAt: old, lastScanResult: { outcome: "FAILED", updates: [{ updateId: "u2" }] } },
-    { isConnected: false, lastHeartbeatAt: now, lastScanResult: null },
+    { isConnected: true, lastHeartbeatAt: now, lastScanAt: now, lastScanResult: { outcome: "SUCCESS", updates: [{ updateId: "u1" }] } },
+    { isConnected: true, lastHeartbeatAt: old, lastScanAt: old, lastScanResult: { outcome: "FAILED", updates: [{ updateId: "u2" }] } },
+    { isConnected: false, lastHeartbeatAt: now, lastScanAt: null, lastScanResult: null },
   ];
   const prisma = {
     device: { count: async (args?: { where?: object }) => args?.where ? 2 : 5 },
