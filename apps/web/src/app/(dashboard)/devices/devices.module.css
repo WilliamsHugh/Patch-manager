@@ -25,6 +25,11 @@
 .detailSection h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
 .detailSection > p { color: var(--muted); font-size: 13px; }
 .detailSection .error { margin: 10px 0; }
+.detailTabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; border-bottom: 1px solid var(--line); }
+.detailTabs button { padding: 8px 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--text); }
+.detailTabs button[aria-selected="true"] { border-bottom-color: var(--azure); color: var(--azure); font-weight: 600; }
+.detailTabs button:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
+.detailPanel > .attentionMessage { color: #a4262c; font-weight: 600; }
 .observationNote { margin: 0 0 12px; color: var(--muted); }
 .credentialArea { display: grid; gap: 10px; margin-top: 14px; }
 .credentialArea > button, .detailSection > button { justify-self: start; }

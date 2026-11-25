@@ -100,6 +100,7 @@ export default function DevicesPage() {
     useState<ComplianceResult | null>(null);
   const [complianceLoading, setComplianceLoading] = useState(false);
   const [complianceError, setComplianceError] = useState("");
+  const [detailTab, setDetailTab] = useState<"software" | "patches">("software");
 
   const [form, setForm] = useState<DeviceForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -181,6 +182,7 @@ export default function DevicesPage() {
 
   async function selectDevice(device: Device) {
     setSelected(device);
+    setDetailTab("software");
     setIssuedToken("");
     setCredentialError("");
     setCompliance(null);
@@ -585,6 +587,12 @@ export default function DevicesPage() {
           <p>
             <b>Status:</b> {statusLabel(selected.status)}
           </p>
+          {compliance?.missingPatches.some(patch => patch.severity === "HIGH" || patch.severity === "CRITICAL") && (
+            <p className={styles.attentionMessage} role="status">
+              <span className={`${styles.complianceBadge} ${styles.critical}`}>NEEDS_ATTENTION</span>{" "}
+              High or critical catalog patches may apply to this device.
+            </p>
+          )}
 
           <p>
             <b>Agent:</b>{" "}
@@ -643,7 +651,12 @@ export default function DevicesPage() {
             )}
           </div>
 
-          <div className={styles.detailSection}>
+          <div className={styles.detailTabs} role="tablist" aria-label="Device inventory details">
+            <button type="button" role="tab" aria-selected={detailTab === "software"} onClick={() => setDetailTab("software")}>Installed software</button>
+            <button type="button" role="tab" aria-selected={detailTab === "patches"} onClick={() => setDetailTab("patches")}>Missing catalog patches</button>
+          </div>
+
+          {detailTab === "software" && <div className={styles.detailSection}>
             <h3>Installed software</h3>
 
             {!selected.installedSoftware?.length ? (
@@ -683,10 +696,11 @@ export default function DevicesPage() {
                 </table>
               </div>
             )}
-          </div>
+          </div>}
 
-          <div className={styles.detailSection}>
+          {detailTab === "patches" && <div className={styles.detailSection}>
             <h3>Missing patches</h3>
+            <p>Catalog estimates based on installed versions; separate from Windows Update observations.</p>
 
             {complianceLoading && <p>Checking patch compliance...</p>}
 
@@ -756,7 +770,7 @@ export default function DevicesPage() {
                   </table>
                 </div>
               )}
-          </div>
+          </div>}
         </section>
       )}
     </section>
