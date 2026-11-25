@@ -6,7 +6,7 @@ import {
   Role,
 } from "@patch-management/shared";
 
-import { apiClient } from "@/lib/api";
+import { apiClient, getCachedApiData } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import { ModuleTableLoading } from "@/components/ui/module-table-loading";
@@ -29,13 +29,13 @@ type SeverityFilter = "" | PatchSeverity;
 
 export default function Page() {
   const [patches, setPatches] =
-    useState<PatchItem[]>([]);
+    useState<PatchItem[]>(() => getCachedApiData<PatchItem[]>("/patches") ?? []);
 
   const [software, setSoftware] =
     useState<SoftwareOption[]>([]);
 
   const [loading, setLoading] =
-    useState(true);
+    useState(() => getCachedApiData<PatchItem[]>("/patches") === undefined);
 
   const [error, setError] =
     useState<string | null>(null);
@@ -94,9 +94,8 @@ export default function Page() {
   // LOAD PATCHES
   // ==========================
 
-  async function loadPatches() {
+  async function loadPatches(force = false) {
     try {
-      setLoading(true);
       setError(null);
 
       const params =
@@ -119,11 +118,14 @@ export default function Page() {
       const query =
         params.toString();
 
+      const path = `/patches${query ? `?${query}` : ""}`;
+      const cached = force ? undefined : getCachedApiData<PatchItem[]>(path);
+      if (cached) setPatches(cached);
+      setLoading(cached === undefined);
       const data =
         await apiClient<PatchItem[]>(
-          `/patches${
-            query ? `?${query}` : ""
-          }`,
+          path,
+          force ? { cache: "reload" } : {},
         );
 
       setPatches(data);
@@ -556,6 +558,9 @@ export default function Page() {
           <DashboardActionButton onClick={resetFilters}>
             Reset
           </DashboardActionButton>
+          <DashboardActionButton onClick={() => void loadPatches(true)} disabled={loading}>
+            Refresh
+          </DashboardActionButton>
         </div>
 
         {/* LOADING */}
@@ -581,7 +586,7 @@ export default function Page() {
               type="button"
               className="primary"
               onClick={() =>
-                void loadPatches()
+                void loadPatches(true)
               }
             >
               Try again

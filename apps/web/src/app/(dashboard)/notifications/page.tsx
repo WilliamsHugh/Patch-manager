@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiClient } from "@/lib/api";
+import { apiClient, getCachedApiData } from "@/lib/api";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 import styles from "./notifications.module.css";
 
@@ -20,18 +20,25 @@ function broadcastCount(items: Notification[]) {
 }
 
 export default function NotificationsPage() {
-  const [items, setItems] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Notification[]>(() => getCachedApiData<Notification[]>("/notifications") ?? []);
+  const [loading, setLoading] = useState(() => getCachedApiData<Notification[]>("/notifications") === undefined);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
   const [error, setError] = useState("");
   const unreadCount = useMemo(() => items.filter((item) => item.status === "UNREAD").length, [items]);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (force = false) => {
+    const cached = force ? undefined : getCachedApiData<Notification[]>("/notifications");
+    if (cached) {
+      setItems(cached);
+      setLoading(false);
+      broadcastCount(cached);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      const result = await apiClient<Notification[]>("/notifications");
+      const result = await apiClient<Notification[]>("/notifications", force ? { cache: "reload" } : {});
       setItems(result);
       broadcastCount(result);
     } catch (cause) {
@@ -83,7 +90,7 @@ export default function NotificationsPage() {
     <div className="dataHead">
       <div><h2>Notifications</h2><p>Updates and requests for your account.</p></div>
       <div className={styles.actions}>
-        <DashboardActionButton onClick={() => void refresh()} disabled={loading}>Refresh</DashboardActionButton>
+        <DashboardActionButton onClick={() => void refresh(true)} disabled={loading}>Refresh</DashboardActionButton>
         <button type="button" className={styles.markAll} onClick={() => void markAllRead()} disabled={loading || !unreadCount || markingAll || Boolean(savingId)}>{markingAll ? "Saving..." : "Mark all as read"}</button>
       </div>
     </div>
