@@ -17,6 +17,7 @@
     "test:agent": "tsx --test test/agent.spec.ts",
     "test:agent-token": "tsx --test test/agent-token-guard.spec.ts",
     "test:deployment-plans": "tsx --test test/deployment-plan-workflow.spec.ts",
+    "test:notifications": "tsx --test test/notifications.spec.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
