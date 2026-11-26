@@ -1,11 +1,11 @@
 .selectedRow {
-  background: #f3f9fd;
+  background: var(--surface-selected);
 }
 
 .editPanel {
-  padding: 18px 17px 20px;
+  padding: 18px 18px 20px;
   border-top: 1px solid var(--line);
-  background: #faf9f8;
+  background: var(--surface-subtle);
 }
 
 .formHeader {
@@ -52,9 +52,9 @@
 .field select,
 .field textarea {
   width: 100%;
-  border: 1px solid #8a8886;
-  border-radius: 0;
-  background: var(--white);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
   color: var(--text);
   font: inherit;
   font-size: 13px;
@@ -64,8 +64,8 @@
 
 .field input,
 .field select {
-  height: 32px;
-  min-height: 32px;
+  height: 34px;
+  min-height: 34px;
   padding: 0 10px;
 }
 
@@ -84,7 +84,7 @@
 .field select:focus,
 .field textarea:focus {
   border-color: var(--azure);
-  box-shadow: inset 0 0 0 1px var(--azure);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .checkboxGroup {
@@ -135,12 +135,12 @@
 }
 
 .secondaryBtn {
-  height: 32px;
-  min-height: 32px;
+  height: 34px;
+  min-height: 34px;
   padding: 0 14px;
-  border: 1px solid #8a8886;
-  border-radius: 0;
-  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   color: var(--text);
   font: inherit;
   font-size: 12px;
@@ -149,7 +149,7 @@
 }
 
 .secondaryBtn:hover:not(:disabled) {
-  background: #f3f2f1;
+  background: var(--surface-hover);
 }
 
 .secondaryBtn:focus-visible {

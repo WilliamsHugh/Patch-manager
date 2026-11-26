@@ -2,6 +2,7 @@ import planStyles from "@/app/(dashboard)/deployment-plans/deployment-plans.modu
 import notificationStyles from "@/app/(dashboard)/notifications/notifications.module.css";
 import securityStyles from "@/app/(dashboard)/security-inventory/security-inventory.module.css";
 import { ModuleTableLoading, type LoadingModule } from "@/components/ui/module-table-loading";
+import { InfoCircleIcon, NavModuleIcon } from "@/components/ui/icons";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
 
@@ -37,13 +38,13 @@ const tableLoadingModules: Record<string, LoadingModule> = {
 function DashboardPreview() {
   return <>
     <section className="scopeCard" aria-busy="true">
-      <div className="scopeTitle"><span>ⓘ</span><p><b>Live assessment scope</b><small>Data from the connected database. Use the filters below to narrow the device list.</small></p></div>
+      <div className="scopeTitle"><span><InfoCircleIcon size={19} /></span><p><b>Live assessment scope</b><small>Data from the connected database. Use the filters below to narrow the device list.</small></p></div>
       <div className="scopeFilters"><label>Department<select disabled><option>All departments</option></select></label><button className="dashboardActionButton" disabled>Refresh data</button></div>
     </section>
 
     <section className="summaryGrid" aria-busy="true">
-      <article className="summaryCard"><div className="cardHead"><h2>Device status</h2></div><div className="machineSummary"><div className="ring" style={{ background: "#edebe9" }}><div><b>—</b><small>Total devices</small></div></div><ul><li><span className="legend healthy"/><p><b>—</b><small>Online</small></p></li><li><span className="legend warning"/><p><b>—</b><small>Needs attention</small></p></li><li><span className="legend unknown"/><p><b>—</b><small>Offline</small></p></li></ul></div><button className="cardLink" disabled>View all devices →</button></article>
-      <article className="summaryCard updateCard"><div className="cardHead"><h2>Cataloged patches</h2></div><div className="updateNumber"><span className="shield">♢</span><div><b>—</b><small>Total patches</small></div></div><div className="updateStats"><div><span className="criticalDot"/><b>—</b><small>Critical</small></div><div><span className="securityDot"/><b>—</b><small>High</small></div><div><span className="otherDot"/><b>—</b><small>Other</small></div></div><button className="cardLink" disabled>View patches →</button></article>
+      <article className="summaryCard"><div className="cardHead"><h2>Device status</h2></div><div className="machineSummary"><div className="ring" style={{ background: "var(--line)" }}><div><b>—</b><small>Total devices</small></div></div><ul><li><span className="legend healthy"/><p><b>—</b><small>Online</small></p></li><li><span className="legend warning"/><p><b>—</b><small>Needs attention</small></p></li><li><span className="legend unknown"/><p><b>—</b><small>Offline</small></p></li></ul></div><button className="cardLink" disabled>View all devices →</button></article>
+      <article className="summaryCard updateCard"><div className="cardHead"><h2>Cataloged patches</h2></div><div className="updateNumber"><span className="shield"><NavModuleIcon name="patches" size={22} /></span><div><b>—</b><small>Total patches</small></div></div><div className="updateStats"><div><span className="criticalDot"/><b>—</b><small>Critical</small></div><div><span className="securityDot"/><b>—</b><small>High</small></div><div><span className="otherDot"/><b>—</b><small>Other</small></div></div><button className="cardLink" disabled>View patches →</button></article>
       <article className="summaryCard"><div className="cardHead"><h2>Upcoming maintenance</h2></div><p className="cardMessage">Loading plans...</p><button className="cardLink" disabled>View deployment plans →</button></article>
     </section>
 

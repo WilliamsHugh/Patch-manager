@@ -7,19 +7,26 @@
 .filters .entityType {
   flex: 1 1 180px;
   min-width: 160px;
-  height: 32px;
-  padding: 0 9px;
-  border: 1px solid #8a8886;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 12px;
 }
 
 .filters .dateField {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   width: auto;
   border: 0;
   white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .filters .dateField span {
@@ -27,15 +34,19 @@
 }
 
 .filters .dateField input {
-  width: 170px;
+  width: 160px;
   min-width: 0;
-  height: 32px;
-  padding: 0 7px;
-  border: 1px solid #8a8886;
-  background: #fff;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 12px;
 }
 
 .filters input:focus-visible {
-  outline: 2px solid var(--azure);
-  outline-offset: 2px;
+  outline: none;
+  border-color: var(--azure);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }

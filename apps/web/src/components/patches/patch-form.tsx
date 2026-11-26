@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { PatchSeverity } from "@patch-management/shared";
+import { CloseIcon } from "@/components/ui/icons";
 
 import { PatchItem } from "./patch-table";
 
@@ -124,7 +125,7 @@ export function PatchForm({
             onClick={onClose}
             aria-label="Close patch form"
           >
-            ×
+            <CloseIcon size={18} />
           </button>
         </div>
 

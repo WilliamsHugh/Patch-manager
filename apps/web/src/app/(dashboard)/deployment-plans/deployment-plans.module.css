@@ -14,9 +14,14 @@
 .metrics div,
 .panel,
 .formPanel {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
+}
+
+.panel {
+  overflow: hidden;
 }
 
 .metrics div {
@@ -36,11 +41,13 @@
   display: block;
   font-size: 26px;
   margin-top: 6px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .toolbar {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--line);
@@ -51,24 +58,49 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .toolbar select,
 .form input,
-.form textarea {
-  border: 1px solid #8a8886;
+.form textarea,
+.reviewPanel textarea {
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text);
   min-height: 34px;
   padding: 0 10px;
   outline: none;
 }
 
-.toolbar button,
+.toolbar select:focus,
+.form input:focus,
+.form textarea:focus,
+.reviewPanel textarea:focus {
+  border-color: var(--azure);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.toolbar button:not(:global(.dashboardActionButton)),
 .actions button,
 .formTitle button {
   min-height: 34px;
-  border: 1px solid #8a8886;
-  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
   padding: 0 12px;
+}
+
+.toolbar button:not(:global(.dashboardActionButton)):hover:not(:disabled),
+.actions button:hover:not(:disabled),
+.formTitle button:hover:not(:disabled) {
+  background: var(--surface-hover);
 }
 
 .contentGrid {
@@ -89,8 +121,8 @@
 .table th {
   height: 38px;
   text-align: left;
-  color: #605e5c;
-  background: #faf9f8;
+  color: var(--muted);
+  background: var(--surface-subtle);
   border-bottom: 1px solid var(--line);
   font-size: 11px;
   padding: 0 12px;
@@ -98,7 +130,7 @@
 
 .table td {
   height: 50px;
-  border-bottom: 1px solid #edebe9;
+  border-bottom: 1px solid var(--line-subtle);
   padding: 0 12px;
   white-space: nowrap;
 }
@@ -107,18 +139,22 @@
   cursor: pointer;
 }
 
-.table tr:hover,
+.table tr:hover {
+  background: var(--surface-hover);
+}
+
 .selected {
-  background: #f3f9fd;
+  background: var(--surface-selected);
 }
 
 .status {
   display: inline-flex;
   align-items: center;
   min-height: 24px;
-  padding: 0 8px;
-  background: #deecf9;
-  color: #005a9e;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--info-bg);
+  color: var(--info-text);
   font-size: 11px;
   font-weight: 600;
 }
@@ -141,6 +177,7 @@
 .formTitle h2 {
   margin: 4px 0 0;
   font-size: 18px;
+  color: var(--text);
 }
 
 .actions {
@@ -158,7 +195,7 @@
   grid-template-columns: 110px 1fr;
   gap: 14px;
   padding: 12px 0;
-  border-bottom: 1px solid #edebe9;
+  border-bottom: 1px solid var(--line-subtle);
 }
 
 .facts dt {
@@ -168,22 +205,23 @@
 .facts dd {
   margin: 0;
   line-height: 1.45;
+  color: var(--text);
 }
 
 .state,
 .error {
-  padding: 28px;
+  padding: 24px;
   color: var(--muted);
 }
 
 .error {
-  color: #a4262c;
-  background: #fde7e9;
-  border-bottom: 1px solid #f3c6ca;
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border-bottom: 1px solid var(--danger-border);
 }
 
 .formPanel {
-  padding: 16px;
+  padding: 18px;
 }
 
 .formTitle {
@@ -212,6 +250,7 @@
 
 .form fieldset {
   border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
   margin: 0;
   padding: 12px;
 }
@@ -240,45 +279,125 @@
 
 .checkGrid input {
   min-height: auto;
+  width: auto;
+  accent-color: var(--azure);
 }
 
 .primary {
   justify-self: start;
   min-height: 36px;
   border: 1px solid var(--azure);
+  border-radius: var(--radius-sm);
   background: var(--azure);
-  color: #fff;
+  color: #ffffff;
   padding: 0 16px;
   font-weight: 600;
+}
+
+.primary:hover:not(:disabled),
+.actions .primaryAction:hover:not(:disabled) {
+  background: var(--azure-hover);
+  border-color: var(--azure-hover);
 }
 
 .actions .primaryAction {
   border-color: var(--azure);
   background: var(--azure);
-  color: #fff;
+  color: #ffffff;
 }
 
-.observationNote { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
-.reviewPanel { display: grid; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-.reviewPanel label { display: grid; gap: 6px; }
-.reviewPanel textarea { width: 100%; min-height: 72px; box-sizing: border-box; }
-.taskPanel { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
-.taskPanel h3 { margin: 0; font-size: 14px; }
-.taskPanel > p { color: var(--muted); font-size: 12px; line-height: 1.5; }
-.taskList { display: grid; gap: 8px; }
-.taskRow { display: grid; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
-.taskRow > div:first-child { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
-.taskRow > div:first-child span { color: var(--muted); }
-.taskRow > .status { justify-self: start; }
-.taskError { font-size: 12px; }
-.taskError summary { cursor: pointer; color: var(--azure); }
-.taskError p { white-space: normal; overflow-wrap: anywhere; }
+.observationNote {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.reviewPanel {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.reviewPanel label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.reviewPanel textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+.taskPanel {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.taskPanel h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.taskPanel > p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.taskList {
+  display: grid;
+  gap: 8px;
+}
+
+.taskRow {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.taskRow > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.taskRow > div:first-child span {
+  color: var(--muted);
+}
+
+.taskRow > .status {
+  justify-self: start;
+}
+
+.taskError {
+  font-size: 12px;
+}
+
+.taskError summary {
+  cursor: pointer;
+  color: var(--accent-text);
+}
+
+.taskError p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 
 .primary:disabled,
 .toolbar button:disabled,
 .actions button:disabled {
   cursor: not-allowed;
-  opacity: 0.62;
+  opacity: 0.55;
 }
 
 @media (max-width: 1050px) {

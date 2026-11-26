@@ -1,46 +1,299 @@
-.page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; padding-bottom: 20px; }
-.filters { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
-.deviceForm input, .deviceForm select { min-height: 32px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 3px; background: #fff; color: var(--text); font: inherit; }
-.filters button { min-height: 32px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 3px; background: #fff; color: var(--text); cursor: pointer; }
-.filters button:global(.primary) { border-color: var(--azure); background: var(--azure); color: #fff; }
-.filters button:focus-visible, .deviceForm input:focus-visible, .deviceForm select:focus-visible, .actionButton:focus-visible, .dangerButton:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
-.selectableRow { cursor: pointer; }
-.selectableRow:focus-visible { outline: 2px solid var(--azure); outline-offset: -2px; }
-.page td small { color: var(--muted); }
-.error { margin: 14px 18px; padding: 10px 12px; border-left: 3px solid #a4262c; background: #fdf3f4; color: #a4262c; font-size: 13px; }
-.error p { margin: 3px 0 0; }
-.actionButton, .dangerButton { padding: 4px 6px; border: 0; background: transparent; color: var(--azure); cursor: pointer; font: inherit; }
-.dangerButton { color: #a4262c; }
-.actionButton:hover, .dangerButton:hover { text-decoration: underline; }
-.formPanel, .detailPanel { padding: 18px; }
-.formPanel h2, .detailPanel h2 { margin: 0 0 16px; font-size: 16px; font-weight: 600; }
-.deviceForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
-.deviceForm h2, .deviceForm .error, .deviceForm > button { grid-column: 1 / -1; }
-.deviceForm .error { margin: 0; }
-.deviceForm label { display: grid; gap: 5px; color: var(--text); font-size: 13px; font-weight: 600; }
-.deviceForm > button { justify-self: start; }
-.detailPanel > p { margin: 7px 0; color: var(--text); font-size: 13px; }
-.detailPanel > p b { display: inline-block; min-width: 145px; font-weight: 600; }
-.detailSection { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-.detailSection h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
-.detailSection > p { color: var(--muted); font-size: 13px; }
-.detailSection .error { margin: 10px 0; }
-.detailTabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; border-bottom: 1px solid var(--line); }
-.detailTabs button { padding: 8px 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--text); }
-.detailTabs button[aria-selected="true"] { border-bottom-color: var(--azure); color: var(--azure); font-weight: 600; }
-.detailTabs button:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
-.detailPanel > .attentionMessage { color: #a4262c; font-weight: 600; }
-.observationNote { margin: 0 0 12px; color: var(--muted); }
-.credentialArea { display: grid; gap: 10px; margin-top: 14px; }
-.credentialArea > button, .detailSection > button { justify-self: start; }
-.credentialError, .scanError { color: #a4262c !important; }
-.tokenNotice { display: grid; gap: 8px; max-width: 100%; padding: 10px 12px; border: 1px solid #f1e4ad; background: #fffbea; color: #5c4b00; font-size: 13px; }
-.tokenNotice code { overflow-wrap: anywhere; color: var(--text); font-family: Consolas, "Courier New", monospace; }
-.complianceBadge, .severity { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 7px; border: 1px solid var(--line); border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-.compliant, .low, .successMessage { color: #107c10; }
-.compliant, .low { border-color: #c4e8c4; background: #f1faf1; }
-.nonCompliant, .high { border-color: #f4d6bd; background: #fff8f1; color: #a15c00; }
-.critical { border-color: #f3c8cc; background: #fdf3f4; color: #a4262c; }
-.medium { border-color: #f1e4ad; background: #fffbea; color: #8a6d00; }
-@media (max-width: 800px) { .deviceForm { grid-template-columns: 1fr; } }
-@media (max-width: 560px) { .filters { flex-wrap: wrap; } .filters input { flex-basis: 100%; } .detailPanel > p b { min-width: 0; } }
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+  padding-bottom: 20px;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.deviceForm input,
+.deviceForm select {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.filters button:not(:global(.primary)):not(:global(.dashboardActionButton)) {
+  min-height: 34px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.filters button:focus-visible,
+.deviceForm input:focus-visible,
+.deviceForm select:focus-visible,
+.actionButton:focus-visible,
+.dangerButton:focus-visible {
+  outline: 2px solid var(--azure);
+  outline-offset: 2px;
+}
+
+.selectableRow {
+  cursor: pointer;
+}
+
+.selectableRow:focus-visible {
+  outline: 2px solid var(--azure);
+  outline-offset: -2px;
+}
+
+.page td small {
+  color: var(--muted);
+}
+
+.error {
+  margin: 14px 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-size: 13px;
+}
+
+.error p {
+  margin: 3px 0 0;
+}
+
+.actionButton,
+.dangerButton {
+  padding: 4px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--accent-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.dangerButton {
+  color: var(--danger-text);
+}
+
+.actionButton:hover,
+.dangerButton:hover {
+  text-decoration: underline;
+}
+
+.formPanel,
+.detailPanel {
+  padding: 18px;
+}
+
+.formPanel h2,
+.detailPanel h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.deviceForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.deviceForm h2,
+.deviceForm .error,
+.deviceForm > button {
+  grid-column: 1 / -1;
+}
+
+.deviceForm .error {
+  margin: 0;
+}
+
+.deviceForm label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.deviceForm > button {
+  justify-self: start;
+}
+
+.detailPanel > p {
+  margin: 7px 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.detailPanel > p b {
+  display: inline-block;
+  min-width: 145px;
+  font-weight: 600;
+}
+
+.detailSection {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.detailSection h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.detailSection > p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.detailSection .error {
+  margin: 10px 0;
+}
+
+.detailTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.detailTabs button {
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.detailTabs button:hover {
+  color: var(--text);
+}
+
+.detailTabs button[aria-selected="true"] {
+  border-bottom-color: var(--azure);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.detailTabs button:focus-visible {
+  outline: 2px solid var(--azure);
+  outline-offset: 2px;
+}
+
+.detailPanel > .attentionMessage {
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.observationNote {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.credentialArea {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.credentialArea > button,
+.detailSection > button {
+  justify-self: start;
+  margin-top: 10px;
+}
+
+.credentialError,
+.scanError {
+  color: var(--danger-text) !important;
+}
+
+.tokenNotice {
+  display: grid;
+  gap: 8px;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--warn-border);
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 13px;
+}
+
+.tokenNotice code {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.complianceBadge,
+.severity {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.successMessage {
+  color: var(--success-text);
+}
+
+.compliant,
+.low {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.nonCompliant,
+.high,
+.medium {
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
+.critical {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+@media (max-width: 800px) {
+  .deviceForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .filters {
+    flex-wrap: wrap;
+  }
+  .filters input {
+    flex-basis: 100%;
+  }
+  .detailPanel > p b {
+    min-width: 0;
+  }
+}

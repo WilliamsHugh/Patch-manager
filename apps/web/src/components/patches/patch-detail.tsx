@@ -3,6 +3,7 @@
 import { PatchItem } from "./patch-table";
 import { useState } from "react";
 import { Role } from "@patch-management/shared";
+import { CloseIcon } from "@/components/ui/icons";
 import styles from "./patch-review.module.css";
 
 interface PatchDetailProps {
@@ -84,7 +85,7 @@ export function PatchDetail({
             onClick={onClose}
             aria-label="Close patch details"
           >
-            ×
+            <CloseIcon size={18} />
           </button>
         </div>
 

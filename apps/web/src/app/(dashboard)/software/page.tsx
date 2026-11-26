@@ -17,6 +17,14 @@ import {
 
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import {
+  CloseIcon,
+  EditIcon,
+  InfoCircleIcon,
+  NavModuleIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@/components/ui/icons";
 import { ModuleTableLoading } from "@/components/ui/module-table-loading";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
 
@@ -521,11 +529,15 @@ export default function SoftwarePage() {
                     "nowrap",
                 }}
               >
-                {saving
-                  ? "Saving..."
-                  : editingId
-                    ? "Save changes"
-                    : "＋ Add software"}
+                {saving ? (
+                  "Saving..."
+                ) : editingId ? (
+                  "Save changes"
+                ) : (
+                  <>
+                    <PlusIcon size={14} /> Add software
+                  </>
+                )}
               </button>
 
               {editingId && (
@@ -685,7 +697,7 @@ export default function SoftwarePage() {
                               );
                             }}
                           >
-                            ◫{" "}
+                            <NavModuleIcon name="software" size={15} />
                             {
                               item.name
                             }
@@ -738,7 +750,7 @@ export default function SoftwarePage() {
                               title="Edit software"
                               aria-label={`Edit ${item.name}`}
                             >
-                              ✎
+                              <EditIcon size={15} />
                             </button>
 
                             <button
@@ -751,7 +763,7 @@ export default function SoftwarePage() {
                               title="Delete software"
                               aria-label={`Delete ${item.name}`}
                             >
-                              ⌫
+                              <TrashIcon size={15} />
                             </button>
                           </td>
                         )}
@@ -831,7 +843,7 @@ export default function SoftwarePage() {
                 </small>
 
                 <h2>
-                  ◫{" "}
+                  <NavModuleIcon name="software" size={19} />
                   {
                     selected.name
                   }
@@ -840,13 +852,14 @@ export default function SoftwarePage() {
 
               <button
                 type="button"
+                aria-label="Close software details"
                 onClick={() =>
                   setSelected(
                     null,
                   )
                 }
               >
-                ×
+                <CloseIcon size={18} />
               </button>
             </div>
 
@@ -954,8 +967,8 @@ export default function SoftwarePage() {
                 </div>
               </>
             ) : (
-              <div className="infoBox">
-                ⓘ No related patches are available.
+              <div className="infoBox" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <InfoCircleIcon size={16} /> No related patches are available.
               </div>
             )}
 
@@ -969,7 +982,7 @@ export default function SoftwarePage() {
                   )
                 }
               >
-                ✎ Edit software
+                <EditIcon size={15} /> Edit software
               </button>
             )}
           </aside>

@@ -38,7 +38,7 @@ export default function AuditLogsPage() {
       <input className={styles.entityType} aria-label="Filter entity type" placeholder="Entity type" value={entityType} onChange={event => setEntityType(event.target.value)} />
       <label className={styles.dateField}><span>From</span><input type="date" value={from} onChange={event => setFrom(event.target.value)} /></label>
       <label className={styles.dateField}><span>To</span><input type="date" value={to} onChange={event => setTo(event.target.value)} /></label>
-      <button type="submit" disabled={loading}>Apply filters</button>
+      <button type="submit" className="primary" disabled={loading}>Apply filters</button>
       <DashboardActionButton onClick={() => { setEntityType(""); setFrom(""); setTo(""); void load(undefined, true, true); }} disabled={loading}>Reset</DashboardActionButton>
     </form>
     {error && <p className="panelMessage" role="alert">{error}</p>}

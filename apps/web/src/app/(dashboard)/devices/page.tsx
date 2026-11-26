@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { ApiError, apiClient, getCachedApiData } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { PlusIcon } from "@/components/ui/icons";
 import { ModuleTableLoading } from "@/components/ui/module-table-loading";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
 
@@ -344,7 +345,7 @@ export default function DevicesPage() {
           </div>
           {isAdmin && (
             <button type="button" className="primary" onClick={startCreate}>
-              ＋ Add device
+              <PlusIcon size={14} /> Add device
             </button>
           )}
         </div>

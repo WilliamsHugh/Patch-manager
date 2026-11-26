@@ -9,6 +9,7 @@ import {
 import { apiClient, getCachedApiData } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { DashboardActionButton } from "@/components/ui/dashboard-action-button";
+import { PlusIcon } from "@/components/ui/icons";
 import { ModuleTableLoading } from "@/components/ui/module-table-loading";
 import { ModuleSearchField } from "@/components/ui/module-search-field";
 
@@ -469,7 +470,7 @@ export default function Page() {
                 openCreateForm
               }
             >
-              ＋ Create patch
+              <PlusIcon size={14} /> Create patch
             </button>
           )}
         </div>
@@ -617,7 +618,7 @@ export default function Page() {
                     openCreateForm
                   }
                 >
-                  ＋ Create patch
+                  <PlusIcon size={14} /> Create patch
                 </button>
               )}
             </div>

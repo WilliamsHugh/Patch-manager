@@ -14,9 +14,14 @@
 .metrics div,
 .panel,
 .formPanel {
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--line);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
+}
+
+.panel {
+  overflow: hidden;
 }
 
 .metrics div {
@@ -37,6 +42,8 @@
   display: block;
   font-size: 26px;
   margin-top: 6px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .panelHead {
@@ -53,6 +60,7 @@
 .formTitle h2 {
   margin: 0;
   font-size: 16px;
+  color: var(--text);
 }
 
 .panelHead p {
@@ -77,6 +85,9 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .toolbar select,
@@ -85,10 +96,11 @@
 .form select,
 .form textarea,
 .commentForm textarea {
-  border: 1px solid #8a8886;
-  background: var(--white);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
   color: var(--text);
-  min-height: 32px;
+  min-height: 34px;
   padding: 0 10px;
   outline: none;
 }
@@ -100,14 +112,15 @@
 .form textarea:focus,
 .commentForm textarea:focus {
   border-color: var(--azure);
-  box-shadow: inset 0 0 0 1px var(--azure);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .secondaryBtn,
 .formTitle button {
-  min-height: 32px;
-  border: 1px solid #8a8886;
-  background: var(--white);
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
   color: var(--text);
   padding: 0 12px;
   font-size: 12px;
@@ -116,14 +129,15 @@
 
 .secondaryBtn:hover:not(:disabled),
 .formTitle button:hover:not(:disabled) {
-  background: #f3f2f1;
+  background: var(--surface-hover);
 }
 
 .primaryBtn {
-  min-height: 32px;
+  min-height: 34px;
   border: 1px solid var(--azure);
+  border-radius: var(--radius-sm);
   background: var(--azure);
-  color: var(--white);
+  color: #ffffff;
   padding: 0 14px;
   font-size: 12px;
   font-weight: 600;
@@ -138,7 +152,7 @@
 .primaryBtn:disabled,
 .secondaryBtn:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .contentGrid {
@@ -160,8 +174,8 @@
 .table th {
   height: 38px;
   text-align: left;
-  color: #605e5c;
-  background: #faf9f8;
+  color: var(--muted);
+  background: var(--surface-subtle);
   border-bottom: 1px solid var(--line);
   font-size: 11px;
   font-weight: 600;
@@ -170,7 +184,7 @@
 
 .table td {
   height: 52px;
-  border-bottom: 1px solid #edebe9;
+  border-bottom: 1px solid var(--line-subtle);
   padding: 8px 12px;
   font-size: 12px;
   vertical-align: middle;
@@ -180,9 +194,12 @@
   cursor: pointer;
 }
 
-.table tbody tr:hover,
+.table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
 .selectedRow {
-  background: #f3f9fd;
+  background: var(--surface-selected);
 }
 
 .titleCell {
@@ -203,54 +220,55 @@
   align-items: center;
   min-height: 22px;
   padding: 0 8px;
+  border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .statusOpen {
-  background: #deecf9;
-  color: #005a9e;
+  background: var(--info-bg);
+  color: var(--info-text);
 }
 
 .statusInProgress {
-  background: #fff4ce;
-  color: #8a5300;
+  background: var(--warn-bg);
+  color: var(--warn-text);
 }
 
 .statusWaitingUser {
-  background: #fde7e9;
-  color: #a4262c;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 .statusResolved {
-  background: #dff6dd;
-  color: var(--green);
+  background: var(--success-bg);
+  color: var(--success-text);
 }
 
 .statusClosed {
-  background: #edebe9;
-  color: #605e5c;
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
 }
 
 .priorityLow {
-  background: #edebe9;
-  color: #605e5c;
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
 }
 
 .priorityMedium {
-  background: #deecf9;
-  color: #005a9e;
+  background: var(--info-bg);
+  color: var(--info-text);
 }
 
 .priorityHigh {
-  background: #fff4ce;
-  color: #8a5300;
+  background: var(--warn-bg);
+  color: var(--warn-text);
 }
 
 .priorityCritical {
-  background: #fde7e9;
-  color: #a4262c;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 .detailPane {
@@ -290,8 +308,9 @@
   color: var(--text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background: #faf9f8;
-  border: 1px solid #edebe9;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
 }
 
@@ -304,7 +323,7 @@
   grid-template-columns: 100px 1fr;
   gap: 12px;
   padding: 9px 0;
-  border-bottom: 1px solid #edebe9;
+  border-bottom: 1px solid var(--line-subtle);
 }
 
 .facts dt {
@@ -317,6 +336,7 @@
   font-size: 12px;
   line-height: 1.4;
   overflow-wrap: anywhere;
+  color: var(--text);
 }
 
 .actionsBox {
@@ -352,8 +372,9 @@
 }
 
 .commentItem {
-  border: 1px solid #edebe9;
-  background: #faf9f8;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
   padding: 10px 12px;
 }
 
@@ -373,7 +394,7 @@
 
 .commentRole {
   font-size: 10px;
-  color: var(--azure);
+  color: var(--accent-text);
   margin-left: 6px;
   font-weight: 600;
 }
@@ -422,15 +443,15 @@
 }
 
 .errorBanner {
-  color: #a4262c;
-  background: #fde7e9;
-  border-bottom: 1px solid #f3c6ca;
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border-bottom: 1px solid var(--danger-border);
 }
 
 .successBanner {
-  color: var(--green);
-  background: #dff6dd;
-  border-bottom: 1px solid #bce3b8;
+  color: var(--success-text);
+  background: var(--success-bg);
+  border-bottom: 1px solid var(--success-border);
 }
 
 .formPanel {

@@ -1,18 +1,135 @@
-.panel { min-width: 0; }
-.actions { display: flex; align-items: center; gap: 8px; }
-.markAll { min-height: 32px; padding: 0 12px; border: 1px solid var(--line); background: #fff; color: var(--text); }
-.markAll:disabled { opacity: .55; cursor: not-allowed; }
-.actions button:focus-visible, .list button:focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; }
-.error { margin: 0; padding: 16px 18px; color: var(--red); }
-.list { list-style: none; margin: 0; padding: 0; }
-.list li { border-bottom: 1px solid var(--line); }
-.list li:last-child { border-bottom: 0; }
-.list button { display: grid; gap: 5px; width: 100%; padding: 15px 18px; border: 0; background: #fff; color: var(--text); text-align: left; }
-.list .unread button { background: #f3f9fd; cursor: pointer; }
-.list .unread button:hover { background: #eaf4fc; }
-.title { font-weight: 600; font-size: 13px; }
-.badge { margin-left: 9px; color: var(--azure); font-size: 11px; font-weight: 600; }
-.message { color: var(--text); font-size: 12px; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
-.list time { color: var(--muted); font-size: 11px; }
-:global(.sideNav) :global(.moduleNav) a .navCount { display: inline-flex; align-items: center; justify-content: center; margin-left: auto; flex: none; min-width: 20px; width: auto; padding: 2px 5px; background: #deecf9; color: #005a9e; font-size: 11px; font-weight: 600; text-align: center; }
-@media (max-width: 600px) { .panel :global(.dataHead) { height: auto; min-height: 70px; align-items: flex-start; flex-direction: column; gap: 12px; padding: 14px 17px; } .actions { flex-wrap: wrap; } }
+.panel {
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.markAll {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.markAll:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.markAll:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.actions button:focus-visible,
+.list button:focus-visible {
+  outline: 2px solid var(--azure);
+  outline-offset: 2px;
+}
+
+.error {
+  margin: 0;
+  padding: 16px 18px;
+  color: var(--danger-text);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list li {
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.list li:last-child {
+  border-bottom: 0;
+}
+
+.list button {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+.list button:hover {
+  background: var(--surface-hover);
+}
+
+.list .unread button {
+  background: var(--surface-selected);
+  cursor: pointer;
+}
+
+.list .unread button:hover {
+  background: var(--surface-hover);
+}
+
+.title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.badge {
+  margin-left: 9px;
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.message {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.list time {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+:global(.sideNav) :global(.moduleNav) a .navCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex: none;
+  min-width: 20px;
+  width: auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .panel :global(.dataHead) {
+    height: auto;
+    min-height: 70px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 17px;
+  }
+  .actions {
+    flex-wrap: wrap;
+  }
+}

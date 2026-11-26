@@ -7,26 +7,28 @@
   width: 330px;
   max-width: 100%;
   min-width: 0;
-  height: 32px;
-  min-height: 32px;
+  height: 34px;
+  min-height: 34px;
   padding: 0;
-  border: 1px solid #8a8886;
-  border-radius: 0;
-  background: #fff;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .field.field:focus-within {
   border-color: var(--azure);
-  outline: 1px solid var(--azure);
-  outline-offset: 0;
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .icon.icon {
   flex: none;
-  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px 0 10px;
   color: var(--muted);
-  font-size: 16px;
-  line-height: 1;
+  line-height: 0;
 }
 
 .field.field .input {
@@ -35,7 +37,7 @@
   min-width: 0;
   height: 100%;
   min-height: 0;
-  padding: 0;
+  padding: 0 10px 0 2px;
   border: 0;
   border-radius: 0;
   outline: 0;

@@ -126,7 +126,8 @@ export function PatchTable({
                       style={{
                         border: 0,
                         background: "none",
-                        color: "var(--azure)",
+                        color: "var(--accent-text)",
+                        fontWeight: 600,
                         cursor: "pointer",
                       }}
                     >
@@ -141,7 +142,8 @@ export function PatchTable({
                           style={{
                             border: 0,
                             background: "none",
-                            color: "var(--azure)",
+                            color: "var(--accent-text)",
+                            fontWeight: 600,
                             cursor: "pointer",
                           }}
                         >
@@ -154,7 +156,8 @@ export function PatchTable({
                           style={{
                             border: 0,
                             background: "none",
-                            color: "var(--red)",
+                            color: "var(--danger-text)",
+                            fontWeight: 600,
                             cursor: "pointer",
                           }}
                         >
